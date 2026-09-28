@@ -8,9 +8,12 @@ import test from 'node:test';
 import { main as markdownlint } from 'markdownlint-cli2';
 import prettier from 'prettier';
 
-import { standard } from '../standard.config.ts';
-import { addMarkdownlintIgnore, consumerIgnoreWarnings } from '../standards/consumer-ignores.ts';
-import { applyPreset, LEGACY_SCOPE } from '../standards/web-platform.ts';
+import {
+  addMarkdownlintIgnore,
+  consumerIgnoreWarnings,
+} from '../packages/cli/src/lib/update/consumer-ignores.mjs';
+import { applyUpdate } from '../packages/cli/src/lib/update/index.mjs';
+import { LEGACY_SCOPE } from '../packages/cli/src/lib/update/legacy-scope.mjs';
 
 const reason = 'Agent worktrees are other checkouts of this repository.';
 
@@ -25,7 +28,7 @@ const consumerMarkdownlint = `{
   "config": { "default": true, "ignores": [".claude/worktrees"] },
   "globs": ["**/*.md"],
   "ignores": [
-    "${standard.vendorDir}",
+    "coverage",
     "node_modules",
     // Build output.
     "**/dist",
@@ -40,17 +43,6 @@ async function fixture(run) {
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
-}
-
-function preset() {
-  const files = { 'catalog.json': '{}' };
-  return {
-    formatVersion: 1,
-    preset: standard.preset,
-    release: 'v1.0.0',
-    commit: 'a'.repeat(40),
-    files,
-  };
 }
 
 /**
@@ -88,12 +80,12 @@ test("an update keeps another session's agent worktree out of git, Prettier, and
     assert.notEqual((await lintMarkdown(root)).code, 0, "the worktree's Markdown fails at first");
     const changed = ['.gitignore', '.markdownlint-cli2.jsonc', '.prettierignore'];
 
-    const planned = await applyPreset(root, preset(), true);
-    assert.deepEqual(planned.consumerChanged, changed);
+    const planned = await applyUpdate(root, { dryRun: true });
+    assert.deepEqual(planned.migrated, changed);
     assert.equal(await readFile(path.join(root, '.markdownlint-cli2.jsonc'), 'utf8'), config);
 
-    const applied = await applyPreset(root, preset());
-    assert.deepEqual(applied.consumerChanged, changed);
+    const applied = await applyUpdate(root);
+    assert.deepEqual(applied.migrated, changed);
     const lint = await lintMarkdown(root);
     assert.equal(lint.code, 0, lint.errors);
     assert.equal(
@@ -110,7 +102,7 @@ test("an update keeps another session's agent worktree out of git, Prettier, and
       "the other session's files stay as they were",
     );
 
-    assert.deepEqual((await applyPreset(root, preset())).consumerChanged, []);
+    assert.deepEqual((await applyUpdate(root)).migrated, []);
   }));
 
 test('adds the ignore first in the array and keeps every entry and comment', () => {
@@ -154,7 +146,7 @@ test('a configuration the update cannot read stops it before any file changes', 
     await writeFile(path.join(root, '.gitignore'), 'node_modules/\n');
     await writeFile(path.join(root, 'package.json'), legacyManifest);
     await writeFile(path.join(root, '.markdownlint-cli2.jsonc'), '{ "ignores": ["dist }');
-    await assert.rejects(applyPreset(root, preset()), /unclosed string/);
+    await assert.rejects(applyUpdate(root), /unclosed string/);
     assert.equal(await readFile(path.join(root, '.gitignore'), 'utf8'), 'node_modules/\n');
     assert.match(await readFile(path.join(root, 'package.json'), 'utf8'), legacyReference);
   }));
@@ -173,14 +165,14 @@ test('an equivalent spelling of a rule counts as present', () =>
     await writeFile(path.join(root, '.prettierignore'), '.claude/worktrees/**\n');
     const config = '{\n  "ignores": [\n    "./.claude/worktrees/**",\n  ],\n}\n';
     await writeFile(path.join(root, '.markdownlint-cli2.jsonc'), config);
-    assert.deepEqual((await applyPreset(root, preset())).consumerChanged, []);
+    assert.deepEqual((await applyUpdate(root)).migrated, []);
     assert.equal(await readFile(path.join(root, '.gitignore'), 'utf8'), gitignore);
   }));
 
 test('a rule anchored to the root does not stand in for one that reaches every app', () =>
   fixture(async (root) => {
     await writeFile(path.join(root, '.gitignore'), '/test-results/\n');
-    await applyPreset(root, preset());
+    await applyUpdate(root);
     const lines = (await readFile(path.join(root, '.gitignore'), 'utf8')).split('\n');
     assert.ok(lines.includes('test-results/'));
   }));
@@ -190,7 +182,7 @@ test('added lines keep the line endings the file already uses', () =>
     await writeFile(path.join(root, '.gitignore'), 'node_modules/\r\n');
     const config = '{\r\n  "ignores": [\r\n    "dist",\r\n  ],\r\n}\r\n';
     await writeFile(path.join(root, '.markdownlint-cli2.jsonc'), config);
-    await applyPreset(root, preset());
+    await applyUpdate(root);
     for (const name of ['.gitignore', '.markdownlint-cli2.jsonc']) {
       const text = await readFile(path.join(root, name), 'utf8');
       assert.ok(text.includes('.claude/worktrees'), name);
@@ -202,8 +194,8 @@ test('an agent worktree folder whose checkout is gone is still left alone', () =
   fixture(async (root) => {
     const worktree = await agentWorktree(root);
     await unlink(path.join(worktree, '.git'));
-    const plan = await applyPreset(root, preset());
-    assert.ok(!plan.consumerChanged.some((file) => file.startsWith('.claude/')));
+    const plan = await applyUpdate(root);
+    assert.ok(!plan.migrated.some((file) => file.startsWith('.claude/')));
     assert.match(await readFile(path.join(worktree, 'package.json'), 'utf8'), legacyReference);
   }));
 

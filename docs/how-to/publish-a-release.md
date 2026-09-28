@@ -1,9 +1,9 @@
 # Publish a tooling release
 
 This guide cuts a release of the standard so repositories can move to it. A release tag identifies
-the matching source and vendored preset. The shared packages publish to GitHub Packages under the
-`@williecubed` scope. Published templates vendor the same release, so their standard stays available
-locally and validation remains network-free.
+the source, and the shared packages publish to GitHub Packages under the `@williecubed` scope at the
+same version. Repositories install those packages at that exact version, and published templates
+copy the examples at that tag.
 
 ## Before you start
 
@@ -20,8 +20,9 @@ before 1.0 increments the minor number and includes an explicit migration path.
 
 In the release commit, set the root `package.json`, every `packages/*/package.json`, both plugin
 manifests under `packages/cli/plugins/willie-contributions/`, and `.claude-plugin/marketplace.json`
-to the same version. Pin the examples' `@williecubed/*` dependencies and Claude marketplace ref to
-the tag `v<version>`. `pnpm check` fails when any of these disagree.
+to the same version. Pin the examples' `@williecubed/*` dependencies to the version, and point the
+Claude marketplace ref in each example and in `packages/cli/repository/.claude/settings.json` at the
+tag `v<version>`. `pnpm check` fails when any of these disagree.
 
 Commit with `chore(tooling): release v0.3.0`.
 
@@ -36,17 +37,28 @@ Create the GitHub release from the tag with `gh release create v0.3.0 --generate
 the notes so the first line says what changes for a repository that updates. The release notes page
 `docs/reference/release-<version>.md` belongs in the release commit; `pnpm check` fails without it.
 
-Nothing else is needed to roll the release out. Every repository runs its own `Standard update`
-workflow each day. When it finds a release newer than the one in `.williecubed/web-platform.json`,
-it opens one pull request on the branch `automation/repository-standard-<tag>`, using only that
+Other contributors depend on the standard staying predictable. A new rule ships as a warning in one
+minor release and becomes a failure only in a later one; the first release's notes say which release
+enforces it, so every repository sees the warning in its own checks first.
+
+## 3. Publish to GitHub Packages
+
+Trigger the `Publish packages` workflow with the release tag. It publishes every `packages/*` to
+`npm.pkg.github.com` under the `@williecubed` scope. Publishing is what rolls the release out:
+repositories update to the newest version GitHub Packages has, never to a tag alone.
+
+Nothing else is needed. Every repository runs its own `Standard update` workflow each day. When
+GitHub Packages has a release newer than the version the repository pins `@williecubed/cli` to, it
+opens one pull request on the branch `automation/repository-standard-<tag>`, using only that
 workflow's own token:
 
 - A template repository is regenerated from its example (`examples/basic` for
   [WillieCubed/template-basic](https://github.com/WillieCubed/template-basic), `examples/with-astro`
   for `template-with-astro`, and `examples/with-vite-react` for `template-with-vite-react`). These
   power GitHub's "Use this template" button.
-- Every other repository runs the release's own updater, so the release's migrations apply in one
-  pass however old the repository's current release is.
+- Every other repository moves every `@williecubed/*` dependency to the release and runs that
+  release's own `cube update`, so the release's migrations apply in one pass however old the
+  repository's current release is.
 
 A patch release's pull request merges itself once `Validate` passes. A minor release's pull request
 waits for a maintainer to merge it, because a minor release can change how a repository works. A
@@ -58,30 +70,20 @@ A workflow's own token may not change workflow files. When a release changes one
 example's `ci.yml`, the update still opens its pull request without that file, and the run fails and
 names the file to copy by hand.
 
-Other contributors depend on the standard staying predictable. A new rule ships as a warning in one
-minor release and becomes a failure only in a later one; the first release's notes say which release
-enforces it, so every repository sees the warning in its own checks first.
-
-## 3. Publish to GitHub Packages
-
-Trigger the `Publish packages` workflow with the release tag. It publishes every `packages/*` to
-`npm.pkg.github.com` under the `@williecubed` scope. Contributors authenticate their local pnpm
-configuration to GitHub Packages; CI uses its repository token.
-
 ## 4. Watch the repositories update
 
 The `Standard status` workflow runs daily. Its job summary lists each repository's release and open
 update pull request, and it fails when a repository has drifted: behind the latest release for more
-than three days, an unreleased vendored commit on `main`, a failing update pull request, a
-contribution plugin ref that differs from the vendored release, a missing `org-standard` ruleset, or
+than three days, a `main` that pins `@williecubed/cli` to no release, a failing update pull request,
+a contribution plugin ref that differs from the pinned release, a missing `org-standard` ruleset, or
 no way to update itself (no `standard-update.yml`, or a `ci.yml` without `workflow_dispatch`). Run
 the same check locally with `pnpm standards:status`.
 
-A failing update pull request means the repository needs a change the updater could not make. Fix it
+A failing update pull request means the repository needs a change the update could not make. Fix it
 on the update branch; the pull request then merges itself. A repository that must diverge from one
 rule for a while records an exception in `standards/repositories.json` with the rule, a reason, and
 an expiry date.
 
-Do not cut a release to unblock one repository. Try an unreleased change there with
-`pnpm standards:update --commit <sha>` on a branch that is never merged; `Standard status` flags
-`release: null` on `main`.
+Do not cut a release to unblock one repository. Try an unreleased change there by linking a local
+checkout, as [Installation and updates](../reference/installation.md#unreleased-changes) describes,
+on a branch that is never merged.

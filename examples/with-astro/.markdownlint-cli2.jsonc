@@ -20,7 +20,6 @@
     "dist",
     "**/dist",
     ".turbo",
-    ".williecubed/web-platform",
     "docs/superpowers",
     "CHANGELOG.md",
   ],

@@ -7,8 +7,7 @@ export const standard = Object.freeze({
   owner: 'WillieCubed',
   npmScope: '@williecubed',
   cliName: 'cube',
-  preset: 'willie-web',
-  vendorDir: '.williecubed/web-platform',
+  stateDir: '.williecubed',
   pluginName: 'willie-contributions',
   bot: Object.freeze({ name: 'cube-bot', email: 'noreply@willie.page' }),
   cloudflare: Object.freeze({
@@ -18,11 +17,11 @@ export const standard = Object.freeze({
   }),
 });
 
-/** The directory that holds the vendored snapshot, its provenance record, and the commit scopes. */
-export const stateDir = standard.vendorDir.slice(0, standard.vendorDir.lastIndexOf('/'));
-
 /** The repository's own list of durable commit scopes. */
-export const commitScopes = `${stateDir}/commit-scopes.txt`;
+export const commitScopes = `${standard.stateDir}/commit-scopes.txt`;
+
+/** repository-tooling on GitHub, as `owner/name`. */
+export const sourceRepository = `${standard.owner}/repository-tooling`;
 
 /** The environment variable a non-interactive run reads the Cloudflare setup token from. */
 export const setupTokenVariable = `${standard.cliName.toUpperCase()}_CLOUDFLARE_SETUP_TOKEN`;

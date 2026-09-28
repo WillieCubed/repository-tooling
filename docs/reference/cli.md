@@ -6,20 +6,26 @@ It needs Node.js 24.20 or newer on the 24 line, and git.
 
 ## Commands
 
-| Command                       | Purpose                                                                                           | Exit code                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------- |
-| `cube bootstrap`              | `pnpm install`, then the preflight checks                                                         | as preflight                |
-| `cube bootstrap --production` | The same, then set up everything the repository's `platform.json` declares, asking as it goes     | 0 ready, 1 open, 2 no tty   |
-| `cube preflight`              | Check Node, pnpm, dependencies, git hooks, scopes, GitHub CLI, Cloudflare                         | 0 pass, 1 fail              |
-| `cube preflight --production` | The same, then report whether production has everything `platform.json` declares; changes nothing | 0 ready, 1 not ready        |
-| `cube check [name ...]`       | The shared repository-shape rules: `filenames`, `contract`, `debt`, `platform` (all by default)   | 0 pass, 1 fail, 2 bad usage |
-| `cube deploy [--filter x]`    | `pnpm build`, then `wrangler deploy` in every app with a wrangler config                          | 0 done, 2 nothing to deploy |
-| `cube help`                   | Print usage                                                                                       | 0                           |
+| Command                       | Purpose                                                                                                  | Exit code                   |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `cube bootstrap`              | `pnpm install`, then the preflight checks                                                                | as preflight                |
+| `cube bootstrap --production` | The same, then set up everything the repository's `platform.json` declares, asking as it goes            | 0 ready, 1 open, 2 no tty   |
+| `cube preflight`              | Check Node, pnpm, dependencies, git hooks, scopes, GitHub CLI, Cloudflare                                | 0 pass, 1 fail              |
+| `cube preflight --production` | The same, then report whether production has everything `platform.json` declares; changes nothing        | 0 ready, 1 not ready        |
+| `cube check [name ...]`       | The shared repository-shape rules: `filenames`, `contract`, `debt`, `owned`, `platform` (all by default) | 0 pass, 1 fail, 2 bad usage |
+| `cube deploy [--filter x]`    | `pnpm build`, then `wrangler deploy` in every app with a wrangler config                                 | 0 done, 2 nothing to deploy |
+| `cube update`                 | Write the files the standard owns from the installed release and migrate the repository to it            | 0 done, 1 unreadable file   |
+| `cube self-update`            | Move the repository to the newest published release through one pull request                             | 0 done, 1 failed            |
+| `cube help`                   | Print usage                                                                                              | 0                           |
 
 `cube check filenames --staged` checks the staged tree, which the pre-commit hook uses.
 `cube deploy --dry-run` builds and runs `wrangler deploy --dry-run`; `--filter apps/worker` limits
 it to one app. With `--production`, `--filter apps/site` (or `site`) limits bootstrap and preflight
 to that app's `platform.json`; `--filter .` picks the one at the root.
+
+`cube update --dry-run` lists what the update would write without writing it. `cube self-update` is
+what the `Standard update` workflow runs; `--dry-run` commits the update on its branch without
+pushing it or opening a pull request. [Installation and updates](installation.md) describes both.
 
 `cube bootstrap --production --rotate SIGNING_SECRET` replaces the stored value of a secret the
 manifest declares; `--rotate` takes one name or several separated by commas, and only
@@ -32,15 +38,16 @@ Through pnpm, the flags pass straight to the script: `pnpm bootstrap --productio
 
 Each failing check prints the command that fixes it.
 
-| Check         | Passes when                                       | Fix it prints                                 |
-| ------------- | ------------------------------------------------- | --------------------------------------------- |
-| Node.js       | the running version satisfies `engines.node`      | install the version `engines.node` names      |
-| pnpm          | `pnpm --version` equals `packageManager`          | `corepack prepare pnpm@<version> --activate`  |
-| dependencies  | `node_modules` exists                             | `pnpm install`                                |
-| git hooks     | `core.hooksPath` is `.githooks`                   | `pnpm install` (the prepare script sets it)   |
-| commit scopes | `.williecubed/commit-scopes.txt` exists           | copy it from the example and list your scopes |
-| GitHub CLI    | `gh auth status` succeeds                         | `brew install gh && gh auth login`            |
-| Cloudflare    | no wrangler config, or `wrangler whoami` succeeds | `pnpm exec wrangler login`                    |
+| Check           | Passes when                                                                                                              | Fix it prints                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Node.js         | the running version satisfies `engines.node`                                                                             | install the version `engines.node` names                                                                             |
+| pnpm            | `pnpm --version` equals `packageManager`                                                                                 | `corepack prepare pnpm@<version> --activate`                                                                         |
+| dependencies    | `node_modules` exists                                                                                                    | `pnpm install`                                                                                                       |
+| GitHub Packages | no `@williecubed/*` package installs from the registry, CI is running, or pnpm resolves a token for `npm.pkg.github.com` | `gh auth refresh --scopes read:packages`, the auth line in `~/.npmrc`, and `export NODE_AUTH_TOKEN=$(gh auth token)` |
+| git hooks       | `core.hooksPath` is `.githooks`                                                                                          | `pnpm install` (the prepare script sets it)                                                                          |
+| commit scopes   | `.williecubed/commit-scopes.txt` exists                                                                                  | copy it from the example and list your scopes                                                                        |
+| GitHub CLI      | `gh auth status` succeeds                                                                                                | `brew install gh && gh auth login`                                                                                   |
+| Cloudflare      | no wrangler config, or `wrangler whoami` succeeds                                                                        | `pnpm exec wrangler login`                                                                                           |
 
 ## Production checks
 
@@ -107,12 +114,13 @@ command-line arguments. The same goes for the Turnstile and Access token.
 
 ## Shape checks
 
-| Check       | Enforces                                                                                                                                                                                                                                                                                                                                                          |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `filenames` | Under `apps/*` and `packages/*`: `src/` files are `<name>.<ext>` (plus `.module.*`, `*.config.*`, `.gitkeep`); tests are `<name>.test.ts(x)`; `.spec.ts(x)` only under `tests/e2e/`; helpers and snapshots under `support/` or `snapshots/`                                                                                                                       |
-| `contract`  | Every package that ships code declares `lint`, `check-types`, `test`; every dependency is `catalog:`, `workspace:`, a repository-tooling tag, a verified vendored `file:` path, or `link:`; test material lives under `tests/`; every Astro project (a package with `astro` and its own `astro.config.*`) declares `sync`, and `turbo.json` runs it before `lint` |
-| `platform`  | Every `platform.json` at the root or under `apps/*` matches the schema `@williecubed/cli` ships and names only secrets and vars it declares; a repository without one passes                                                                                                                                                                                      |
-| `debt`      | `eslint-suppressions.json` ledgers never grow against `main`, and a changed file that carries suppressions shrinks (fewer findings or lines)                                                                                                                                                                                                                      |
+| Check       | Enforces                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `filenames` | Under `apps/*` and `packages/*`: `src/` files are `<name>.<ext>` (plus `.module.*` and `*.config.*`); tests are `<name>.test.ts(x)`; `.spec.ts(x)` only under `tests/e2e/`; helpers and snapshots under `support/` or `snapshots/`. A `.gitkeep` or `.keep` placeholder anywhere warns, and fails from v0.8.0                                                                                                                                                                |
+| `contract`  | Every package that ships code declares `lint`, `check-types`, `test`; every dependency is `catalog:`, `workspace:`, `link:`, or, for a `@williecubed/*` package, a release's exact version; test material lives under `tests/`; every Astro project (a package with `astro` and its own `astro.config.*`) declares `sync`, and `turbo.json` runs it before `lint`. A shared catalog entry pinned to another version than the standard's catalog warns, and fails from v0.8.0 |
+| `owned`     | The files the standard owns match the installed `@williecubed/cli` copies and the hooks are executable, no `.prettierrc` file replaces `prettier.config.js`, and `.claude/settings.json` loads the contribution plugin from the installed release. `cube update` fixes everything but a `.prettierrc` file                                                                                                                                                                   |
+| `platform`  | Every `platform.json` at the root or under `apps/*` matches the schema `@williecubed/cli` ships and names only secrets and vars it declares; a repository without one passes                                                                                                                                                                                                                                                                                                 |
+| `debt`      | `eslint-suppressions.json` ledgers never grow against `main`, and a changed file that carries suppressions shrinks (fewer findings or lines)                                                                                                                                                                                                                                                                                                                                 |
 
 ## Standard scripts
 
@@ -165,8 +173,9 @@ specific checks such as dead-code, duplication, or dependency-boundary scans liv
 ## Git hooks
 
 The hooks under `.githooks/` are stubs that run the shared scripts in
-`node_modules/@williecubed/cli/hooks/`. Repository-specific steps go below the shared call in the
-stub.
+`node_modules/@williecubed/cli/hooks/`. The standard owns the stubs, so `cube check owned` fails
+when one changes. A repository's own checks go in its `validate` task, which `pnpm check` runs and
+so does `pre-push`.
 
 | Hook                 | Shared behavior                                                                                                                                                                                 |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

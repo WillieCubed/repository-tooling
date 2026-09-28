@@ -11,11 +11,12 @@ This repository is a fork of
 
 It owns five things:
 
-- the shared packages every repository depends on: `@williecubed/eslint-config`,
-  `@williecubed/typescript-config`, `@williecubed/prettier-config`, `@williecubed/vitest-config`,
-  `@williecubed/playwright-config`, and `@williecubed/cli` (the `cube` command for `bootstrap`,
-  `preflight`, `check`, and `deploy`, the production platform setup, the git hooks, and the
-  `willie-contributions` agent plugin);
+- the shared packages every repository installs from GitHub Packages at one exact release:
+  `@williecubed/eslint-config`, `@williecubed/typescript-config`, `@williecubed/prettier-config`,
+  `@williecubed/vitest-config`, `@williecubed/playwright-config`, and `@williecubed/cli` (the `cube`
+  command for `bootstrap`, `preflight`, `check`, `deploy`, and `update`, the production platform
+  setup, the git hooks, the files every repository keeps identical, and the `willie-contributions`
+  agent plugin);
 - the security packages every app with admin or personal data uses: `@williecubed/access`,
   `@williecubed/edge-security`, `@williecubed/audit`, and `@williecubed/data`;
 - the example repositories under `examples/` that the templates are published from;
@@ -37,9 +38,11 @@ It owns five things:
 
 ## Create a repository
 
-Press **Use this template** on the template that matches what the repository ships: `template-basic`
-for libraries, CLIs, and Workers; `template-with-astro` for an Astro site;
-`template-with-vite-react` for a Vite and React application. Or, from a terminal:
+Installing the `@williecubed/*` packages needs a GitHub token with `read:packages`;
+[Installation and updates](docs/reference/installation.md#authentication) sets one up. Then press
+**Use this template** on the template that matches what the repository ships: `template-basic` for
+libraries, CLIs, and Workers; `template-with-astro` for an Astro site; `template-with-vite-react`
+for a Vite and React application. Or, from a terminal:
 
 ```bash
 gh repo create WillieCubed/<your-repo> --template WillieCubed/template-basic --private --clone
@@ -48,8 +51,9 @@ pnpm bootstrap
 pnpm check
 ```
 
-Each template is published from the matching directory under `examples/` on every release. Inside a
-repository, `pnpm standards:update --release <tag> --apply` reviews and applies a newer standard.
+Each template is published from the matching directory under `examples/` on every release. Every
+repository's daily `Standard update` workflow opens a pull request that moves it to each newer
+release.
 
 ## Every repository answers to the same commands
 

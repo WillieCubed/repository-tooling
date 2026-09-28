@@ -1,15 +1,15 @@
 # The shared packages
 
-Every personal repository depends on these packages. A released preset vendors them under
-`.williecubed/web-platform`, so each dependency resolves to that immutable local snapshot:
+Every personal repository depends on these packages, installed from GitHub Packages at the exact
+version of one release:
 
 ```json
-"@williecubed/typescript-config": "file:../../.williecubed/web-platform/packages/typescript-config"
+"@williecubed/typescript-config": "0.7.0"
 ```
 
-All packages share one version, the tooling version. `.williecubed/web-platform.json` records the
-release, commit, and content hash for the complete preset rather than versioning packages
-independently.
+All packages share one version, the tooling version, and a repository pins every one of them to the
+same release. [Installation and updates](installation.md) describes the registry, the token, and how
+a repository moves to a new release.
 
 | Package                          | What a repository gets                                                                                                                                                                                                                                                                                                                                       |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -18,7 +18,7 @@ independently.
 | `@williecubed/prettier-config`   | The Prettier settings object: 100 columns, single quotes, trailing commas, wrapped prose                                                                                                                                                                                                                                                                     |
 | `@williecubed/vitest-config`     | `sharedConfig`: unit tests under `tests/`, empty suites fail                                                                                                                                                                                                                                                                                                 |
 | `@williecubed/playwright-config` | `sharedConfig`: end-to-end tests under `tests/e2e/*.spec.ts`, desktop and mobile projects, traces on failure, retries in CI; accessibility and browser-health assertions                                                                                                                                                                                     |
-| `@williecubed/cli`               | The `cube` command (`bootstrap`, `preflight`, `check`, `deploy`), the git hooks, the `willie-contributions` agent plugin, and the version catalog                                                                                                                                                                                                            |
+| `@williecubed/cli`               | The `cube` command (`bootstrap`, `preflight`, `check`, `deploy`, `update`, `self-update`), the git hooks, the `willie-contributions` agent plugin, the version catalog, and the files every repository keeps identical                                                                                                                                       |
 
 ## How a package uses them
 

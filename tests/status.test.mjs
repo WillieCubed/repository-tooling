@@ -3,7 +3,15 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 
-import { applyExceptions, daysBehind, findings, pluginRef, report } from '../standards/status.ts';
+import {
+  applyExceptions,
+  daysBehind,
+  findings,
+  pluginRef,
+  propagationTargets,
+  readRegistry,
+  report,
+} from '../standards/status.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
 const day = 86_400_000;
@@ -24,6 +32,17 @@ const current = (overrides = {}) => ({
 });
 const rules = (state) => findings(state, releases, now).map(({ rule }) => rule);
 
+test('every template and consumer receives each release, and the source does not', async () => {
+  const registry = await readRegistry();
+  const targets = propagationTargets(registry);
+  assert.ok(!targets.some(({ name }) => name === 'repository-tooling'));
+  assert.equal(targets.length, registry.repositories.length - 1);
+  for (const entry of targets) {
+    if (entry.kind === 'template') assert.equal(entry.name, `template-${entry.example}`);
+    else assert.equal(entry.kind, 'consumer');
+  }
+});
+
 test('a current repository has no findings', () => {
   assert.deepEqual(rules(current()), []);
 });
@@ -36,7 +55,7 @@ test('lag counts from the first release a repository missed, not the latest', ()
   assert.ok(daysBehind('v0.4.4', releases, now + 4 * day) > 3);
 });
 
-test('unreleased vendoring, plugin refs, self-update, rulesets, and red updates are drift', () => {
+test('an unpinned CLI, plugin refs, self-update, rulesets, and red updates are drift', () => {
   assert.deepEqual(rules(current({ release: null, pluginRef: null })), ['release']);
   assert.deepEqual(rules(current({ pluginRef: 'v0.4.0' })), ['plugin-ref']);
   assert.deepEqual(rules(current({ selfUpdating: false })), ['self-update']);

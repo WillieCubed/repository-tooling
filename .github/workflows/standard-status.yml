@@ -1,11 +1,11 @@
 # Checks every repository in standards/repositories.json against the latest
 # release and the organization settings, and fails when one has drifted:
-# behind the latest release for more than three days, an unreleased vendored
-# commit on main, a failing update pull request, a stale plugin ref, a missing
-# org-standard ruleset, or a repository that cannot update itself. The job
-# summary lists every repository. A documented, unexpired exception in
-# repositories.json silences one rule for one repository. Every repository is
-# public, so the workflow's own token reads everything it needs.
+# behind the latest release for more than three days, a main that pins
+# @williecubed/cli to no release, a failing update pull request, a stale plugin
+# ref, a missing org-standard ruleset, or a repository that cannot update
+# itself. The job summary lists every repository. A documented, unexpired
+# exception in repositories.json silences one rule for one repository. Every
+# repository is public, so the workflow's own token reads everything it needs.
 name: Standard status
 
 on:

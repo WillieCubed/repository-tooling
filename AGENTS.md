@@ -7,14 +7,17 @@ This repository is a pnpm workspace that follows Turborepo conventions. `package
 packages every personal repository installs: `eslint-config`, `typescript-config`,
 `prettier-config`, `vitest-config`, `playwright-config`, `web-platform`, the security packages
 (`access`, `edge-security`, `audit`, `data`), and `cli` (the `cube` command, the git hooks under
-`hooks/`, the contribution plugin under `plugins/`, and the version catalog in `catalog.json`).
-`examples/` holds the repositories the templates are published from; each is a complete, runnable
-Turborepo workspace, and a test proves it passes its own checks. The catalog in every
-`pnpm-workspace.yaml` here must match `packages/cli/catalog.json`; a test fails when they differ.
+`hooks/`, the contribution plugin under `plugins/`, the version catalog in `catalog.json`, and the
+files every repository keeps identical under `repository/`). Repositories install these packages
+from GitHub Packages at exact versions; none of them carries a copy of this repository. `examples/`
+holds the repositories the templates are published from; each is a complete, runnable Turborepo
+workspace, and a test proves it passes its own checks. The catalog in every `pnpm-workspace.yaml`
+here must match `packages/cli/catalog.json`, and every example's copy of a file under
+`packages/cli/repository/` must match it; tests fail when they differ.
 
-Every value that names an owner, such as the GitHub owner, npm scope, command name, vendor
-directory, Cloudflare account, or Access team, comes from `standard.config.ts`. Never write one out
-in code, templates, or documentation examples that code generates.
+Every value that names an owner, such as the GitHub owner, npm scope, command name, state directory,
+Cloudflare account, or Access team, comes from `standard.config.ts`. Never write one out in code,
+templates, or documentation examples that code generates.
 
 Documentation comes first. A change to a rule updates its document under `docs/` in the same change,
 and a new rule gets a document before it gets code. Decisions that were expensive to make go in
@@ -39,6 +42,6 @@ index: `git restore --staged . && git add <paths> && git commit -F <file>`.
 
 Nothing is published or tagged from this repository without the maintainer's explicit approval.
 `Publish packages` runs only by hand. Every repository's daily `Standard update` workflow picks up a
-new release tag and opens an update pull request in that repository, using only that workflow's own
-token. A patch release's pull request merges itself; a minor release's waits for a maintainer. A new
-rule warns for at least one minor release before it fails.
+new release published to GitHub Packages and opens an update pull request in that repository, using
+only that workflow's own token. A patch release's pull request merges itself; a minor release's
+waits for a maintainer. A new rule warns for at least one minor release before it fails.

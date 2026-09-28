@@ -5,7 +5,7 @@ import { CliError } from './arguments.mjs';
 import { exists, readJson } from './files.mjs';
 import { findManifests } from './platform/manifest.mjs';
 import { platformBootstrap, platformPreflight } from './platform/index.mjs';
-import { commitScopes } from './standard.mjs';
+import { commitScopes, standard } from './standard.mjs';
 
 function output(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
@@ -147,6 +147,37 @@ async function repositoryFindings(cwd, report) {
     );
 }
 
+const REGISTRY = 'npm.pkg.github.com';
+
+/** Whether the repository installs one of the standard's packages from GitHub Packages. */
+function installsStandardPackages(packageJson) {
+  return Object.entries({ ...packageJson.dependencies, ...packageJson.devDependencies }).some(
+    ([name, range]) => name.startsWith(`${standard.npmScope}/`) && /^\d+\.\d+\.\d+$/.test(range),
+  );
+}
+
+/**
+ * The standard's packages install from GitHub Packages, which needs a token. pnpm ignores a token
+ * a repository's own .npmrc reads from the environment, so the one that counts is the one pnpm
+ * resolves from the user's configuration. Its value is never printed.
+ */
+function registryFindings(cwd, packageJson, report) {
+  const label = 'GitHub Packages';
+  if (!installsStandardPackages(packageJson))
+    report.pass(label, `no ${standard.npmScope}/* package installs from ${REGISTRY}`);
+  else if (process.env.CI) report.pass(label, 'the setup action authenticates installs in CI');
+  else {
+    const token = output('pnpm', ['config', 'get', `//${REGISTRY}/:_authToken`], cwd);
+    if (token && token !== 'undefined') report.pass(label, `pnpm has a token for ${REGISTRY}`);
+    else
+      report.fail(
+        label,
+        `pnpm has no token for ${REGISTRY}, so ${standard.npmScope}/* cannot install`,
+        'gh auth refresh --scopes read:packages, then add `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}` to ~/.npmrc and `export NODE_AUTH_TOKEN=$(gh auth token)` to your shell profile',
+      );
+  }
+}
+
 async function cloudflareFindings(cwd, report) {
   const targets = await deployables(cwd);
   if (targets.length === 0) {
@@ -173,12 +204,13 @@ async function machineFindings(cwd) {
   };
 
   await toolchainFindings(cwd, packageJson, report);
+  registryFindings(cwd, packageJson, report);
   await repositoryFindings(cwd, report);
   await cloudflareFindings(cwd, report);
 
   for (const finding of findings) {
     process.stdout.write(
-      `  ${finding.ok ? 'ok  ' : 'FAIL'}  ${finding.label.padEnd(14)} ${finding.detail}\n`,
+      `  ${finding.ok ? 'ok  ' : 'FAIL'}  ${finding.label.padEnd(15)} ${finding.detail}\n`,
     );
     if (!finding.ok) process.stdout.write(`        fix: ${finding.fix}\n`);
   }

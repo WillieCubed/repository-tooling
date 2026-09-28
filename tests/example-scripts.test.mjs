@@ -36,3 +36,12 @@ test('every example workspace script runs one command and leaves ordering to Tur
     }
   }
 });
+
+test('web profiles preserve immutable Worker version previews', async () => {
+  for (const file of [
+    'with-astro/apps/site/wrangler.jsonc',
+    'with-vite-react/apps/app/wrangler.jsonc',
+  ]) {
+    assert.match(await readFile(path.join(examples, file), 'utf8'), /"preview_urls": true/);
+  }
+});

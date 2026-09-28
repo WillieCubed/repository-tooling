@@ -5,7 +5,7 @@ production: its Cloudflare Worker, D1 databases, R2 buckets, Turnstile widgets, 
 email sending domain, secrets, vars, GitHub environment secrets, and the values that must never be
 set there. The repository owns it. It lives next to the app's production `wrangler.jsonc`, usually
 at `apps/<app>/platform.json`, or at the repository root for a single-app repository. It never lives
-under `.williecubed/`, because that directory is vendored.
+under `.williecubed/`, which holds only the files the standard reads, such as the commit scopes.
 
 `pnpm preflight --production` compares the manifest with what exists and prints a readiness report.
 `pnpm bootstrap --production` sets up what is missing. `pnpm check` validates the manifest's shape

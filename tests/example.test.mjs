@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
+  chmod,
   cp,
   mkdir,
   mkdtemp,
@@ -227,6 +228,13 @@ for (const [name, { uses, deploys }] of Object.entries(examples)) {
     assert.equal(shape.status, 0, `${shape.stdout}\n${shape.stderr}`);
     assert.match(shape.stdout, /ok {4}filenames/);
     assert.match(shape.stdout, /ok {4}contract/);
+    // The example's owned files are the installed CLI's copies.
+    assert.match(shape.stdout, /ok {4}owned/);
+    assert.doesNotMatch(
+      shape.stdout,
+      /warning:/,
+      'an example meets every rule, even one that warns',
+    );
 
     for (const directory of await workspacePackages(repository)) {
       const manifest = await json(path.join(repository, directory, 'package.json'));
@@ -261,6 +269,7 @@ test('cube check reports the file that breaks a shape rule', async () => {
     'export {};\n',
   );
   await writeFile(path.join(repository, 'packages/example/src/stray.test.ts'), 'export {};\n');
+  await writeFile(path.join(repository, 'packages/example/src/pages/.gitkeep'), '');
   // Coverage output mirrors the tests tree and is not test material.
   await mkdir(path.join(repository, 'packages/example/coverage/tests/support'), {
     recursive: true,
@@ -296,14 +305,12 @@ test('cube check reports the file that breaks a shape rule', async () => {
   assert.match(result.stdout, /greet\.helper\.ts/);
   assert.doesNotMatch(result.stdout, /robots\.txt\.ts/);
   assert.doesNotMatch(result.stdout, /fixtures\.ts|home-desktop\.png/);
-  // CSS modules, config files, placeholders, and a README beside tests are conventions.
-  const conventional = [
-    'src/card.module.css',
-    'src/content.config.ts',
-    'src/pages/.gitkeep',
-    'tests/README.md',
-  ];
+  // CSS modules, config files, and a README beside tests are conventions.
+  const conventional = ['src/card.module.css', 'src/content.config.ts', 'tests/README.md'];
   for (const file of conventional) assert.ok(!result.stdout.includes(file), `${file} is allowed`);
+  // A placeholder for files that do not exist yet warns until standard v0.8.0.
+  assert.match(result.stdout, /warning: packages\/example\/src\/pages\/\.gitkeep holds a place/);
+  assert.doesNotMatch(result.stdout, /\.gitkeep\n\s+expected/);
   assert.match(result.stdout, /FAIL {2}contract/);
   assert.match(result.stdout, /stray\.test\.ts/);
   assert.doesNotMatch(result.stdout, /coverage\//);
@@ -388,6 +395,31 @@ test('preflight names the fix for every failing check and passes once they are d
   assert.match(after.stdout, /all \d+ checks passed/);
 });
 
+test('preflight names the GitHub Packages setup when pnpm has no token for the registry', async () => {
+  const repository = await installedCopy('basic');
+  // A pnpm that reports its version and resolves no token, as on a machine never set up.
+  const fakeBin = path.join(repository, 'fake-bin');
+  await mkdir(fakeBin);
+  const pnpm = path.join(fakeBin, 'pnpm');
+  await writeFile(
+    pnpm,
+    '#!/bin/sh\nif [ "$1" = --version ]; then echo 11.25.0; fi\nif [ "$1" = config ]; then echo undefined; fi\n',
+  );
+  await chmod(pnpm, 0o755);
+  const result = spawnSync(process.execPath, [cli, 'preflight'], {
+    cwd: repository,
+    encoding: 'utf8',
+    env: { ...process.env, CI: '', PATH: `${fakeBin}:${process.env.PATH}` },
+  });
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stdout,
+    /FAIL {2}GitHub Packages pnpm has no token for npm\.pkg\.github\.com/,
+  );
+  assert.match(result.stdout, /fix: gh auth refresh --scopes read:packages/);
+  assert.ok(result.stdout.includes('//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'));
+});
+
 test('deploy refuses to run where there is nothing to deploy', async () => {
   const repository = await installedCopy('basic');
   const result = spawnSync(process.execPath, [cli, 'deploy', '--dry-run'], {
@@ -421,33 +453,5 @@ test('source manifests use one published version rather than a development prere
     const manifest = await json(path.join(sourceRoot, 'packages', name, 'package.json'));
     assert.equal(manifest.version, version, `${name} must share the tooling version`);
     assert.equal(manifest.publishConfig?.registry, 'https://npm.pkg.github.com');
-  }
-});
-
-test('source and generated repositories pin audited transitive fixes', async () => {
-  for (const directory of [
-    '.',
-    'examples/basic',
-    'examples/with-astro',
-    'examples/with-vite-react',
-  ]) {
-    const workspace = await readFile(
-      path.join(sourceRoot, directory, 'pnpm-workspace.yaml'),
-      'utf8',
-    );
-    assert.match(
-      workspace,
-      /^overrides:\n {2}sharp: 0\.35\.4\n {2}smol-toml: 1\.8\.0\n {2}svgo: 4\.1\.0$/m,
-    );
-  }
-});
-
-test('generated repositories exclude the immutable vendored preset from formatting', async () => {
-  for (const directory of ['basic', 'with-astro', 'with-vite-react']) {
-    const ignore = await readFile(
-      path.join(sourceRoot, 'examples', directory, '.prettierignore'),
-      'utf8',
-    );
-    assert.ok(ignore.split('\n').includes(`${standard.vendorDir}/`), directory);
   }
 });

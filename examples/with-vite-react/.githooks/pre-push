@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# The shared hook lives in @williecubed/cli; repository-specific steps go below it.
+# Runs the shared hook from @williecubed/cli. The standard owns this file; a
+# repository's own checks go in its `validate` task.
 set -eu
 ROOT=$(git rev-parse --show-toplevel)
 sh "$ROOT/node_modules/@williecubed/cli/hooks/pre-push.sh" "$@"

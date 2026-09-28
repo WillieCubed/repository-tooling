@@ -11,9 +11,12 @@ import { resolve } from 'node:path';
  */
 const MODULE_FILE = /^(?:apps|packages)\/[^/]+\/(src|tests)\/(.+)$/;
 const SOURCE_FILE = /^[^.]+\.[^.]+$/;
-// Conventions that carry a second dot on purpose: CSS modules, tool config
-// files (Astro requires src/content.config.ts), and placeholder files.
-const CONVENTIONAL_SOURCE = /^(?:[^.]+\.(?:module\.[a-z]+|config\.[a-z]+)|\.gitkeep)$/;
+// Conventions that carry a second dot on purpose: CSS modules and tool config
+// files (Astro requires src/content.config.ts).
+const CONVENTIONAL_SOURCE = /^[^.]+\.(?:module\.[a-z]+|config\.[a-z]+)$/;
+// A file kept only so git records an empty directory. A repository commits
+// nothing for a thing that does not exist yet; until standard v0.8.0 one warns.
+const PLACEHOLDER = /(?:^|\/)\.(?:git)?keep$/;
 // Documentation beside tests describes them and is not a suite.
 const DOCUMENT = /^[A-Z][A-Z0-9-]*\.md$/;
 // Astro routes files by name, and an endpoint such as src/pages/robots.txt.ts
@@ -77,14 +80,23 @@ function violation(path) {
 }
 
 export function checkFilenames({ cwd, staged = false }) {
-  const violations = repositoryFiles(cwd, staged)
+  const files = repositoryFiles(cwd, staged);
+  const placeholders = files.filter((path) => PLACEHOLDER.test(path)).sort();
+  const violations = files
+    .filter((path) => !PLACEHOLDER.test(path))
     .map(violation)
     .filter(Boolean)
     .sort((left, right) => left.path.localeCompare(right.path));
   return {
     name: 'filenames',
     ok: violations.length === 0,
-    lines: violations.map(({ path, expected }) => `${path}\n      expected: ${expected}`),
+    lines: [
+      ...violations.map(({ path, expected }) => `${path}\n      expected: ${expected}`),
+      ...placeholders.map(
+        (path) =>
+          `warning: ${path} holds a place for files that do not exist yet; delete it, and the directory arrives with its first real file (from v0.8.0 this fails)`,
+      ),
+    ],
     fix: 'rename each file to the expected form and update its imports',
   };
 }

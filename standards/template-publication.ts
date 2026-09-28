@@ -1,13 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { cp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { standard } from '../standard.config.ts';
-import { applyPreset } from './web-platform.ts';
-import { readRelease } from './web-platform-source.ts';
+import { marketplace, standard } from '../standard.config.ts';
 
 const examples = new Set(['basic', 'with-astro', 'with-vite-react']);
 const dependencyFields = [
@@ -16,13 +14,12 @@ const dependencyFields = [
   'optionalDependencies',
   'peerDependencies',
 ] as const;
+// Kept when the target is cleared: its history, and the dependencies its own workflow installed.
+const kept = new Set(['.git', 'node_modules']);
 
-interface Manifest {
-  scripts?: Record<string, string>;
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  optionalDependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
+type Manifest = Partial<Record<(typeof dependencyFields)[number], Record<string, string>>>;
+interface Settings {
+  extraKnownMarketplaces?: Record<string, { source?: { ref?: string } }>;
 }
 
 async function manifestPaths(root: string): Promise<string[]> {
@@ -37,33 +34,35 @@ async function manifestPaths(root: string): Promise<string[]> {
   return manifests;
 }
 
-async function rewriteManifest(root: string, file: string): Promise<void> {
-  const manifest = JSON.parse(await readFile(file, 'utf8')) as Manifest;
-  for (const field of dependencyFields) {
-    const dependencies = manifest[field];
-    if (!dependencies) continue;
-    for (const name of Object.keys(dependencies)) {
-      if (!name.startsWith(`${standard.npmScope}/`)) continue;
-      const packageName = name.slice(`${standard.npmScope}/`.length);
-      const target = path.join(root, standard.vendorDir, 'packages', packageName);
-      const relative = path.relative(path.dirname(file), target).split(path.sep).join('/');
-      dependencies[name] = `file:${relative}`;
+/**
+ * Every place an example names the release it belongs to that disagrees with `release`: a
+ * `@williecubed/*` dependency, or the ref the contribution plugin loads from.
+ */
+async function releaseMismatches(example: string, release: string): Promise<string[]> {
+  const version = release.slice(1);
+  const found: string[] = [];
+  for (const file of await manifestPaths(example)) {
+    const manifest = JSON.parse(await readFile(file, 'utf8')) as Manifest;
+    for (const field of dependencyFields) {
+      for (const [name, range] of Object.entries(manifest[field] ?? {})) {
+        if (name.startsWith(`${standard.npmScope}/`) && range !== version)
+          found.push(`${path.relative(example, file)} pins ${name} to ${range}`);
+      }
     }
   }
-  if (file === path.join(root, 'package.json')) {
-    manifest.scripts ??= {};
-    const cli = `node ${standard.vendorDir}/standards/web-platform-cli.ts`;
-    manifest.scripts['standards:update'] = `${cli} update`;
-    manifest.scripts['standards:check'] = `${cli} check`;
-    const check = manifest.scripts.check;
-    if (!check) throw new Error('The template root must define a check script.');
-    if (!check.startsWith('pnpm standards:check && ')) {
-      manifest.scripts.check = `pnpm standards:check && ${check}`;
-    }
-  }
-  await writeFile(file, `${JSON.stringify(manifest, null, 2)}\n`);
+  const settings = JSON.parse(
+    await readFile(path.join(example, '.claude/settings.json'), 'utf8'),
+  ) as Settings;
+  const ref = settings.extraKnownMarketplaces?.[marketplace]?.source?.ref;
+  if (ref !== release) found.push(`.claude/settings.json loads the plugin from ${String(ref)}`);
+  return found;
 }
 
+/**
+ * Makes `target` an exact copy of one example at a release. The example already pins every
+ * `@williecubed/*` package to the release, so the copy installs from GitHub Packages like any
+ * repository; publication refuses an example that names a different release.
+ */
 export async function materializeTemplate(options: {
   source: string;
   target: string;
@@ -75,23 +74,37 @@ export async function materializeTemplate(options: {
   if (!examples.has(options.example))
     throw new Error(`Unknown template example: ${options.example}`);
   if (source === target) throw new Error('Source and target directories must differ.');
+  if (!/^v\d+\.\d+\.\d+$/.test(options.release))
+    throw new Error('Use an explicit version tag, such as v0.7.0.');
 
-  const bundle = readRelease(source, options.release);
   const git = (args: string[]) =>
-    execFileSync('git', ['-C', source, ...args], { encoding: 'utf8' }).trim();
-  if (git(['rev-parse', 'HEAD']) !== bundle.commit || git(['status', '--porcelain'])) {
+    execFileSync('git', ['-C', source, ...args], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  let tagged: string;
+  try {
+    tagged = git(['rev-parse', '--verify', `refs/tags/${options.release}^{commit}`]);
+  } catch {
+    throw new Error(`The source checkout has no tag ${options.release}.`);
+  }
+  if (git(['rev-parse', 'HEAD']) !== tagged || git(['status', '--porcelain'])) {
     throw new Error('Template publication requires a clean checkout of the requested release.');
   }
+  const example = path.join(source, 'examples', options.example);
+  const mismatches = await releaseMismatches(example, options.release);
+  if (mismatches.length > 0)
+    throw new Error(
+      `examples/${options.example} does not belong to ${options.release}: ${mismatches.join('; ')}.`,
+    );
 
   const entries = await readdir(target, { withFileTypes: true }).catch(() => []);
   await Promise.all(
     entries
-      .filter((entry) => entry.name !== '.git')
+      .filter((entry) => !kept.has(entry.name))
       .map((entry) => rm(path.join(target, entry.name), { recursive: true, force: true })),
   );
-  await cp(path.join(source, 'examples', options.example), target, { recursive: true });
-  await applyPreset(target, bundle);
-  for (const file of await manifestPaths(target)) await rewriteManifest(target, file);
+  await cp(example, target, { recursive: true });
 }
 
 export async function main(args: string[]): Promise<void> {

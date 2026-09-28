@@ -1,7 +1,9 @@
 {
   "extends": "../packages/typescript-config/node.json",
   "compilerOptions": {
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    // The status report shares the release rules the CLI ships, which are JavaScript with JSDoc.
+    "allowJs": true
   },
   "include": ["*.ts", "../standard.config.ts", "../packages/web-platform/src/**/*.ts"]
 }

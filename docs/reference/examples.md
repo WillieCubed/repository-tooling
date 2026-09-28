@@ -15,8 +15,9 @@ its own `check` with the shared packages.
 
 | Path                                         | Purpose                                                                                          |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `package.json`                               | The standard scripts, lint-staged, and the `@williecubed/cli` and Prettier deps                  |
-| `pnpm-workspace.yaml`                        | `apps/*`, `packages/*`, and the version catalog                                                  |
+| `package.json`                               | The standard scripts, lint-staged, and the `@williecubed/cli` and Prettier deps at the release   |
+| `.npmrc`                                     | The `@williecubed` scope's registry, GitHub Packages                                             |
+| `pnpm-workspace.yaml`                        | `apps/*`, `packages/*`, the release age rules, and the version catalog                           |
 | `turbo.json`                                 | `build`, `lint`, `check-types`, `test`, `test:e2e`, `dev` tasks                                  |
 | `prettier.config.js`                         | Extends `@williecubed/prettier-config`                                                           |
 | `.markdownlint-cli2.jsonc`                   | Documentation rules, including that every relative link resolves                                 |
@@ -25,7 +26,7 @@ its own `check` with the shared packages.
 | `.codex/hooks.json`, `.agents/plugins/`      | Codex loads the plugin from `node_modules` and runs its guard                                    |
 | `.claude/settings.json`                      | Claude Code loads the plugin from the release tag, formats on edit, and cannot read secret files |
 | `.github/workflows/ci.yml`                   | The `Validate` job: `pnpm check`, dependency audit, secret scan                                  |
-| `.github/workflows/standard-update.yml`      | Daily: opens a self-merging pull request when a newer standard release exists                    |
+| `.github/workflows/standard-update.yml`      | Daily: `cube self-update` opens a pull request when GitHub Packages has a newer release          |
 | `.github/actions/setup-node-pnpm/action.yml` | Node from `package.json`, pinned pnpm, frozen install                                            |
 | `.github/renovate.json`                      | Weekly grouped updates; `@williecubed/*` bumps grouped as one                                    |
 | `.github/CODEOWNERS`                         | The owner reviews everything                                                                     |
@@ -33,12 +34,19 @@ its own `check` with the shared packages.
 | `docs/`                                      | The index, a start-here tutorial, and a glossary                                                 |
 | `AGENTS.md`, `README.md`                     | Agent guidance and the repository's own front page                                               |
 | `packages/example/`                          | A sample package with `lint`, `check-types`, `test`, `build`                                     |
-| `apps/`                                      | Empty; deployable apps go here                                                                   |
 
-The example remains the authoritative source for application-owned template files. During
-publication, the workflow copies it, vendors the exact tagged `willie-web` preset, adds
-`standards:update` and `standards:check`, and rewrites every `@williecubed/*` dependency to the
-appropriate local `file:` path. Running publication again for the same tag produces the same files.
+`pnpm-workspace.yaml` lists `apps/*` even though `basic` has no app yet. pnpm and Turborepo accept a
+glob with nothing under it, and `turbo gen workspace` creates the directory with the first app, so
+no placeholder file holds it. The deployable examples have no `packages/` directory for the same
+reason.
+
+The `.githooks/` stubs, the Codex files, the setup action, and `.editorconfig` are the standard's
+own files: `@williecubed/cli` carries the same copies, and `cube check owned` holds every repository
+to them. [Installation and updates](installation.md#files-the-standard-owns) lists them.
+
+The example is the authoritative source for its template repository. Publication copies it at the
+release tag, unchanged, after checking that every `@williecubed/*` dependency and the plugin ref
+name that release. Running publication again for the same tag produces the same files.
 
 ## What the deployable examples add
 
@@ -61,8 +69,8 @@ a `sync` task that `lint` depends on. Astro generates the types for `astro:conte
 environment only when it syncs or builds, so on a clean checkout, as in CI, type-aware lint rules
 would otherwise reject every module that imports them. Turbo caches the generated `.astro/`
 directory, so the extra task costs nothing when the content hasn't changed. The React example's
-`turbo.json` has no `sync` task, because nothing in it runs `astro sync`; `pnpm standards:update`
-adds the task to any repository that gains an Astro package.
+`turbo.json` has no `sync` task, because nothing in it runs `astro sync`; `cube update` adds the
+task to any repository that gains an Astro package.
 
 ## Adding an example
 

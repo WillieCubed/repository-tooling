@@ -9,6 +9,11 @@ and the shared rules arrive as ordinary dependencies.
 - You can create repositories under the `WillieCubed` account.
 - Node.js 24 or newer and git are installed on your machine. pnpm is activated by Corepack if it is
   missing (`corepack enable`).
+- Your machine can install from GitHub Packages, where the `@williecubed/*` packages live. Run
+  `gh auth refresh --scopes read:packages`, add
+  `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}` to `~/.npmrc`, and export
+  `NODE_AUTH_TOKEN=$(gh auth token)` in your shell profile.
+  [Installation and updates](../reference/installation.md#authentication) explains each part.
 - You know the repository's durable commit scopes: the two to six boundaries a change can belong to,
   such as `web`, `worker`, `docs`, `dx`. A scope is never a feature, file, task, or role.
 
@@ -33,8 +38,8 @@ cd <your-repo>
 
 Each template is published from the matching directory under `examples/` in this repository on every
 release, so it is always the current standard. Use the published template rather than copying an
-example directly: publication is the step that adds the released vendor snapshot and local package
-references.
+example directly: publication copies the example at a release tag, so every `@williecubed/*` version
+and the plugin ref name that release.
 
 ## 2. Bootstrap and check
 
@@ -47,8 +52,8 @@ pnpm check
 `preflight`, which confirms Node, pnpm, hooks, GitHub CLI, and Cloudflare access and names the fix
 for anything missing. `check` runs the format check, then lint, typecheck, and tests through
 Turborepo, exactly as CI does. Both pass on a fresh copy. The `@williecubed/*` packages install from
-the versioned snapshot under `.williecubed/web-platform`, so no registry login is needed and `check`
-verifies the snapshot before using it.
+GitHub Packages at the exact release the template pins, and `check` confirms that the files the
+standard owns match the installed `@williecubed/cli`.
 
 ## 3. Make it yours
 
@@ -61,15 +66,8 @@ verifies the snapshot before using it.
   requires it on every pull request. Add steps to the job.
 - `AGENTS.md` carries the paragraphs agents need. Add repository-specific guidance below them.
 
-Update the standard explicitly and review the resulting vendor, provenance, manifest, and lockfile
-diff together:
-
-```bash
-pnpm standards:update --release <tag> --dry-run --json
-pnpm standards:update --release <tag> --apply
-pnpm install
-pnpm check
-```
+The repository keeps itself on the standard: its `Standard update` workflow opens a pull request for
+each newer release, as [Installation and updates](../reference/installation.md) describes.
 
 ## 4. Commit and register
 
@@ -79,16 +77,19 @@ git push
 ```
 
 Then add the repository to `standards/repositories.json` here with `"kind": "consumer"`, so the
-standard ruleset applies and every release opens its update pull request. A deployable repository
-also needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets in a `production`
-environment before `.github/workflows/deploy.yml` can run.
+standard ruleset applies and `Standard status` tracks it. Its workflows install the `@williecubed/*`
+packages with their own token, so give the repository read access to each package in the package's
+settings on GitHub, under **Manage Actions access**. A deployable repository also needs the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets in a `production` environment before
+`.github/workflows/deploy.yml` can run.
 
 ## Common problems
 
-**`pnpm standards:check` reports an integrity failure**: restore `.williecubed/web-platform` and
-`.williecubed/web-platform.json` from the same known-good commit. Do not accept an edited snapshot
-by recalculating its hash. Make the shared change in repository-tooling and apply its reviewed
-release or full commit instead.
+**`pnpm install` fails with a 401 or 403 from `npm.pkg.github.com`**: pnpm has no token for GitHub
+Packages. `pnpm preflight` names the fix; the prerequisites above list it.
+
+**`cube check owned` fails**: a file the standard owns was changed. Run `pnpm exec cube update` to
+restore it, and make the shared change in repository-tooling instead.
 
 **`turbo` cannot find a task**: every package must declare `lint`, `check-types`, and `test` scripts
 (and `build` where it builds). Copy them from `packages/example/package.json`.

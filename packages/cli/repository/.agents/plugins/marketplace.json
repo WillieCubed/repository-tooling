@@ -1,0 +1,20 @@
+{
+  "name": "cube",
+  "interface": {
+    "displayName": "WillieCubed"
+  },
+  "plugins": [
+    {
+      "name": "willie-contributions",
+      "source": {
+        "source": "local",
+        "path": "../../node_modules/@williecubed/cli/plugins/willie-contributions"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

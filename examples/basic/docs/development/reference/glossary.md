@@ -33,6 +33,10 @@ discussed in review. The settings come from `@williecubed/prettier-config`.
 <a id="wrangler"></a>**Wrangler**: Cloudflare's command line for deploying Workers.
 `pnpm run deploy` calls it.
 
+<a id="github-packages"></a>**GitHub Packages**: the registry the shared `@williecubed/*` packages
+install from, at the exact version of one release of the standard. Installing needs a GitHub token
+with `read:packages`; `pnpm preflight` checks that pnpm has one.
+
 <a id="gh"></a>**gh**: the GitHub command line. Signing in with `gh auth login` lets the
 repository's helper create issues and pull requests for you.
 
@@ -48,6 +52,10 @@ boundary of the repository the change belongs to. The allowed list is
 
 <a id="ci"></a>**CI**: continuous integration, the automation that runs `pnpm check` on every pull
 request. The required status is named `Validate`.
+
+<a id="standard-update"></a>**Standard update**: the daily workflow that opens a pull request moving
+this repository to each newer release of the shared packages, and restores the files the standard
+owns, such as the git hooks, with `cube update`.
 
 <a id="preflight"></a>**Preflight**: `pnpm preflight`, the check that your machine can build and
 deploy this repository, with a fix printed for anything missing.

@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
 import { standard } from '../standard.config.ts';
 import { materializeTemplate } from '../standards/template-publication.ts';
-import { verifyPreset } from '../standards/web-platform.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
 const json = async (file) => JSON.parse(await readFile(path.join(root, file), 'utf8'));
@@ -26,33 +25,6 @@ async function tree(directory, prefix = '') {
       };
   }
   return files;
-}
-
-async function manifests(directory) {
-  const files = [path.join(directory, 'package.json')];
-  for (const parent of ['apps', 'packages']) {
-    const entries = await readdir(path.join(directory, parent), { withFileTypes: true }).catch(
-      () => [],
-    );
-    for (const entry of entries) {
-      if (entry.isDirectory()) files.push(path.join(directory, parent, entry.name, 'package.json'));
-    }
-  }
-  return Promise.all(files.map(async (file) => [file, JSON.parse(await readFile(file, 'utf8'))]));
-}
-
-function assertVendoredDependencies(target, file, manifest) {
-  const fields = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
-  const dependencies = fields.flatMap((field) => Object.entries(manifest[field] ?? {}));
-  for (const [name, specifier] of dependencies) {
-    if (!name.startsWith(`${standard.npmScope}/`)) continue;
-    const packageName = name.slice(`${standard.npmScope}/`.length);
-    assert.ok(specifier.startsWith('file:'), `${file}: ${name} must use a file dependency`);
-    assert.equal(
-      path.resolve(path.dirname(file), specifier.slice('file:'.length)),
-      path.join(target, standard.vendorDir, 'packages', packageName),
-    );
-  }
 }
 
 test('browser templates type their Node.js test configuration', async () => {
@@ -82,48 +54,71 @@ test('template publication respects protected branches through a reviewed pull r
     path.join(root, 'examples/basic/.github/workflows/standard-update.yml'),
     'utf8',
   );
-  const propagate = [
-    await readFile(path.join(root, 'standards/propagate.ts'), 'utf8'),
-    await readFile(path.join(root, 'standards/propose.ts'), 'utf8'),
-  ].join('\n');
+  const selfUpdate = await Promise.all(
+    ['apply.mjs', 'propose.mjs', 'index.mjs'].map((file) =>
+      readFile(path.join(root, 'packages/cli/src/lib/self-update', file), 'utf8'),
+    ),
+  );
+  const code = selfUpdate.join('\n');
 
-  assert.match(propagate, /automation\/repository-standard-/);
-  assert.match(propagate, /github-create\.mjs/);
-  assert.match(propagate, /'--body-file'/);
-  assert.match(propagate, /'--base', 'main'/);
-  assert.match(propagate, /'pr', 'list'/);
-  assert.match(propagate, /'pr', 'edit'/);
-  assert.match(propagate, /standards\/template-publication\.ts/);
-  assert.match(workflow, /self-update\.ts/);
-  assert.doesNotMatch(`${workflow}\n${propagate}`, /HEAD:main/);
+  assert.match(code, /github-create\.mjs/);
+  assert.match(code, /'--body-file'/);
+  assert.match(code, /'--base', 'main'/);
+  assert.match(code, /'pr', 'list'/);
+  assert.match(code, /'pr', 'edit'/);
+  assert.match(code, /standards\/template-publication\.ts/);
+  assert.ok(workflow.includes(`pnpm exec ${standard.cliName} self-update`));
+  assert.doesNotMatch(`${workflow}\n${code}`, /HEAD:main/);
 });
 
-test('template publication vendors one exact release and is byte-for-byte idempotent', async (t) => {
+test('template publication copies one exact release and is byte-for-byte idempotent', async (t) => {
   const fixture = await mkdtemp(path.join(os.tmpdir(), 'standard-template-publication-'));
   t.after(() => rm(fixture, { recursive: true, force: true }));
+  const { version } = await json('packages/cli/package.json');
+  const release = `v${version}`;
+  // A release checkout of the examples as they are in this working tree, so the test holds while a
+  // release is being prepared as well as after it is committed.
   const source = path.join(fixture, 'source');
-  execFileSync('git', ['clone', '--quiet', '--shared', root, source]);
-  execFileSync('git', ['-C', source, 'tag', 'v99.0.0', 'HEAD']);
+  await cp(path.join(root, 'examples'), path.join(source, 'examples'), { recursive: true });
+  const git = (...args) => execFileSync('git', ['-C', source, ...args], { stdio: 'ignore' });
+  git('init', '--quiet', '--initial-branch', 'main');
+  git('add', '--', 'examples');
+  git(
+    '-c',
+    'user.name=test',
+    '-c',
+    'user.email=test@example.org',
+    'commit',
+    '--quiet',
+    '-m',
+    'release',
+  );
+  git('tag', release);
 
   for (const example of ['basic', 'with-astro', 'with-vite-react']) {
     const target = path.join(fixture, example);
-    await materializeTemplate({ source, target, example, release: 'v99.0.0' });
-
-    const metadata = await verifyPreset(target);
-    assert.equal(metadata.release, 'v99.0.0');
-    const rootManifest = JSON.parse(await readFile(path.join(target, 'package.json'), 'utf8'));
-    const cli = `node ${standard.vendorDir}/standards/web-platform-cli.ts`;
-    assert.equal(rootManifest.scripts['standards:update'], `${cli} update`);
-    assert.equal(rootManifest.scripts['standards:check'], `${cli} check`);
-    assert.match(rootManifest.scripts.check, /^pnpm standards:check && /);
-
-    for (const [file, manifest] of await manifests(target))
-      assertVendoredDependencies(target, file, manifest);
+    await mkdir(path.join(target, 'node_modules'), { recursive: true });
+    await writeFile(path.join(target, 'node_modules/kept'), 'installed\n');
+    await writeFile(path.join(target, 'stale.txt'), 'from an older release\n');
+    await materializeTemplate({ source, target, example, release });
 
     const first = await tree(target);
-    await materializeTemplate({ source, target, example, release: 'v99.0.0' });
+    const { 'node_modules/kept': kept, ...copied } = first;
+    assert.deepEqual(copied, await tree(path.join(source, 'examples', example)), example);
+    assert.equal(kept?.content, 'installed\n', 'the installed dependencies stay');
+    await materializeTemplate({ source, target, example, release });
     assert.deepEqual(await tree(target), first, `${example} publication must be idempotent`);
   }
+
+  const other = { source, target: path.join(fixture, 'other'), example: 'basic' };
+  await assert.rejects(
+    materializeTemplate({ ...other, release: 'v99.0.0' }),
+    /has no tag v99\.0\.0/,
+  );
+  git('tag', 'v99.0.0');
+  await assert.rejects(materializeTemplate({ ...other, release: 'v99.0.0' }), (error) =>
+    error.message.includes(`package.json pins ${standard.npmScope}/cli to ${version}`),
+  );
 
   await writeFile(path.join(source, 'examples/basic/README.md'), 'unreleased change\n');
   await assert.rejects(
@@ -131,7 +126,7 @@ test('template publication vendors one exact release and is byte-for-byte idempo
       source,
       target: path.join(fixture, 'dirty-source'),
       example: 'basic',
-      release: 'v99.0.0',
+      release,
     }),
     /clean checkout of the requested release/,
   );

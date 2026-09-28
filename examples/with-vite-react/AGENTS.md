@@ -46,4 +46,7 @@ scope when a change crosses boundaries; never invent one for a feature, file, ta
 ## The repository standard
 
 Lint, format, TypeScript, and test settings extend the `@williecubed/*` packages from
-`WillieCubed/repository-tooling`. Change a shared rule there, not here.
+`WillieCubed/repository-tooling`. Change a shared rule there, not here. The standard also owns the
+`.githooks/` stubs, `.codex/hooks.json`, `.agents/plugins/marketplace.json`, the `setup-node-pnpm`
+action, and `.editorconfig`: `pnpm check` fails when one of them changes, and
+`pnpm exec cube update` restores them.

@@ -7,6 +7,9 @@ repository created from the example, reached by copying files from it.
 ## Before you start
 
 - The working tree is clean, so the adoption is the only thing in the diff you review.
+- Your machine can install from GitHub Packages: `pnpm preflight` in any repository on the standard
+  passes its `GitHub Packages` check, or you have followed
+  [Installation and updates](../reference/installation.md#authentication).
 - You have a checkout of this repository, or the [examples/basic](../../examples/basic) directory
   open on GitHub, to copy from. For an Astro site or a Vite and React app, also keep
   [examples/with-astro](../../examples/with-astro) or
@@ -20,26 +23,33 @@ In the root `package.json`, add the dev dependencies and the standard scripts ex
 `format`, `format:check`, `lint`, `check-types`, `test`, `build`, `dev`, `prepare`). In each
 workspace package, add `@williecubed/eslint-config`, `@williecubed/typescript-config`, and
 `@williecubed/vitest-config` as `examples/basic/packages/example/package.json` does, and give it
-`lint`, `check-types`, `test`, and `build` scripts.
+`lint`, `check-types`, `test`, and `build` scripts. Every `@williecubed/*` dependency names the same
+exact release the example pins.
 
-Copy the `catalog:` block of `examples/basic/pnpm-workspace.yaml` into yours and switch tool
-versions to `catalog:`. Copy `turbo.json` if the repository has none.
+Copy `.npmrc` from the example, which points the `@williecubed` scope at GitHub Packages. Copy the
+`minimumReleaseAge`, `minimumReleaseAgeExclude`, and `catalog:` blocks of
+`examples/basic/pnpm-workspace.yaml` into yours and switch tool versions to `catalog:`. Copy
+`turbo.json` if the repository has none. Then run `pnpm install`.
 
-## 2. Copy the standard files
+## 2. Write the standard files
+
+Run `pnpm exec cube update`. It writes the files the standard owns (the `.githooks/` stubs,
+`.codex/hooks.json`, `.agents/plugins/marketplace.json`,
+`.github/actions/setup-node-pnpm/action.yml`, and `.editorconfig`), overwriting your versions. It
+adds `.github/workflows/standard-update.yml` and `.claude/settings.json` if the repository has none,
+and adds the ignore rules the standard needs to your ignore files.
 
 Copy these from the example, overwriting your versions:
 
-- `.githooks/commit-msg`, `.githooks/prepare-commit-msg`, `.githooks/pre-push`
-- `.codex/hooks.json` and `.agents/plugins/marketplace.json`
-- `.github/actions/setup-node-pnpm/action.yml` and `.github/renovate.json`
-- `.github/workflows/standard-update.yml`, and give your `ci.yml` a `workflow_dispatch` trigger so
-  the update pull requests it opens run `Validate`
-- `.editorconfig`, `.prettierignore`, `prettier.config.js`
+- `.github/renovate.json`
+- `.prettierignore` and `prettier.config.js`, deleting any `.prettierrc` file
 
 Merge these by hand, keeping what the repository already has:
 
-- `.claude/settings.json`: the `cube` marketplace entry and `enabledPlugins`
-- `.github/workflows/ci.yml`: a job named `Validate` that runs `pnpm check`
+- `.claude/settings.json`, if the repository had one: the `cube` marketplace entry and
+  `enabledPlugins`
+- `.github/workflows/ci.yml`: a job named `Validate` that runs `pnpm check`, and a
+  `workflow_dispatch` trigger so the update pull requests `Standard update` opens run `Validate`
 - `AGENTS.md`: the standard paragraphs above your own
 
 Point each package's `eslint.config.js`, `tsconfig.json`, and `vitest.config.ts` at the shared

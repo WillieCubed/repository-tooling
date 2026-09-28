@@ -18,22 +18,22 @@ export const AGENT_WORKTREES = '.claude/worktrees';
 const AGENT_WORKTREES_REASON = 'Agent worktrees are other checkouts of this repository.';
 
 /** The rules each root ignore file must hold, as the examples hold them. */
-const LINE_RULES: Record<string, string[]> = {
+const LINE_RULES = {
   '.gitignore': [...PLAYWRIGHT_OUTPUT_IGNORES, `${AGENT_WORKTREES}/`],
   '.prettierignore': [`${AGENT_WORKTREES}/`],
 };
 
 const MARKDOWNLINT_CONFIG = '.markdownlint-cli2.jsonc';
-// markdownlint-cli2's other configuration formats, which the updater doesn't edit.
+// markdownlint-cli2's other configuration formats, which the update doesn't edit.
 const OTHER_MARKDOWNLINT_CONFIGS = [
   '.markdownlint-cli2.yaml',
   '.markdownlint-cli2.cjs',
   '.markdownlint-cli2.mjs',
 ];
 
-/** What the consumer must change by hand: a markdownlint configuration the updater can't edit. */
-export async function consumerIgnoreWarnings(root: string): Promise<string[]> {
-  const warnings: string[] = [];
+/** What the repository must change by hand: a markdownlint configuration the update can't edit. */
+export async function consumerIgnoreWarnings(root) {
+  const warnings = [];
   for (const name of OTHER_MARKDOWNLINT_CONFIGS) {
     const source = await readFile(path.join(root, name), 'utf8').catch(() => null);
     if (source !== null && !source.includes(AGENT_WORKTREES))
@@ -45,11 +45,11 @@ export async function consumerIgnoreWarnings(root: string): Promise<string[]> {
 }
 
 /**
- * Adds the standard's ignore rules that a consumer's root ignore files lack, leaving their own
- * lines, comments, and order untouched. A file the consumer doesn't have stays absent.
+ * Adds the standard's ignore rules that a repository's root ignore files lack, leaving their own
+ * lines, comments, and order untouched. A file the repository doesn't have stays absent.
  */
-export async function syncConsumerIgnores(root: string, dryRun: boolean): Promise<string[]> {
-  const changed: string[] = [];
+export async function syncConsumerIgnores(root, dryRun) {
+  const changed = [];
   for (const [name, rules] of Object.entries(LINE_RULES)) {
     if (await appendMissingLines(path.join(root, name), rules, dryRun)) changed.push(name);
   }
@@ -65,7 +65,7 @@ export async function syncConsumerIgnores(root: string, dryRun: boolean): Promis
   return changed;
 }
 
-async function appendMissingLines(file: string, rules: string[], dryRun: boolean) {
+async function appendMissingLines(file, rules, dryRun) {
   const source = await readFile(file, 'utf8').catch(() => null);
   if (source === null) return false;
   const present = new Set(source.split(/\r?\n/).map(patternKey));
@@ -78,7 +78,7 @@ async function appendMissingLines(file: string, rules: string[], dryRun: boolean
 }
 
 /** The line ending a file already uses, so added lines match it. */
-function lineEnding(source: string): string {
+function lineEnding(source) {
   return source.includes('\r\n') ? '\r\n' : '\n';
 }
 
@@ -86,7 +86,7 @@ function lineEnding(source: string): string {
  * An ignore pattern without the spellings that don't change what it covers here: a trailing `/` or
  * `/**`, a leading `./`, and a leading `/` when another slash anchors the pattern anyway.
  */
-function patternKey(pattern: string): string {
+function patternKey(pattern) {
   const bare = pattern
     .trim()
     .replace(/^\.\//, '')
@@ -94,15 +94,8 @@ function patternKey(pattern: string): string {
   return bare.startsWith('/') && bare.slice(1).includes('/') ? bare.slice(1) : bare;
 }
 
-interface Token {
-  text: string;
-  value?: string;
-  start: number;
-  end: number;
-}
-
 /** Where the comment that starts at `index` ends, or `index` when none starts there. */
-function commentEnd(source: string, index: number): number {
+function commentEnd(source, index) {
   if (source.startsWith('//', index)) {
     const end = source.indexOf('\n', index);
     return end === -1 ? source.length : end;
@@ -113,16 +106,16 @@ function commentEnd(source: string, index: number): number {
   return end + 2;
 }
 
-function stringToken(source: string, start: number): Token {
+function stringToken(source, start) {
   let end = start + 1;
   while (end < source.length && source[end] !== '"') end += source[end] === '\\' ? 2 : 1;
   if (end >= source.length) throw new Error(`${MARKDOWNLINT_CONFIG} has an unclosed string.`);
   const text = source.slice(start, end + 1);
-  return { text, value: JSON.parse(text) as string, start, end: end + 1 };
+  return { text, value: JSON.parse(text), start, end: end + 1 };
 }
 
 /** A punctuation mark, or a literal such as `true` or `100`. */
-function otherToken(source: string, start: number): Token {
+function otherToken(source, start) {
   const character = source.charAt(start);
   if ('{}[]:,'.includes(character)) return { text: character, start, end: start + 1 };
   let end = start;
@@ -132,8 +125,8 @@ function otherToken(source: string, start: number): Token {
 }
 
 /** The strings, punctuation, and literals of a JSONC document, without whitespace or comments. */
-function tokenize(source: string): Token[] {
-  const tokens: Token[] = [];
+function tokenize(source) {
+  const tokens = [];
   let index = 0;
   while (index < source.length) {
     const skipped = /\s/.test(source.charAt(index)) ? index + 1 : commentEnd(source, index);
@@ -156,7 +149,7 @@ const NESTING = new Map([
 ]);
 
 /** The `[` that opens the top-level `key` array and every token after it, if there is one. */
-function topLevelArray(tokens: Token[], key: string): { open: Token; rest: Token[] } | undefined {
+function topLevelArray(tokens, key) {
   let depth = 0;
   for (const [index, { text, value }] of tokens.entries()) {
     const open = tokens[index + 2];
@@ -168,7 +161,7 @@ function topLevelArray(tokens: Token[], key: string): { open: Token; rest: Token
 }
 
 /** Whether an array holds `value` as one of its own entries, given the tokens after its `[`. */
-function arrayHolds(rest: Token[], value: string): boolean {
+function arrayHolds(rest, value) {
   let depth = 0;
   for (const token of rest) {
     depth += NESTING.get(token.text) ?? 0;
@@ -180,7 +173,7 @@ function arrayHolds(rest: Token[], value: string): boolean {
 }
 
 /** The whitespace that starts the first line after `offset` holding anything else. */
-function nextIndentation(source: string, offset: number): { indentation: string; closes: boolean } {
+function nextIndentation(source, offset) {
   const match = /\n([ \t]*)(\S)/.exec(source.slice(offset));
   return { indentation: match?.[1] ?? '', closes: match?.[2] === ']' || match?.[2] === '}' };
 }
@@ -190,7 +183,7 @@ function nextIndentation(source: string, offset: number): { indentation: string;
  * as a comment above it. The entry goes first in the array; every existing entry, comment, and
  * blank line stays where it was. A configuration without `ignores` gets the array.
  */
-export function addMarkdownlintIgnore(source: string, glob: string, reason: string): string {
+export function addMarkdownlintIgnore(source, glob, reason) {
   const tokens = tokenize(source);
   const [first] = tokens;
   if (first?.text !== '{') throw new Error(`${MARKDOWNLINT_CONFIG} must hold one object.`);
@@ -207,7 +200,7 @@ export function addMarkdownlintIgnore(source: string, glob: string, reason: stri
  * Inserts `entry` right after `offset`: on its own line below a `// comment`, indented like the
  * line that follows, or ahead of the next entry when the bracket's contents share its line.
  */
-function insertAfter(source: string, offset: number, comment: string, entry: string): string {
+function insertAfter(source, offset, comment, entry) {
   const before = source.slice(0, offset);
   const after = source.slice(offset);
   if (!/^[ \t]*\r?\n/.test(after)) return `${before}${entry} ${after.trimStart()}`;

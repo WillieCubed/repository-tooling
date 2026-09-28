@@ -151,14 +151,16 @@ test('generated repositories authenticate GitHub Packages during installation', 
   }
 });
 
-test('publication commits an installable frozen lockfile', async () => {
-  const propagate = await read('standards/propagate.ts');
+test('a standard update commits an installable lockfile', async () => {
+  const apply = await read('packages/cli/src/lib/self-update/apply.mjs');
 
-  assert.match(propagate, /'install', '--lockfile-only', '--no-frozen-lockfile'/);
-  assert.ok(
-    propagate.indexOf("'--lockfile-only'") < propagate.indexOf("'add', '-A'"),
-    'the lockfile must be generated before the update commit',
-  );
+  assert.match(apply, /'install', '--lockfile-only', '--no-frozen-lockfile'/);
+  assert.match(apply, /'install', '--no-frozen-lockfile'/);
+  for (const install of ["'--lockfile-only'", "['install', '--no-frozen-lockfile']"])
+    assert.ok(
+      apply.indexOf(install) < apply.indexOf("'add', '-A'"),
+      'the lockfile must be generated before the update commit',
+    );
 });
 
 test('the source repository installs the shared commit-subject validator', async () => {
@@ -206,4 +208,19 @@ test('the ruleset requires only the repository Validate check', async () => {
   const statusRule = ruleset.rules.find(({ type }) => type === 'required_status_checks');
   assert.deepEqual(statusRule.parameters.required_status_checks, [{ context: 'Validate' }]);
   assert.deepEqual(ruleset.bypass_actors, []);
+});
+
+test('source and generated repositories pin audited transitive fixes', async () => {
+  for (const directory of [
+    '.',
+    'examples/basic',
+    'examples/with-astro',
+    'examples/with-vite-react',
+  ]) {
+    const workspace = await readFile(path.join(root, directory, 'pnpm-workspace.yaml'), 'utf8');
+    assert.match(
+      workspace,
+      /^overrides:\n {2}sharp: 0\.35\.4\n {2}smol-toml: 1\.8\.0\n {2}svgo: 4\.1\.0$/m,
+    );
+  }
 });

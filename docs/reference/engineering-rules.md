@@ -1,7 +1,7 @@
 # Engineering rules
 
-Rules for code in every repository that adopts the web preset. Each rule is a failing check where a
-machine can check it; the rest are review rules and say so.
+Rules for code in every repository on the standard. Each rule is a failing check where a machine can
+check it; the rest are review rules and say so.
 
 ## Toolchain
 
@@ -57,14 +57,27 @@ errors into responses: a `PublicError` returns its message and status, and every
 logged once and answered with a fixed message. A test proves an error carrying a secret is logged
 but never returned.
 
+## Source control
+
+A repository commits only what it owns and cannot regenerate: its source, its configuration, its
+documentation, and its lockfile. It never commits another repository's code, build output, generated
+files, or placeholders kept for things that do not exist yet. Shared code arrives as a pinned
+dependency, as the
+[GitHub Packages decision](../explanation/decisions/install-from-github-packages.md) records. A
+reviewer asks of every added file whether this repository is its source.
+
 ## Dependencies
 
 - One version catalog. Every repository's `pnpm-workspace.yaml` carries the catalog from
-  `packages/cli/catalog.json`, and packages depend on `"catalog:"`. `cube check contract` fails when
-  a repository's catalog differs.
+  `packages/cli/catalog.json`, and packages depend on `"catalog:"`. `cube check contract` warns when
+  a repository pins a shared entry to another version, and fails from v0.8.0.
+- The standard's own `@williecubed/*` packages install from GitHub Packages at one release's exact
+  version, the same in every package of the workspace.
 - Versions are exact and change only through the pnpm CLI or a standard update, never by editing a
   manifest by hand.
-- A package version must be one day old before it installs (`minimumReleaseAge: 1440`).
+- A package version must be one day old before it installs (`minimumReleaseAge: 1440`). The
+  standard's own packages are exempt (`minimumReleaseAgeExclude`), so a release installs the day it
+  is published.
 - Only packages on the `allowBuilds` list may run install scripts.
 - CI installs with `--frozen-lockfile`.
 

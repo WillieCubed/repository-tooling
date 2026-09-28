@@ -10,7 +10,6 @@ import {
   setupTokenVariable,
   sourceRepository,
   standard,
-  stateDir,
 } from '../standard.config.ts';
 
 /**
@@ -28,8 +27,8 @@ const plugin = `packages/cli/plugins/${standard.pluginName}`;
 
 test('the CLI carries the same owner values as standard.config.ts', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(cliCopy.standard)), standard);
-  assert.equal(cliCopy.stateDir, stateDir);
   assert.equal(cliCopy.commitScopes, commitScopes);
+  assert.equal(cliCopy.sourceRepository, sourceRepository);
   assert.equal(cliCopy.setupTokenVariable, setupTokenVariable);
   assert.equal(cliCopy.accessTeamDomain, `${standard.cloudflare.accessTeam}.cloudflareaccess.com`);
 });
@@ -90,6 +89,16 @@ test('each example names the owner in the files it cannot compute', async () => 
       assert.ok(stub.includes(`node_modules/${standard.npmScope}/cli/hooks/${hook}.sh`), hook);
     }
     const update = await read(`${example}/.github/workflows/standard-update.yml`);
-    assert.ok(update.includes(`${standard.vendorDir}/standards/self-update.ts`), name);
+    assert.ok(update.includes(`pnpm exec ${standard.cliName} self-update`), name);
+    assert.match(
+      await read(`${example}/.npmrc`),
+      new RegExp(`^${standard.npmScope}:registry=https://npm\\.pkg\\.github\\.com$`, 'm'),
+    );
+    // A release of the standard installs the day it is published.
+    assert.match(
+      await read(`${example}/pnpm-workspace.yaml`),
+      new RegExp(`^minimumReleaseAgeExclude:\\n {2}- '${standard.npmScope}/\\*'$`, 'm'),
+      name,
+    );
   }
 });

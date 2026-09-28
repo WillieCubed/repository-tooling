@@ -15,10 +15,8 @@ export interface StandardConfig {
   readonly npmScope: `@${string}`;
   /** The command every repository's scripts call. */
   readonly cliName: string;
-  /** The preset name recorded in each vendored snapshot. */
-  readonly preset: string;
-  /** Where a consumer keeps the vendored snapshot, relative to its root. */
-  readonly vendorDir: string;
+  /** Where every repository keeps the standard's per-repository files, relative to its root. */
+  readonly stateDir: string;
   /** The Claude Code and Codex contribution plugin. */
   readonly pluginName: string;
   /** The identity the update workflow commits as. */
@@ -35,8 +33,7 @@ export const standard = {
   owner: 'WillieCubed',
   npmScope: '@williecubed',
   cliName: 'cube',
-  preset: 'willie-web',
-  vendorDir: '.williecubed/web-platform',
+  stateDir: '.williecubed',
   pluginName: 'willie-contributions',
   bot: { name: 'cube-bot', email: 'noreply@willie.page' },
   cloudflare: {
@@ -46,14 +43,8 @@ export const standard = {
   },
 } as const satisfies StandardConfig;
 
-/** The directory that holds the vendored snapshot, its provenance record, and the commit scopes. */
-export const stateDir = standard.vendorDir.slice(0, standard.vendorDir.lastIndexOf('/'));
-
-/** The provenance record `standards:check` verifies the snapshot against. */
-export const presetRecord = `${standard.vendorDir}.json`;
-
 /** The repository's own list of durable commit scopes. */
-export const commitScopes = `${stateDir}/commit-scopes.txt`;
+export const commitScopes = `${standard.stateDir}/commit-scopes.txt`;
 
 /** This repository on GitHub, as `owner/name`. */
 export const sourceRepository = `${standard.owner}/repository-tooling`;

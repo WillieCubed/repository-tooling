@@ -1,20 +1,52 @@
 import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { appendFile } from 'node:fs/promises';
+import { appendFile, readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { presetRecord, sourceRepository } from '../standard.config.ts';
 import {
   BRANCH_PREFIX,
-  OWNER,
-  type Registry,
-  type RegistryEntry,
   compareReleases,
   latestRelease,
-  propagationTargets,
-  readRegistry,
-} from './propagate.ts';
+  pinnedRelease,
+} from '../packages/cli/src/lib/self-update/release.mjs';
+import { sourceRepository, standard } from '../standard.config.ts';
+
+const OWNER = standard.owner;
+
+type Manifest = Parameters<typeof pinnedRelease>[0];
+
+export interface RegistryEntry {
+  name: string;
+  requiredStatus: string;
+  kind: 'source' | 'template' | 'consumer';
+  example?: string;
+}
+
+export interface RegistryException {
+  repository: string;
+  rule: string;
+  reason: string;
+  expires: string;
+}
+
+export interface Registry {
+  version: number;
+  repositories: RegistryEntry[];
+  exceptions: RegistryException[];
+}
+
+export async function readRegistry(
+  file = path.join(import.meta.dirname, 'repositories.json'),
+): Promise<Registry> {
+  return JSON.parse(await readFile(file, 'utf8')) as Registry;
+}
+
+/** Repositories that receive each release: every template and consumer, never the source. */
+export function propagationTargets(registry: Registry): RegistryEntry[] {
+  return registry.repositories.filter(({ kind }) => kind !== 'source');
+}
 
 /** Days a repository may trail the latest release while its update pull request runs. */
 export const GRACE_DAYS = 3;
@@ -59,7 +91,10 @@ export function findings(state: RepositoryState, releases: Release[], now: numbe
   const latest = latestRelease(releases.map(({ tag }) => tag));
 
   if (state.release === null) {
-    add('release', 'main vendors an unreleased commit (`release: null`); merge a tagged release.');
+    add(
+      'release',
+      `main pins no released \`${standard.npmScope}/cli\`; pin every \`${standard.npmScope}/*\` package to a release.`,
+    );
   } else {
     const days = daysBehind(state.release, releases, now);
     if (days > GRACE_DAYS)
@@ -147,8 +182,8 @@ export function pluginRef(settings: string | null): string | null {
 }
 
 function readState(entry: RegistryEntry): RepositoryState {
-  const manifest = readRaw(entry.name, presetRecord);
-  const release = manifest ? (JSON.parse(manifest) as { release: string | null }).release : null;
+  const manifest = readRaw(entry.name, 'package.json');
+  const release = manifest ? pinnedRelease(JSON.parse(manifest) as Manifest) : null;
   const rulesets = (
     JSON.parse(gh(['api', `repos/${OWNER}/${entry.name}/rulesets`])) as { name: string }[]
   ).map(({ name }) => name);

@@ -5,8 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { checkContract } from '../packages/cli/src/lib/check/contract.mjs';
-import { standard } from '../standard.config.ts';
-import { applyPreset } from '../standards/web-platform.ts';
+import { applyUpdate } from '../packages/cli/src/lib/update/index.mjs';
 
 const sourceRoot = new URL('..', import.meta.url).pathname;
 const example = (name, file) => readFile(path.join(sourceRoot, 'examples', name, file), 'utf8');
@@ -55,24 +54,17 @@ async function consumer(root, { astro = true, library = false } = {}) {
   await writeFile(path.join(root, 'turbo.json'), await example('with-vite-react', 'turbo.json'));
 }
 
-const preset = {
-  formatVersion: 1,
-  preset: standard.preset,
-  release: 'v1.0.0',
-  commit: 'a'.repeat(40),
-};
-
 test('the update wires an Astro package to generate its types before lint', () =>
   fixture(async (root) => {
     await consumer(root);
     const before = await readFile(path.join(root, 'turbo.json'), 'utf8');
 
-    const planned = await applyPreset(root, { ...preset, files: { 'catalog.json': '{}' } }, true);
-    assert.deepEqual(planned.consumerChanged, ['apps/site/package.json', 'turbo.json']);
+    const planned = await applyUpdate(root, { dryRun: true });
+    assert.deepEqual(planned.migrated, ['apps/site/package.json', 'turbo.json']);
     assert.equal(await readFile(path.join(root, 'turbo.json'), 'utf8'), before);
 
-    const applied = await applyPreset(root, { ...preset, files: { 'catalog.json': '{}' } });
-    assert.deepEqual(applied.consumerChanged, ['apps/site/package.json', 'turbo.json']);
+    const applied = await applyUpdate(root);
+    assert.deepEqual(applied.migrated, ['apps/site/package.json', 'turbo.json']);
     const site = await json(path.join(root, 'apps/site/package.json'));
     assert.equal(site.scripts.sync, 'astro sync');
     assert.deepEqual(Object.keys(site.scripts), ['build', 'lint', 'sync', 'check-types', 'test']);
@@ -84,16 +76,16 @@ test('the update wires an Astro package to generate its types before lint', () =
     );
     assert.deepEqual(checkContract({ cwd: root }).lines, []);
 
-    const repeated = await applyPreset(root, { ...preset, files: { 'catalog.json': '{}' } });
-    assert.deepEqual(repeated.consumerChanged, []);
+    const repeated = await applyUpdate(root);
+    assert.deepEqual(repeated.migrated, []);
   }));
 
 test('the update leaves a repository without Astro alone', () =>
   fixture(async (root) => {
     await consumer(root, { astro: false });
     const before = await readFile(path.join(root, 'turbo.json'), 'utf8');
-    const applied = await applyPreset(root, { ...preset, files: { 'catalog.json': '{}' } });
-    assert.deepEqual(applied.consumerChanged, []);
+    const applied = await applyUpdate(root);
+    assert.deepEqual(applied.migrated, []);
     assert.equal(await readFile(path.join(root, 'turbo.json'), 'utf8'), before);
   }));
 
@@ -112,8 +104,8 @@ test('an Astro library without its own configuration is not an Astro project', (
   fixture(async (root) => {
     await consumer(root, { astro: false, library: true });
     const before = await readFile(path.join(root, 'packages/ui/package.json'), 'utf8');
-    const applied = await applyPreset(root, { ...preset, files: { 'catalog.json': '{}' } });
-    assert.deepEqual(applied.consumerChanged, []);
+    const applied = await applyUpdate(root);
+    assert.deepEqual(applied.migrated, []);
     assert.equal(await readFile(path.join(root, 'packages/ui/package.json'), 'utf8'), before);
     assert.deepEqual(checkContract({ cwd: root }).lines, []);
   }));

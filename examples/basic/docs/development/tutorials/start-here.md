@@ -11,6 +11,10 @@ terminal; nothing else is assumed.
 - git, and a GitHub account with access to this repository.
 - The GitHub CLI (`gh`), signed in with `gh auth login`. Issues and pull requests are created
   through it.
+- Access to [GitHub Packages](../reference/glossary.md#github-packages), where the shared
+  `@williecubed/*` packages live. Run `gh auth refresh --scopes read:packages`, add
+  `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}` to `~/.npmrc`, and add
+  `export NODE_AUTH_TOKEN=$(gh auth token)` to your shell profile, then open a new terminal.
 
 pnpm (the package manager, see the [glossary](../reference/glossary.md#pnpm)) installs itself from
 the version pinned in `package.json` the first time you run it, through Corepack. If
@@ -28,14 +32,15 @@ pnpm bootstrap
 prints one line per check:
 
 ```text
-  ok    Node.js        24.20.0 satisfies ^24.20.0
-  ok    pnpm           11.25.0 matches packageManager
-  ok    dependencies   node_modules is present
-  ok    git hooks      core.hooksPath is .githooks
-  ok    commit scopes  .williecubed/commit-scopes.txt is present
-  ok    GitHub CLI     gh is installed and signed in
-  ok    Cloudflare     no wrangler config; nothing to deploy from here
-preflight: all 7 checks passed
+  ok    Node.js         24.20.0 satisfies ^24.20.0
+  ok    pnpm            11.25.0 matches packageManager
+  ok    dependencies    node_modules is present
+  ok    GitHub Packages pnpm has a token for npm.pkg.github.com
+  ok    git hooks       core.hooksPath is .githooks
+  ok    commit scopes   .williecubed/commit-scopes.txt is present
+  ok    GitHub CLI      gh is installed and signed in
+  ok    Cloudflare      no wrangler config; nothing to deploy from here
+preflight: all 8 checks passed
 ```
 
 A failing line prints the command that fixes it. Run it, then `pnpm preflight` again.

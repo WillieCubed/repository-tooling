@@ -12,6 +12,10 @@ allowBuilds:
 # A release must be at least one day old before it installs, so a package
 # that is compromised and yanked the same day never reaches a repository.
 minimumReleaseAge: 1440
+# The standard's own packages are reviewed releases from repository-tooling,
+# so a new release installs the day it is published.
+minimumReleaseAgeExclude:
+  - '@williecubed/*'
 
 # Temporary transitive pins for published security fixes not yet selected by
 # their direct dependents.

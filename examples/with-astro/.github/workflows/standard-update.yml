@@ -1,12 +1,13 @@
 # Keeps this repository on the latest release of the WillieCubed repository standard.
-# Each day it compares .williecubed/web-platform.json with the newest release of
-# repository-tooling. When a release is newer, it applies it with the
-# release's own updater and opens one pull request that merges itself once
-# Validate passes. It uses only this workflow's own token.
+# Each day `cube self-update` compares the @williecubed/* versions in package.json
+# with the newest release published to GitHub Packages. When a release is newer,
+# it moves every @williecubed/* dependency to it, runs that release's
+# `cube update`, and opens one pull request. A patch release's pull request
+# merges itself once Validate passes. It uses only this workflow's own token.
 #
-# The token may not change workflow files, so this file stays small and the
-# work lives in the vendored standard. If a release changes a workflow file,
-# the run fails and names the file to copy by hand.
+# The token may not change workflow files, so the work lives in
+# @williecubed/cli. If a release changes a workflow file, the run fails and
+# names the file to copy by hand.
 name: Standard update
 
 on:
@@ -42,4 +43,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           NODE_AUTH_TOKEN: ${{ github.token }}
-        run: node .williecubed/web-platform/standards/self-update.ts
+        run: pnpm exec cube self-update

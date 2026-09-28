@@ -27,6 +27,9 @@ const IGNORED = new Set([
 ]);
 
 const STANDARD_CATALOG = new URL('../../../catalog.json', import.meta.url);
+const { version: RELEASE } = JSON.parse(
+  readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'),
+);
 
 const SCOPE = `${standard.npmScope}/`;
 /** A package this standard publishes: its scope, then a plain package name. */
@@ -41,17 +44,6 @@ function allowedRange(name, range) {
     (isStandardPackage(name) && /^\d+\.\d+\.\d+$/.test(range)) ||
     range.startsWith('link:')
   );
-}
-
-function vendoredRange(root, directory, name, range) {
-  if (!isStandardPackage(name) || !range.startsWith('file:')) return false;
-  const expected = path.resolve(root, standard.vendorDir, 'packages', name.slice(SCOPE.length));
-  if (path.resolve(root, directory, range.slice('file:'.length)) !== expected) return false;
-  try {
-    return JSON.parse(readFileSync(path.join(expected, 'package.json'), 'utf8')).name === name;
-  } catch {
-    return false;
-  }
 }
 
 /** `packages:` globs from pnpm-workspace.yaml, without a YAML dependency. */
@@ -92,7 +84,7 @@ export function catalogEntries(text) {
 
 /**
  * Shared catalog versions belong to the standard; a repository adds entries but never re-pins one.
- * These are warnings until standard v0.7.0, which moves the entries and fails on any that differ.
+ * These are warnings until standard v0.8.0, which moves the entries and fails on any that differ.
  */
 function catalogWarnings(root) {
   const catalog = JSON.parse(readFileSync(STANDARD_CATALOG, 'utf8')).catalog;
@@ -101,11 +93,12 @@ function catalogWarnings(root) {
     .filter(([name, version]) => Object.hasOwn(catalog, name) && catalog[name] !== version)
     .map(
       ([name, version]) =>
-        `warning: pnpm-workspace.yaml pins "${name}" to "${version}"; the standard's catalog has "${catalog[name]}" (from v0.7.0 this fails)`,
+        `warning: pnpm-workspace.yaml pins "${name}" to "${version}"; the standard's catalog has "${catalog[name]}" (from v0.8.0 this fails)`,
     );
 }
 
-function packageDirectories(root) {
+/** The workspace packages pnpm-workspace.yaml names, as directories relative to `root`. */
+export function packageDirectories(root) {
   const directories = [];
   for (const glob of workspaceGlobs(root)) {
     if (glob.endsWith('/*')) {
@@ -173,7 +166,7 @@ const ASTRO_CONFIGS = ['mjs', 'js', 'ts', 'mts', 'cjs', 'cts'].map((ext) => `ast
  * An Astro project depends on astro and has its own configuration. A library that only imports
  * Astro's types, such as an integration or components, has nothing for `astro sync` to generate.
  */
-function isAstroProject(root, directory, manifest) {
+export function isAstroProject(root, directory, manifest) {
   if (!manifest.dependencies?.astro && !manifest.devDependencies?.astro) return false;
   return ASTRO_CONFIGS.some((name) => existsSync(path.join(root, directory, name)));
 }
@@ -216,11 +209,12 @@ function dependencyFailures(root, directory) {
   const failures = [];
   for (const field of ['dependencies', 'devDependencies']) {
     for (const [name, range] of Object.entries(manifest[field] ?? {})) {
-      if (!allowedRange(name, range) && !vendoredRange(root, directory, name, range)) {
-        failures.push(
-          `${directory}/package.json pins "${name}" to "${range}" instead of "catalog:"`,
-        );
-      }
+      if (allowedRange(name, range)) continue;
+      // The standard's own packages install from GitHub Packages at the release's exact version.
+      const expected = isStandardPackage(name) ? `a release such as "${RELEASE}"` : '"catalog:"';
+      failures.push(
+        `${directory}/package.json pins "${name}" to "${range}" instead of ${expected}`,
+      );
     }
   }
   return failures;
@@ -238,6 +232,6 @@ export function checkContract({ cwd }) {
     name: 'contract',
     ok: lines.length === 0,
     lines: [...lines, ...catalogWarnings(cwd)],
-    fix: 'add the missing script, move test material under tests/, set the range to "catalog:" and add the version to pnpm-workspace.yaml, or run `pnpm standards:update` to wire an Astro package\'s "sync" task before lint',
+    fix: `add the missing script, move test material under tests/, set the range to "catalog:" and add the version to pnpm-workspace.yaml, pin ${SCOPE}* packages to a release, or run \`pnpm exec ${standard.cliName} update\` to wire an Astro package's "sync" task before lint`,
   };
 }
