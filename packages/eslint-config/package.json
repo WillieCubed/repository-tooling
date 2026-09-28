@@ -1,12 +1,12 @@
 {
-  "name": "@lasvegasfortransit/eslint-config",
+  "name": "@williecubed/eslint-config",
   "version": "0.5.1",
-  "description": "The ESLint configurations every LVBT repository uses.",
+  "description": "The ESLint configurations every personal repository uses.",
   "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LasVegasForTransit/repository-tooling.git",
+    "url": "https://github.com/WillieCubed/repository-tooling.git",
     "directory": "packages/eslint-config"
   },
   "publishConfig": {

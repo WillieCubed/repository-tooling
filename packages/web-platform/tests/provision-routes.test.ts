@@ -5,9 +5,9 @@ import { reconcileResources } from '../src/provision-reconcile.ts';
 const target = {
   hostname: 'labs.example.org',
   workers: [
-    { slug: 'home', name: 'lvbt-labs-home' },
-    { slug: 'map', name: 'lvbt-labs-map' },
-    { slug: 'map-tools', name: 'lvbt-labs-map-tools' },
+    { slug: 'home', name: 'wpp-home' },
+    { slug: 'map', name: 'wpp-map' },
+    { slug: 'map-tools', name: 'wpp-map-tools' },
   ],
 };
 
@@ -40,7 +40,7 @@ test('creates exact and subtree routes without altering other hosts and reruns w
 
 test.each([
   { pattern: 'labs.example.org/map', script: 'other-owner' },
-  { pattern: 'labs.example.org/map*', script: 'lvbt-labs-map' },
+  { pattern: 'labs.example.org/map*', script: 'wpp-map' },
   { pattern: '*.example.org/*', script: 'other-owner' },
   { pattern: 'https://labs.example.org/map', script: 'other-owner' },
   { pattern: 'labs.example.org/map', script: null },

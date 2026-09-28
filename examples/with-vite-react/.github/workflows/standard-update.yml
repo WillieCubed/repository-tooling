@@ -1,5 +1,5 @@
-# Keeps this repository on the latest release of the LVBT repository standard.
-# Each day it compares .lvbt/web-platform.json with the newest release of
+# Keeps this repository on the latest release of the WillieCubed repository standard.
+# Each day it compares .williecubed/web-platform.json with the newest release of
 # repository-tooling. When a release is newer, it applies it with the
 # release's own updater and opens one pull request that merges itself once
 # Validate passes. It uses only this workflow's own token.
@@ -42,4 +42,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           NODE_AUTH_TOKEN: ${{ github.token }}
-        run: node .lvbt/web-platform/standards/self-update.ts
+        run: node .williecubed/web-platform/standards/self-update.ts

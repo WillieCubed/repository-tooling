@@ -1,12 +1,12 @@
 {
-  "name": "@lasvegasfortransit/prettier-config",
+  "name": "@williecubed/prettier-config",
   "version": "0.5.1",
-  "description": "The Prettier configuration every LVBT repository uses.",
+  "description": "The Prettier configuration every personal repository uses.",
   "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LasVegasForTransit/repository-tooling.git",
+    "url": "https://github.com/WillieCubed/repository-tooling.git",
     "directory": "packages/prettier-config"
   },
   "publishConfig": {

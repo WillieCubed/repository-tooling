@@ -8,10 +8,15 @@ import test from 'node:test';
 import { main as markdownlint } from 'markdownlint-cli2';
 import prettier from 'prettier';
 
+import { standard } from '../standard.config.ts';
 import { addMarkdownlintIgnore, consumerIgnoreWarnings } from '../standards/consumer-ignores.ts';
-import { applyPreset } from '../standards/web-platform.ts';
+import { applyPreset, LEGACY_SCOPE } from '../standards/web-platform.ts';
 
 const reason = 'Agent worktrees are other checkouts of this repository.';
+
+// A file that still names a package by the scope the migration replaces.
+const legacyManifest = `{ "devDependencies": { "${LEGACY_SCOPE}/cli": "1" } }\n`;
+const legacyReference = new RegExp(`${LEGACY_SCOPE}/cli`);
 
 // A consumer's own configuration, written before the standard ignored agent worktrees.
 const consumerMarkdownlint = `{
@@ -20,7 +25,7 @@ const consumerMarkdownlint = `{
   "config": { "default": true, "ignores": [".claude/worktrees"] },
   "globs": ["**/*.md"],
   "ignores": [
-    ".lvbt/web-platform",
+    "${standard.vendorDir}",
     "node_modules",
     // Build output.
     "**/dist",
@@ -29,7 +34,7 @@ const consumerMarkdownlint = `{
 `;
 
 async function fixture(run) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'lvbt-ignores-'));
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'standard-ignores-'));
   try {
     await run(directory);
   } finally {
@@ -39,7 +44,13 @@ async function fixture(run) {
 
 function preset() {
   const files = { 'catalog.json': '{}' };
-  return { formatVersion: 1, preset: 'lvbt-web', release: 'v1.0.0', commit: 'a'.repeat(40), files };
+  return {
+    formatVersion: 1,
+    preset: standard.preset,
+    release: 'v1.0.0',
+    commit: 'a'.repeat(40),
+    files,
+  };
 }
 
 /**
@@ -51,10 +62,7 @@ async function agentWorktree(root) {
   await mkdir(worktree, { recursive: true });
   await writeFile(path.join(worktree, '.git'), 'gitdir: /elsewhere/.git/worktrees/other\n');
   await writeFile(path.join(worktree, 'README.md'), '# One\n# Two\n');
-  await writeFile(
-    path.join(worktree, 'package.json'),
-    '{ "devDependencies": { "@lvbt/cli": "1" } }\n',
-  );
+  await writeFile(path.join(worktree, 'package.json'), legacyManifest);
   return worktree;
 }
 
@@ -98,7 +106,7 @@ test("an update keeps another session's agent worktree out of git, Prettier, and
     assert.ok(info.ignored, 'Prettier ignores the worktree');
     assert.match(
       await readFile(path.join(worktree, 'package.json'), 'utf8'),
-      /@lvbt\/cli/,
+      legacyReference,
       "the other session's files stay as they were",
     );
 
@@ -144,14 +152,11 @@ test('refuses a configuration it cannot read rather than guessing', () => {
 test('a configuration the update cannot read stops it before any file changes', () =>
   fixture(async (root) => {
     await writeFile(path.join(root, '.gitignore'), 'node_modules/\n');
-    await writeFile(
-      path.join(root, 'package.json'),
-      '{ "devDependencies": { "@lvbt/cli": "1" } }\n',
-    );
+    await writeFile(path.join(root, 'package.json'), legacyManifest);
     await writeFile(path.join(root, '.markdownlint-cli2.jsonc'), '{ "ignores": ["dist }');
     await assert.rejects(applyPreset(root, preset()), /unclosed string/);
     assert.equal(await readFile(path.join(root, '.gitignore'), 'utf8'), 'node_modules/\n');
-    assert.match(await readFile(path.join(root, 'package.json'), 'utf8'), /@lvbt\/cli/);
+    assert.match(await readFile(path.join(root, 'package.json'), 'utf8'), legacyReference);
   }));
 
 test('an equivalent spelling of a rule counts as present', () =>
@@ -199,7 +204,7 @@ test('an agent worktree folder whose checkout is gone is still left alone', () =
     await unlink(path.join(worktree, '.git'));
     const plan = await applyPreset(root, preset());
     assert.ok(!plan.consumerChanged.some((file) => file.startsWith('.claude/')));
-    assert.match(await readFile(path.join(worktree, 'package.json'), 'utf8'), /@lvbt\/cli/);
+    assert.match(await readFile(path.join(worktree, 'package.json'), 'utf8'), legacyReference);
   }));
 
 test('names a markdownlint configuration the update cannot edit', () =>

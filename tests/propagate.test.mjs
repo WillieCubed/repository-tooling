@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
+import { presetRecord, standard } from '../standard.config.ts';
 import {
   applyRelease,
   compareReleases,
@@ -72,7 +73,7 @@ test('an update supersedes older update pull requests and yields to newer ones',
   );
 });
 
-test('the update pull request follows the organization template', () => {
+test('the update pull request follows the pull request template', () => {
   const body = pullRequestBody({
     tag: 'v0.4.5',
     kind: 'consumer',
@@ -80,8 +81,8 @@ test('the update pull request follows the organization template', () => {
     automerge: true,
   });
   assert.deepEqual(
-    [...body.matchAll(/^# (.+)$/gm)].map(([, heading]) => heading),
-    ['TL;DR', 'Overview of Changes', 'Follow-ups'],
+    [...body.matchAll(/^## (.+)$/gm)].map(([, heading]) => heading),
+    ['TL;DR', 'Changes', 'Follow-ups and Next Work'],
   );
   assert.match(body, /release-0-4-5\.md/);
   assert.match(body, /merges itself once `Validate` passes/);
@@ -90,7 +91,7 @@ test('the update pull request follows the organization template', () => {
 });
 
 test('a release moves a repository forward once, with its own updater, and never backward', async (t) => {
-  const fixture = await mkdtemp(path.join(os.tmpdir(), 'lvbt-propagate-'));
+  const fixture = await mkdtemp(path.join(os.tmpdir(), 'standard-propagate-'));
   t.after(() => rm(fixture, { recursive: true, force: true }));
   const source = path.join(fixture, 'source');
   execFileSync('git', ['clone', '--quiet', '--shared', root, source]);
@@ -171,10 +172,8 @@ test('a release moves a repository forward once, with its own updater, and never
   });
   assert.equal(first.changed, true);
   assert.equal(git(consumer, 'branch', '--show-current'), 'automation/repository-standard-v99.0.1');
-  assert.equal(git(consumer, 'log', '-1', '--format=%ae'), 'noreply@lasvegasfortransit.org');
-  const manifest = JSON.parse(
-    await readFile(path.join(consumer, '.lvbt/web-platform.json'), 'utf8'),
-  );
+  assert.equal(git(consumer, 'log', '-1', '--format=%ae'), standard.bot.email);
+  const manifest = JSON.parse(await readFile(path.join(consumer, presetRecord), 'utf8'));
   assert.equal(manifest.release, 'v99.0.1');
 
   assert.equal(
@@ -247,7 +246,10 @@ test('every example updates itself with only its own workflow token', async () =
     assert.match(workflow, /^ {2}workflow_dispatch:/m, example);
     for (const permission of ['actions: write', 'contents: write', 'pull-requests: write'])
       assert.match(workflow, new RegExp(`^ {2}${permission}$`, 'm'), `${example}: ${permission}`);
-    assert.match(workflow, /node \.lvbt\/web-platform\/standards\/self-update\.ts/, example);
+    assert.ok(
+      workflow.includes(`node ${standard.vendorDir}/standards/self-update.ts`),
+      `${example} runs the vendored updater`,
+    );
     assert.doesNotMatch(workflow, /secrets\./, example);
     const ci = await readFile(path.join(directory, 'ci.yml'), 'utf8');
     assert.match(ci, /^ {2}workflow_dispatch:$/m, `${example}: ci.yml must accept the dispatch`);
@@ -267,5 +269,5 @@ test('a template repository is regenerated from the example its name gives', () 
     kind: 'template',
     example: 'with-astro',
   });
-  assert.equal(repositoryEntry('labs', false).kind, 'consumer');
+  assert.equal(repositoryEntry('wpp', false).kind, 'consumer');
 });

@@ -5,7 +5,7 @@ import path from 'node:path';
 // An Astro package generates its astro:content and environment types with `astro sync`. On a
 // clean checkout, as in CI, type-aware lint rules fail on every module that imports them until it
 // has run. Every Astro package gets a `sync` script, and turbo.json runs it before lint and caches
-// what it writes. `lvbt check contract` requires the same wiring.
+// what it writes. `cube check contract` requires the same wiring.
 const SYNC_SCRIPT = 'astro sync';
 const SYNC_TASK = { outputs: ['.astro/**'] };
 const PRINT_WIDTH = 100;
@@ -140,7 +140,7 @@ async function wireTurbo(root: string, dryRun: boolean): Promise<string[]> {
   try {
     turbo = JSON.parse(await readFile(file, 'utf8')) as Turbo;
   } catch {
-    // A missing or commented turbo.json is left alone; `lvbt check contract` names what to add.
+    // A missing or commented turbo.json is left alone; `cube check contract` names what to add.
     return [];
   }
   if (!turbo.tasks) return [];

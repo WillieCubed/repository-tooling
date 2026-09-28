@@ -5,13 +5,14 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { checkContract } from '../packages/cli/src/lib/check/contract.mjs';
+import { standard } from '../standard.config.ts';
 import { applyPreset } from '../standards/web-platform.ts';
 
 const sourceRoot = new URL('..', import.meta.url).pathname;
 const example = (name, file) => readFile(path.join(sourceRoot, 'examples', name, file), 'utf8');
 
 async function fixture(run) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'lvbt-astro-sync-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'standard-astro-sync-'));
   try {
     await run(root);
   } finally {
@@ -54,7 +55,12 @@ async function consumer(root, { astro = true, library = false } = {}) {
   await writeFile(path.join(root, 'turbo.json'), await example('with-vite-react', 'turbo.json'));
 }
 
-const preset = { formatVersion: 1, preset: 'lvbt-web', release: 'v1.0.0', commit: 'a'.repeat(40) };
+const preset = {
+  formatVersion: 1,
+  preset: standard.preset,
+  release: 'v1.0.0',
+  commit: 'a'.repeat(40),
+};
 
 test('the update wires an Astro package to generate its types before lint', () =>
   fixture(async (root) => {

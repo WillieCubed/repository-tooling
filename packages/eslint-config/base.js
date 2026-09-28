@@ -7,7 +7,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 /**
- * Paths no LVBT repository lints: build output, caches, dependencies, agent
+ * Paths no repository on the standard lints: build output, caches, dependencies, agent
  * worktrees (full checkouts of the same repository), and typings that
  * `wrangler types` generates from configuration.
  */
@@ -49,8 +49,8 @@ const suppressionHygiene = {
  * Type-aware rules for TypeScript, from the nearest tsconfig.json (run ESLint
  * from the package directory, as `turbo run lint` does). The four departures
  * from the strict presets are measured, not guessed: each reported hundreds of
- * findings on real LVBT code that named a style the code chose on purpose
- * rather than something that could be wrong at runtime.
+ * findings on real code that named a style the code chose on purpose rather
+ * than something that could be wrong at runtime.
  */
 const typescript = {
   files: ['**/*.{ts,tsx,mts,cts}'],
@@ -141,7 +141,7 @@ const turbo = {
 };
 
 /**
- * A shared ESLint configuration for every LVBT repository. Prettier's config
+ * A shared ESLint configuration for every personal repository. Prettier's config
  * is last so formatting is never a lint error.
  *
  * @type {import("eslint").Linter.Config[]}

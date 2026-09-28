@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url';
  * The plugin owns the shared subject grammar, but a repository owns the names
  * of its durable boundaries. Reading the policy from the calling repository
  * keeps a source consumer from silently imposing its own vocabulary on every
- * other LVBT project.
+ * other repository. The plugin is installed on its own, outside any package,
+ * so the path is written out here; a test checks it against
+ * standard.config.ts.
  */
-const scopePolicyRelativePath = '.lvbt/commit-scopes.txt';
+const scopePolicyRelativePath = '.williecubed/commit-scopes.txt';
 const scopePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export const commitTypes = Object.freeze(
@@ -26,7 +28,7 @@ const subjectPattern = /^(?<type>[a-z]+)(?:\((?<scope>[a-z0-9-]+)\))?: \S.*$/;
  * They still pass, with a warning, until the release that retires them.
  */
 export const deprecatedNames = Object.freeze({
-  ci: 'Use `chore` for workflow and CI configuration changes; from standard v0.6.0 the commit hook rejects `ci`.',
+  ci: 'Use `chore` for workflow and CI configuration changes; from standard v0.7.0 the commit hook rejects `ci`.',
 });
 
 /** A warning for a subject that uses a deprecated type or scope, or undefined. */

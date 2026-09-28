@@ -5,6 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { standard } from '../standard.config.ts';
 import { applyPreset } from './web-platform.ts';
 import { readRelease } from './web-platform-source.ts';
 
@@ -42,19 +43,18 @@ async function rewriteManifest(root: string, file: string): Promise<void> {
     const dependencies = manifest[field];
     if (!dependencies) continue;
     for (const name of Object.keys(dependencies)) {
-      if (!name.startsWith('@lasvegasfortransit/')) continue;
-      const packageName = name.slice('@lasvegasfortransit/'.length);
-      const target = path.join(root, '.lvbt/web-platform/packages', packageName);
+      if (!name.startsWith(`${standard.npmScope}/`)) continue;
+      const packageName = name.slice(`${standard.npmScope}/`.length);
+      const target = path.join(root, standard.vendorDir, 'packages', packageName);
       const relative = path.relative(path.dirname(file), target).split(path.sep).join('/');
       dependencies[name] = `file:${relative}`;
     }
   }
   if (file === path.join(root, 'package.json')) {
     manifest.scripts ??= {};
-    manifest.scripts['standards:update'] =
-      'node .lvbt/web-platform/standards/web-platform-cli.ts update';
-    manifest.scripts['standards:check'] =
-      'node .lvbt/web-platform/standards/web-platform-cli.ts check';
+    const cli = `node ${standard.vendorDir}/standards/web-platform-cli.ts`;
+    manifest.scripts['standards:update'] = `${cli} update`;
+    manifest.scripts['standards:check'] = `${cli} check`;
     const check = manifest.scripts.check;
     if (!check) throw new Error('The template root must define a check script.');
     if (!check.startsWith('pnpm standards:check && ')) {

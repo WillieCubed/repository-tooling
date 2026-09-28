@@ -15,14 +15,15 @@ import {
   wranglerToken,
 } from './services.mjs';
 import { paint, terminalIo } from './terminal.mjs';
+import { setupTokenVariable } from '../standard.mjs';
 
 /**
- * `lvbt preflight --production` and `lvbt bootstrap --production`: read a
+ * `cube preflight --production` and `cube bootstrap --production`: read a
  * repository's platform manifests, report whether production has everything
  * they declare, and (for bootstrap) set up what is missing.
  */
 
-export const SETUP_TOKEN_VARIABLE = 'LVBT_CLOUDFLARE_SETUP_TOKEN';
+export const SETUP_TOKEN_VARIABLE = setupTokenVariable;
 
 export function defaultServices() {
   return {

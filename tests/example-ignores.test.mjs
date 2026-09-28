@@ -19,7 +19,7 @@ const sources = ['playwright.config.ts', 'tests/e2e/home.spec.ts'];
 
 for (const name of await readdir(path.join(sourceRoot, 'examples'))) {
   test(`${name}: ignores the output Playwright writes into any app`, async () => {
-    const repository = await mkdtemp(path.join(tmpdir(), `lvbt-${name}-ignores-`));
+    const repository = await mkdtemp(path.join(tmpdir(), `standard-${name}-ignores-`));
     try {
       await cp(
         path.join(sourceRoot, 'examples', name, '.gitignore'),

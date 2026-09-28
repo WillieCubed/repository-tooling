@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { presetRecord, standard } from '../standard.config.ts';
 import {
   type OpenUpdate,
   type RegistryEntry,
@@ -43,7 +44,7 @@ function remoteBranchState(
   const authors = runner('git', ['log', '--format=%ae', `HEAD^..origin/${branch}`], target).split(
     '\n',
   );
-  if (authors.some((author) => author !== 'noreply@lasvegasfortransit.org')) return 'edited';
+  if (authors.some((author) => author !== standard.bot.email)) return 'edited';
   const same = (ref: string) =>
     runner('git', ['rev-parse', `origin/${branch}${ref}`], target) ===
     runner('git', ['rev-parse', `HEAD${ref}`], target);
@@ -134,7 +135,9 @@ function createOrEdit(options: {
   }
   const helper = path.join(
     tooling,
-    'packages/cli/plugins/lvbt-contributions/scripts/github-create.mjs',
+    'packages/cli/plugins',
+    standard.pluginName,
+    'scripts/github-create.mjs',
   );
   const args = [helper, 'pr', '--title', title, '--body-file', body, '--base', 'main', '--json'];
   runner('node', [...args, '--dry-run'], target);
@@ -147,7 +150,7 @@ function defaultBranchRelease(target: string, runner: Runner): string | null {
     'gh',
     [
       'api',
-      'repos/{owner}/{repo}/contents/.lvbt/web-platform.json',
+      `repos/{owner}/{repo}/contents/${presetRecord}`,
       '-H',
       'Accept: application/vnd.github.raw',
     ],

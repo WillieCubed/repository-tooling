@@ -21,28 +21,20 @@
  *   - resend.com/docs/knowledge-base/cloudflare and resend.com/docs/dashboard/domains/regions
  */
 
+import { accessTeamDomain, standard } from '../standard.mjs';
+
 export const ZERO_TRUST = 'https://one.dash.cloudflare.com/';
 
 /**
- * LVBT's Zero Trust organization. The team domain is what Access signs
- * tokens with and what Google redirects to; the team name is only a label.
+ * The owner's Zero Trust organization, from standard.config.ts. The team
+ * domain is what Access signs tokens with and what Google redirects to; the
+ * team name is only a label.
  */
-export const LVBT_TEAM_SUBDOMAIN = 'lvbt';
-export const LVBT_TEAM_DOMAIN = `${LVBT_TEAM_SUBDOMAIN}.cloudflareaccess.com`;
-export const LVBT_TEAM_NAME = 'Las Vegans for Better Transit';
-/** LVBT's one Google Cloud project, which holds every OAuth client and service account. */
-export const LVBT_GOOGLE_PROJECT = 'LVBT Core';
-export const LVBT_GOOGLE_PROJECT_ID = 'lvbt-core';
-/** The shared LVBT address used as a contact wherever a service asks for one. */
-export const LVBT_SHARED_EMAIL = 'tech@lasvegasfortransit.org';
-/** The LVBT Cloudflare account's name. */
-export const LVBT_CLOUDFLARE_ACCOUNT = 'Las Vegans for Better Transit';
-/**
- * The account still carries an old, misspelled name in the dashboard. Every
- * guide that opens Cloudflare and chooses the account repeats this check, so
- * whoever notices it fixes it once instead of copying the wrong name onward.
- */
-const ACCOUNT_NAME_CHECK = `If the account switcher still shows "Las Vegas for Better…" instead of "${LVBT_CLOUDFLARE_ACCOUNT}", open Manage Account and rename it to "${LVBT_CLOUDFLARE_ACCOUNT}" first.`;
+export const TEAM_SUBDOMAIN = standard.cloudflare.accessTeam;
+export const TEAM_DOMAIN = accessTeamDomain;
+export const TEAM_NAME = standard.owner;
+/** How every guide names the Cloudflare account to choose. */
+const ACCOUNT = `the ${standard.owner} account`;
 
 const REGIONS = {
   'us-east-1': 'North Virginia (us-east-1)',
@@ -118,7 +110,7 @@ export function resendDomainGuide(email, cloudflare) {
   return {
     url: 'https://resend.com/domains',
     steps: [
-      'Sign in to Resend at https://resend.com/login. If you have no account, sign up at https://resend.com/signup with your @lasvegasfortransit.org address, then ask a maintainer to invite you to the LVBT team. Everything below belongs in that team, never in a personal one.',
+      'Sign in to Resend at https://resend.com/login, or sign up at https://resend.com/signup if you have no account.',
       `On the Domains page, if ${email.domain} is listed, click it and go to the next step. Otherwise click "Add Domain", type ${email.domain}, choose the region ${REGIONS[region] ?? region}, and click "Add". Keep that region: platform.json and the DNS records both name it.`,
       `The easiest way to add the DNS records is the "Sign in to Cloudflare" button on the domain's page in Resend. Approve the request in the Cloudflare window, and it adds every record for you.`,
       `To add them by hand instead, open https://dash.cloudflare.com/${cloudflare.accountId}/${zone}/dns/records and add these three, each with TTL "Auto" and Proxy status "DNS only": type MX, name ${mx.short}, mail server feedback-smtp.${region}.amazonses.com, priority 10; type TXT, name ${spf.short}, content v=spf1 include:amazonses.com ~all; type TXT, name ${dkim.short}, content the long p=… value Resend shows for it.`,
@@ -134,9 +126,9 @@ export function zeroTrustGuide(manifest) {
   return {
     url: ZERO_TRUST,
     steps: [
-      `Open Cloudflare One and choose the LVBT account (${LVBT_CLOUDFLARE_ACCOUNT}). These steps appear only the first time Zero Trust is used in an account. ${ACCOUNT_NAME_CHECK}`,
-      `Cloudflare asks you to choose the team domain (its documentation calls this the team name). Type ${LVBT_TEAM_SUBDOMAIN}, so the team domain becomes ${LVBT_TEAM_DOMAIN}. That is the address of the sign-in page, the value ${holds} holds, and the start of the Google sign-in addresses.`,
-      `If it also asks for a team name, type ${LVBT_TEAM_NAME}. The team name is only a label people see; it changes nothing in any configuration.`,
+      `Open Cloudflare One and choose ${ACCOUNT}. These steps appear only the first time Zero Trust is used in an account.`,
+      `Cloudflare asks you to choose the team domain (its documentation calls this the team name). Type ${TEAM_SUBDOMAIN}, so the team domain becomes ${TEAM_DOMAIN}. That is the address of the sign-in page, the value ${holds} holds, and the start of the Google sign-in addresses.`,
+      `If it also asks for a team name, type ${TEAM_NAME}. The team name is only a label people see; it changes nothing in any configuration.`,
       'Choose the Zero Trust Free plan. Cloudflare asks for payment details even for the Free plan, but does not charge for it.',
       'Finish the onboarding, then run this command again. It will find Zero Trust turned on and carry on from there.',
       `Later, Cloudflare One → Overview → Account details shows the Team domain and the Team name, each with a pencil icon that edits it. Do not change the team domain: the admin sign-in and the Google sign-in stop working until ${holds} and the Google OAuth client are updated to match.`,
@@ -149,26 +141,25 @@ export function teamDomainGuide(secretName) {
   return {
     url: ZERO_TRUST,
     steps: [
-      `Open Cloudflare One and choose the LVBT account (${LVBT_CLOUDFLARE_ACCOUNT}). If it shows its first-time setup instead, Zero Trust was never turned on for this account: press Enter to skip, and run this command with the Cloudflare token it asks for, so it can show those steps. ${ACCOUNT_NAME_CHECK}`,
-      `On Overview, find Account details. It shows the Team domain (for LVBT, ${LVBT_TEAM_DOMAIN}) and the Team name ("${LVBT_TEAM_NAME}"), which is only a label. ${secretName} needs the domain.`,
+      `Open Cloudflare One and choose ${ACCOUNT}. If it shows its first-time setup instead, Zero Trust was never turned on for this account: press Enter to skip, and run this command with the Cloudflare token it asks for, so it can show those steps.`,
+      `On Overview, find Account details. It shows the Team domain (for ${standard.owner}, ${TEAM_DOMAIN}) and the Team name ("${TEAM_NAME}"), which is only a label. ${secretName} needs the domain.`,
       "Copy the Team domain, without https://, and paste it at this command's prompt.",
     ],
   };
 }
 
 export function googleWorkspaceGuide(teamDomain, workspaceDomain, group) {
-  const team = teamDomain ?? LVBT_TEAM_DOMAIN;
-  const domain = workspaceDomain ?? 'lasvegasfortransit.org';
-  const project = `?project=${LVBT_GOOGLE_PROJECT_ID}`;
+  const team = teamDomain ?? TEAM_DOMAIN;
+  const domain = workspaceDomain ?? 'your Google Workspace domain';
   return {
-    url: `https://console.cloud.google.com/home/dashboard${project}`,
+    url: 'https://console.cloud.google.com/home/dashboard',
     steps: [
-      `Do the Google steps signed in as a Google Workspace super admin for ${domain}: turning on "Trust internal apps" and approving group access both need one. The Cloudflare steps need a Cloudflare user who can administer the LVBT account.`,
-      `Use LVBT's one Google Cloud project, "${LVBT_GOOGLE_PROJECT}" (ID ${LVBT_GOOGLE_PROJECT_ID}); every link below opens it. If the project picker at the top shows no such project, click "New project", name it ${LVBT_GOOGLE_PROJECT}, make sure "Organization" is ${domain} so the project belongs to LVBT rather than to your own account, and click "Create". If Google shows a Free Trial banner, dismiss it: none of this needs billing.`,
-      `Open https://console.cloud.google.com/apis/library/admin.googleapis.com${project} and click "Enable" on "Admin SDK API" (it says "Manage" instead if it is already on). Access uses it to read which Google Groups a person is in.`,
+      `Do the Google steps signed in as a Google Workspace super admin for ${domain}: turning on "Trust internal apps" and approving group access both need one. The Cloudflare steps need a Cloudflare user who can administer ${ACCOUNT}.`,
+      `Keep every OAuth client in one Google Cloud project, chosen in the project picker at the top of each page below. If there is none yet, click "New project", make sure "Organization" is ${domain} so the project belongs to the Workspace rather than to your own account, and click "Create". If Google shows a Free Trial banner, dismiss it: none of this needs billing.`,
+      `Open https://console.cloud.google.com/apis/library/admin.googleapis.com and click "Enable" on "Admin SDK API" (it says "Manage" instead if it is already on). Access uses it to read which Google Groups a person is in.`,
       'Open https://admin.google.com/ac/owl (Security → Access and data control → API controls), click "Settings", turn on "Trust internal apps", and save. It is off by default, and Access needs it.',
       'In a new browser tab, open Cloudflare One, go to Integrations → Identity providers (not "Cloud & SaaS" just above it: that is a different feature that asks for a service account; leave it alone), click "Add new identity provider", then "Google Workspace". Keep this tab open: two of the next steps fill it in, one value at a time.',
-      `Back in Google Cloud, open https://console.cloud.google.com/auth/clients${project}. If it says "Google Auth Platform not configured yet", click "Get started" and complete its four steps: App Information: App name ${LVBT_TEAM_NAME}, User support email ${LVBT_SHARED_EMAIL} (a shared LVBT address, never a person's), then "Next"; Audience: "Internal", then "Next"; Contact Information: ${LVBT_SHARED_EMAIL}, then "Next"; Finish: tick the box agreeing to the Google API Services: User Data Policy, click "Continue", then "Create". Optionally, under "Branding", upload the square LVBT logo from the "Marketing & Communications" shared drive as the App logo. Then open "Clients" again.`,
+      `Back in Google Cloud, open https://console.cloud.google.com/auth/clients. If it says "Google Auth Platform not configured yet", click "Get started" and complete its four steps: App Information: App name ${TEAM_NAME}, User support email an address you read, then "Next"; Audience: "Internal", then "Next"; Contact Information: the same address, then "Next"; Finish: tick the box agreeing to the Google API Services: User Data Policy, click "Continue", then "Create". Then open "Clients" again.`,
       `On the Clients page, if a client named "Cloudflare Access" is listed, click it, check that it has the two addresses below, and under "Client secrets" click "Add secret", because Google shows a secret only when it is made. Otherwise click "Create client", choose the application type "Web application", and name it Cloudflare Access.`,
       `Under "Authorized JavaScript origins", click "Add URI" and enter exactly https://${team}`,
       `Under "Authorized redirect URIs", click "Add URI" and enter exactly https://${team}/cdn-cgi/access/callback, then click "Create" (or "Save").`,
@@ -250,7 +241,7 @@ export function accessAppGuide(app, zone) {
     `Still on "Additional settings", copy "Application Audience (AUD) Tag", and paste it at this command's prompt. It is 64 lowercase letters and digits, and it is the value ${app.audienceSecret} holds.`,
   ];
   const createSteps = [
-    `Open Cloudflare One and choose the LVBT account (${LVBT_CLOUDFLARE_ACCOUNT}). Go to Access controls → Applications. If "${app.name}" is already listed, it exists: skip the steps that create it. ${ACCOUNT_NAME_CHECK}`,
+    `Open Cloudflare One and choose ${ACCOUNT}. Go to Access controls → Applications. If "${app.name}" is already listed, it exists: skip the steps that create it.`,
     'Click "Create new application" at the top right (some screens say "Add an application"). An account with no applications yet shows only a list of prerequisites; the button is still at the top right.',
     'In the "Add an application" dialog, under "Self-hosted and private", choose the "Public DNS" tab. Do not choose "Private destinations", "Workers", or "Service auth". Click "Continue with Self-hosted and private". The page is now "Create new self-hosted application"; work down it from the top.',
     'Under "Destinations" there should be public hostname rows. If you see a "Private IPs" row with "Private IP address" and "Port" instead, "Private destinations" was chosen: click "+ Add public hostname", then remove the empty private row, or go back and choose "Public DNS".',
@@ -307,7 +298,7 @@ export function turnstileGuide(widget, cloudflare, configPath) {
   const config = configPath ?? 'the production wrangler config';
   const mode = { managed: 'Managed', 'non-interactive': 'Non-interactive', invisible: 'Invisible' };
   const createSteps = [
-    `Open Turnstile in the Cloudflare dashboard with the LVBT account (${LVBT_CLOUDFLARE_ACCOUNT}). If a widget named "${widget.name}" is already listed, click it and go to the step for the Site Key. ${ACCOUNT_NAME_CHECK}`,
+    `Open Turnstile in the Cloudflare dashboard with ${ACCOUNT}. If a widget named "${widget.name}" is already listed, click it and go to the step for the Site Key.`,
     `Click "Add widget". Widget name: ${widget.name}.`,
     `Under "Hostname management", add ${widget.domains.join(', ')}.`,
     `Widget Mode: "${mode[widget.mode ?? 'managed']}". Leave pre-clearance off, and click "Create".`,
@@ -340,7 +331,7 @@ export function setupTokenUrl(manifest) {
     permissionGroupKeys: JSON.stringify(permissions),
     accountId: manifest.cloudflare.accountId,
     zoneId: manifest.cloudflare.zone.id,
-    name: `lvbt setup ${manifest.name}`,
+    name: `${standard.cliName} setup ${manifest.name}`,
   });
   return `https://dash.cloudflare.com/profile/api-tokens?${query}`;
 }
@@ -355,10 +346,10 @@ export function setupTokenGuide(manifest) {
   return {
     url: setupTokenUrl(manifest),
     steps: [
-      'The link opens Cloudflare\'s "Create Custom Token" page with the permissions filled in. Sign in with your LVBT Cloudflare account if it asks. This one is a personal token that expires tomorrow, because Cloudflare\'s account API tokens cannot manage Turnstile.',
-      `Token name: lvbt setup ${manifest.name}.`,
+      'The link opens Cloudflare\'s "Create Custom Token" page with the permissions filled in. Sign in to Cloudflare if it asks. This one is a personal token that expires tomorrow, because Cloudflare\'s account API tokens cannot manage Turnstile.',
+      `Token name: ${standard.cliName} setup ${manifest.name}.`,
       `Under "Permissions", check that there are exactly these rows, each set to "Account", and add any that is missing with "+ Add more": ${needed.join('; ')}.`,
-      `Under "Account Resources", choose "Include" and the LVBT account, "${LVBT_CLOUDFLARE_ACCOUNT}" (ID ${manifest.cloudflare.accountId}), not "All accounts".`,
+      `Under "Account Resources", choose "Include" and ${ACCOUNT} (ID ${manifest.cloudflare.accountId}), not "All accounts".`,
       'Under "TTL", set the End Date to tomorrow, so the token stops working by itself.',
       'Click "Continue to summary", then "Create Token". Click "Copy": Cloudflare shows the token only once.',
       "Paste it here. It stays in this terminal's memory and is never saved. When you finish, delete it at https://dash.cloudflare.com/profile/api-tokens.",

@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-import { foregroundServerEnvironment, sharedConfig } from '@lasvegasfortransit/playwright-config';
+import { foregroundServerEnvironment, sharedConfig } from '@williecubed/playwright-config';
 
 const url = 'http://127.0.0.1:4321';
 

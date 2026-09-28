@@ -1,3 +1,3 @@
-import config from '@lasvegasfortransit/prettier-config';
+import config from '@williecubed/prettier-config';
 
 export default config;

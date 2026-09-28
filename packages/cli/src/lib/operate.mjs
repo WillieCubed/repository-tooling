@@ -5,6 +5,7 @@ import { CliError } from './arguments.mjs';
 import { exists, readJson } from './files.mjs';
 import { findManifests } from './platform/manifest.mjs';
 import { platformBootstrap, platformPreflight } from './platform/index.mjs';
+import { commitScopes } from './standard.mjs';
 
 function output(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
@@ -122,15 +123,13 @@ async function repositoryFindings(cwd, report) {
       'pnpm install   # the prepare script sets it',
     );
 
-  const scopes = await readFile(path.join(cwd, '.lvbt/commit-scopes.txt'), 'utf8').catch(
-    () => undefined,
-  );
-  if (scopes) report.pass('commit scopes', '.lvbt/commit-scopes.txt is present');
+  const scopes = await readFile(path.join(cwd, commitScopes), 'utf8').catch(() => undefined);
+  if (scopes) report.pass('commit scopes', `${commitScopes} is present`);
   else
     report.fail(
       'commit scopes',
-      '.lvbt/commit-scopes.txt is missing',
-      "copy .lvbt/commit-scopes.txt from the standard example and list this repository's scopes",
+      `${commitScopes} is missing`,
+      `copy ${commitScopes} from the standard example and list this repository's scopes`,
     );
 
   // Issues and pull requests are created by people, so a runner does not need gh.
@@ -192,7 +191,7 @@ async function machineFindings(cwd) {
 }
 
 /**
- * `lvbt preflight`: the machine checks. With `--production`, also the
+ * `cube preflight`: the machine checks. With `--production`, also the
  * read-only readiness report for every platform manifest.
  */
 export async function preflight({ cwd, options = {} }) {

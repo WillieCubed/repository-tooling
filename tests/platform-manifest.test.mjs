@@ -96,8 +96,8 @@ test('wrangler.jsonc comments and trailing commas parse, and strings stay whole'
   });
 });
 
-test('lvbt check platform finds manifests at the root and under apps/, and fails on errors', async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'lvbt-platform-'));
+test('cube check platform finds manifests at the root and under apps/, and fails on errors', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'standard-platform-'));
   try {
     await mkdir(path.join(root, 'apps/site'), { recursive: true });
     await mkdir(path.join(root, 'apps/docs'), { recursive: true });
@@ -116,7 +116,7 @@ test('lvbt check platform finds manifests at the root and under apps/, and fails
 });
 
 test('a repository without a manifest passes the platform check', async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'lvbt-platform-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'standard-platform-'));
   try {
     assert.equal(checkPlatform({ cwd: root }).ok, true);
   } finally {

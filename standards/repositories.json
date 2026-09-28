@@ -7,12 +7,12 @@
       "kind": "consumer"
     },
     {
-      "name": "analytics",
+      "name": "putin",
       "requiredStatus": "Validate",
       "kind": "consumer"
     },
     {
-      "name": "labs",
+      "name": "reports",
       "requiredStatus": "Validate",
       "kind": "consumer"
     },
@@ -40,17 +40,12 @@
       "example": "with-vite-react"
     },
     {
-      "name": "transit-mapper",
-      "requiredStatus": "Validate",
-      "kind": "consumer"
-    },
-    {
       "name": "website",
       "requiredStatus": "Validate",
       "kind": "consumer"
     },
     {
-      "name": "week-without-driving",
+      "name": "wpp",
       "requiredStatus": "Validate",
       "kind": "consumer"
     }

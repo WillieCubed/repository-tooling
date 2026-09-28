@@ -61,13 +61,13 @@ test('compares deployment timestamps as instants rather than formatted strings',
 });
 
 test('reads the version from structured Wrangler output, not console prose', () => {
-  const record = { type: 'deploy', version: 1, worker_name: 'lvbt-labs-home', version_id: first };
+  const record = { type: 'deploy', version: 1, worker_name: 'wpp-home', version_id: first };
   expect(
     uploadedVersion(
       `${JSON.stringify({ type: 'other' })}\n${JSON.stringify(record)}\n`,
-      'lvbt-labs-home',
+      'wpp-home',
     ),
   ).toBe(first);
-  expect(() => uploadedVersion(JSON.stringify(record), 'lvbt-labs-map')).toThrow();
-  expect(() => uploadedVersion('Current Version ID: something', 'lvbt-labs-home')).toThrow();
+  expect(() => uploadedVersion(JSON.stringify(record), 'wpp-map')).toThrow();
+  expect(() => uploadedVersion('Current Version ID: something', 'wpp-home')).toThrow();
 });

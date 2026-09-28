@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { known, unknown } from '../packages/cli/src/lib/platform/observe.mjs';
 import { planPlatform, readiness } from '../packages/cli/src/lib/platform/plan.mjs';
+import { setupTokenVariable } from '../standard.config.ts';
 import { readyState, sampleManifest } from './support/platform.mjs';
 
 const configPath = 'apps/site/wrangler.jsonc';
@@ -82,7 +83,7 @@ test('Turnstile that cannot be read fails the check and says which credential is
   const plan = planAfter((state) => (state.turnstile = unknown('403', 'unauthorized')));
   const widget = plan.byId('turnstile:example.org');
   assert.equal(widget.status, 'unknown');
-  assert.match(widget.next, /LVBT_CLOUDFLARE_SETUP_TOKEN/);
+  assert.ok(widget.next.includes(setupTokenVariable), widget.next);
   assert.equal(plan.ready, false);
 });
 

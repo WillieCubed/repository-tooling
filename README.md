@@ -13,7 +13,7 @@ It owns five things:
 
 - the shared packages every repository depends on: `@williecubed/eslint-config`,
   `@williecubed/typescript-config`, `@williecubed/prettier-config`, `@williecubed/vitest-config`,
-  `@williecubed/playwright-config`, and `@williecubed/cli` (the `willie` command for `bootstrap`,
+  `@williecubed/playwright-config`, and `@williecubed/cli` (the `cube` command for `bootstrap`,
   `preflight`, `check`, and `deploy`, the production platform setup, the git hooks, and the
   `willie-contributions` agent plugin);
 - the security packages every app with admin or personal data uses: `@williecubed/access`,

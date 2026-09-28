@@ -1,0 +1,12 @@
+{
+  "name": "willie-contributions",
+  "version": "0.5.1",
+  "description": "Create readable GitHub issues and pull requests in WillieCubed repositories through the shared workflow.",
+  "author": {
+    "name": "WillieCubed",
+    "url": "https://willie.page"
+  },
+  "repository": "https://github.com/WillieCubed/repository-tooling",
+  "license": "MIT",
+  "keywords": ["github", "issues", "pull-requests"]
+}

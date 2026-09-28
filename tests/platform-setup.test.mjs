@@ -7,6 +7,7 @@ import test from 'node:test';
 import { applyPlan } from '../packages/cli/src/lib/platform/apply.mjs';
 import { platformBootstrap, platformPreflight } from '../packages/cli/src/lib/platform/index.mjs';
 import { planPlatform } from '../packages/cli/src/lib/platform/plan.mjs';
+import { setupTokenVariable } from '../standard.config.ts';
 import { readyState, sampleManifest, scriptedIo, WORKER_SECRETS } from './support/platform.mjs';
 
 /** A command runner that records every call and answers the read-only ones. */
@@ -163,7 +164,7 @@ test('without a setup token, Turnstile falls back to dashboard steps', async () 
 
 /** A repository on disk plus a fake Cloudflare and DNS, both answering from `state`. */
 async function fakeRepository(state) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'lvbt-platform-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'standard-platform-'));
   const site = path.join(root, 'apps/site');
   await mkdir(path.join(site, 'migrations'), { recursive: true });
   await writeFile(path.join(site, 'platform.json'), JSON.stringify(sampleManifest()));
@@ -222,7 +223,7 @@ function fakeRequest(state, seen) {
   };
 }
 
-async function preflightWith(state, env = { LVBT_CLOUDFLARE_SETUP_TOKEN: 'setup-token' }) {
+async function preflightWith(state, env = { [setupTokenVariable]: 'setup-token' }) {
   const root = await fakeRepository(state);
   const seen = [];
   const { run, calls } = recordingRun({

@@ -18,7 +18,7 @@ independently.
 | `@williecubed/prettier-config`   | The Prettier settings object: 100 columns, single quotes, trailing commas, wrapped prose                                                                                                                                                                                                                                                                     |
 | `@williecubed/vitest-config`     | `sharedConfig`: unit tests under `tests/`, empty suites fail                                                                                                                                                                                                                                                                                                 |
 | `@williecubed/playwright-config` | `sharedConfig`: end-to-end tests under `tests/e2e/*.spec.ts`, desktop and mobile projects, traces on failure, retries in CI; accessibility and browser-health assertions                                                                                                                                                                                     |
-| `@williecubed/cli`               | The `willie` command (`bootstrap`, `preflight`, `check`, `deploy`), the git hooks, the `willie-contributions` agent plugin, and the version catalog                                                                                                                                                                                                          |
+| `@williecubed/cli`               | The `cube` command (`bootstrap`, `preflight`, `check`, `deploy`), the git hooks, the `willie-contributions` agent plugin, and the version catalog                                                                                                                                                                                                            |
 
 ## How a package uses them
 
@@ -76,7 +76,7 @@ The shared floor stays shared.
 
 The baseline is deliberately strict, because the alternative is three repositories each deciding
 what strict means. Findings that exist when a repository adopts it go into
-`eslint-suppressions.json` through `eslint --suppress-all`; `willie check debt` then makes sure that
+`eslint-suppressions.json` through `eslint --suppress-all`; `cube check debt` then makes sure that
 ledger only shrinks, and a file with suppressions has to get better when it is touched.
 
 ## The version catalog

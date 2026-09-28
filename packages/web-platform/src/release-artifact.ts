@@ -44,7 +44,7 @@ export async function sealArtifact(
   const prefixedIndex = files.some(([name]) => name === `${identity.slug}/index.html`);
   if (rootIndex === prefixedIndex)
     throw new Error('Expected one unambiguous root or slug-prefixed index.html.');
-  const markerPath = `${identity.slug === 'home' ? '' : `${identity.slug}/`}lvbt-release.json`;
+  const markerPath = `${identity.slug === 'home' ? '' : `${identity.slug}/`}release.json`;
   const marker: ReleaseMarker = {
     formatVersion: 1,
     ...identity,

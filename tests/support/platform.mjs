@@ -1,4 +1,5 @@
 import { known } from '../../packages/cli/src/lib/platform/observe.mjs';
+import { standard } from '../../standard.config.ts';
 
 /**
  * A manifest that uses every section, and a state in which all of it is
@@ -61,7 +62,7 @@ export function sampleManifest() {
       },
     ],
     vars: [{ name: 'TURNSTILE_SITE_KEY', purpose: 'The public site key.' }],
-    github: { repository: 'LasVegasForTransit/example' },
+    github: { repository: `${standard.owner}/example` },
     forbidden: [
       { name: 'PREVIEW_ADMIN_KEY', reason: 'It opens the admin views.' },
       { name: 'BOT_CHECK', reason: 'It turns the bot check off.', severity: 'warning' },

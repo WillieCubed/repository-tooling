@@ -19,7 +19,7 @@ the version pinned in `package.json` the first time you run it, through Corepack
 ## 1. Clone and bootstrap
 
 ```bash
-git clone git@github.com:LasVegasForTransit/<this-repository>.git
+git clone git@github.com:WillieCubed/<this-repository>.git
 cd <this-repository>
 pnpm bootstrap
 ```
@@ -32,7 +32,7 @@ prints one line per check:
   ok    pnpm           11.25.0 matches packageManager
   ok    dependencies   node_modules is present
   ok    git hooks      core.hooksPath is .githooks
-  ok    commit scopes  .lvbt/commit-scopes.txt is present
+  ok    commit scopes  .williecubed/commit-scopes.txt is present
   ok    GitHub CLI     gh is installed and signed in
   ok    Cloudflare     wrangler is signed in; deployables: apps/app
 preflight: all 7 checks passed
@@ -62,9 +62,9 @@ git commit
 
 The commit hook checks the message. Subjects look like `type(scope): description` where `type` is
 one of `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `build`, `style`, `revert`, and
-the optional `scope` is one of the boundaries listed in `.lvbt/commit-scopes.txt`. A `feat` or `fix`
-commit also needs a body that says what changed for a person using the product and why. The hook
-tells you exactly what to change when it rejects a message.
+the optional `scope` is one of the boundaries listed in `.williecubed/commit-scopes.txt`. A `feat`
+or `fix` commit also needs a body that says what changed for a person using the product and why. The
+hook tells you exactly what to change when it rejects a message.
 
 ## 4. Open a pull request
 

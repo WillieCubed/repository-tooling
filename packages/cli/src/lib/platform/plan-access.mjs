@@ -6,6 +6,7 @@ import {
   zeroTrustGuide,
 } from './guides.mjs';
 import { item, manualGuide, SETUP, TOKEN_HINT, unknownItem } from './plan-items.mjs';
+import { standard } from '../standard.mjs';
 
 /**
  * Cloudflare Access: Zero Trust itself, the identity provider people sign in
@@ -99,7 +100,7 @@ function providerItem(manifest, access, type) {
       : {
           url: ZERO_TRUST,
           steps: [
-            'Open Cloudflare One and choose the LVBT account.',
+            `Open Cloudflare One and choose the ${standard.owner} account.`,
             'Go to Integrations → Identity providers (not "Cloud & SaaS" just above it: that is a different feature that asks for a service account; leave it alone), click "Add new identity provider", choose "One-time PIN", and click "Save". People then sign in with a code emailed to them.',
           ],
         };

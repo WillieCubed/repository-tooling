@@ -7,8 +7,8 @@ const target = {
   zoneName: 'example.org',
   hostname: 'labs.example.org',
   workers: [
-    { slug: 'home', name: 'lvbt-labs-home' },
-    { slug: 'map', name: 'lvbt-labs-map' },
+    { slug: 'home', name: 'wpp-home' },
+    { slug: 'map', name: 'wpp-map' },
   ],
 };
 const fixtures: Record<string, unknown> = {
@@ -22,25 +22,25 @@ const fixtures: Record<string, unknown> = {
   'accounts/account/workers/domains?hostname=labs.example.org': [
     {
       hostname: 'labs.example.org',
-      service: 'lvbt-labs-home',
+      service: 'wpp-home',
       zone_id: 'zone',
       cert_id: 'issued-certificate',
     },
   ],
   'zones/zone/workers/routes': [
-    { pattern: 'labs.example.org/*', script: 'lvbt-labs-home' },
-    { pattern: 'labs.example.org/map', script: 'lvbt-labs-map' },
-    { pattern: 'labs.example.org/map/*', script: 'lvbt-labs-map' },
+    { pattern: 'labs.example.org/*', script: 'wpp-home' },
+    { pattern: 'labs.example.org/map', script: 'wpp-map' },
+    { pattern: 'labs.example.org/map/*', script: 'wpp-map' },
   ],
   'zones/zone/dns_records?name=labs.example.org': [
     { name: 'labs.example.org', proxied: true, type: 'AAAA' },
   ],
-  'accounts/account/workers/scripts': [{ id: 'lvbt-labs-home' }, { id: 'lvbt-labs-map' }],
-  'accounts/account/workers/scripts/lvbt-labs-home/subdomain': {
+  'accounts/account/workers/scripts': [{ id: 'wpp-home' }, { id: 'wpp-map' }],
+  'accounts/account/workers/scripts/wpp-home/subdomain': {
     enabled: false,
     previews_enabled: true,
   },
-  'accounts/account/workers/scripts/lvbt-labs-map/subdomain': {
+  'accounts/account/workers/scripts/wpp-map/subdomain': {
     enabled: false,
     previews_enabled: true,
   },
@@ -74,7 +74,7 @@ test('rejects a Worker custom domain without an issued certificate', async () =>
   const reader = (endpoint: string) => {
     if (endpoint.includes('/workers/domains'))
       return Promise.resolve([
-        { hostname: target.hostname, service: 'lvbt-labs-home', zone_id: target.zoneId },
+        { hostname: target.hostname, service: 'wpp-home', zone_id: target.zoneId },
       ]);
     return read(endpoint);
   };
@@ -126,7 +126,7 @@ test('flags route collisions while preserving an unknown analytics result', asyn
 
 test('fails when any published Worker has version previews disabled', async () => {
   const reader = (endpoint: string) => {
-    if (endpoint.endsWith('lvbt-labs-map/subdomain'))
+    if (endpoint.endsWith('wpp-map/subdomain'))
       return Promise.resolve({ enabled: false, previews_enabled: false });
     return read(endpoint);
   };
@@ -140,22 +140,22 @@ test('verifies an external Worker route without requiring version previews', asy
     ...target,
     workers: [
       ...target.workers,
-      { slug: 'transit-mapper', name: 'transitmapper', previewRequired: false },
+      { slug: 'party-planner', name: 'partyplanner', previewRequired: false },
     ],
   };
   const reader = (endpoint: string) => {
     if (endpoint.endsWith('/workers/routes'))
       return Promise.resolve([
         ...(fixtures['zones/zone/workers/routes'] as object[]),
-        { pattern: 'labs.example.org/transit-mapper', script: 'transitmapper' },
-        { pattern: 'labs.example.org/transit-mapper/*', script: 'transitmapper' },
+        { pattern: 'labs.example.org/party-planner', script: 'partyplanner' },
+        { pattern: 'labs.example.org/party-planner/*', script: 'partyplanner' },
       ]);
     if (endpoint.endsWith('/workers/scripts'))
       return Promise.resolve([
         ...(fixtures['accounts/account/workers/scripts'] as object[]),
-        { id: 'transitmapper' },
+        { id: 'partyplanner' },
       ]);
-    if (endpoint.endsWith('transitmapper/subdomain'))
+    if (endpoint.endsWith('partyplanner/subdomain'))
       return Promise.resolve({ enabled: false, previews_enabled: false });
     return read(endpoint);
   };

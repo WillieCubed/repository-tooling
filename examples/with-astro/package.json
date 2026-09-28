@@ -1,10 +1,10 @@
 {
-  "name": "lvbt-with-astro-example",
+  "name": "with-astro-example",
   "private": true,
   "type": "module",
   "scripts": {
-    "bootstrap": "lvbt bootstrap",
-    "preflight": "lvbt preflight",
+    "bootstrap": "cube bootstrap",
+    "preflight": "cube preflight",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "preview": "turbo run preview",
@@ -14,17 +14,17 @@
     "test:e2e": "turbo run test:e2e --concurrency=1",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && markdownlint-cli2 && lvbt check && turbo run lint check-types test validate",
+    "check": "pnpm format:check && markdownlint-cli2 && cube check && turbo run lint check-types test validate",
     "check:fix": "pnpm format && markdownlint-cli2 --fix && turbo run lint -- --fix",
     "prepare": "git config --local core.hooksPath .githooks 2>/dev/null || true",
-    "deploy": "lvbt deploy"
+    "deploy": "cube deploy"
   },
   "lint-staged": {
     "*": "prettier --write --ignore-unknown"
   },
   "devDependencies": {
-    "@lasvegasfortransit/cli": "0.5.1",
-    "@lasvegasfortransit/prettier-config": "0.5.1",
+    "@williecubed/cli": "0.5.1",
+    "@williecubed/prettier-config": "0.5.1",
     "lint-staged": "catalog:",
     "markdownlint-cli2": "catalog:",
     "markdownlint-rule-relative-links": "catalog:",

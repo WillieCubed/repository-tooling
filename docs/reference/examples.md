@@ -28,7 +28,7 @@ its own `check` with the shared packages.
 | `.github/workflows/standard-update.yml`      | Daily: opens a self-merging pull request when a newer standard release exists                    |
 | `.github/actions/setup-node-pnpm/action.yml` | Node from `package.json`, pinned pnpm, frozen install                                            |
 | `.github/renovate.json`                      | Weekly grouped updates; `@williecubed/*` bumps grouped as one                                    |
-| `.github/CODEOWNERS`                         | The maintainers team reviews everything                                                          |
+| `.github/CODEOWNERS`                         | The owner reviews everything                                                                     |
 | `.williecubed/commit-scopes.txt`             | Placeholder scopes to replace                                                                    |
 | `docs/`                                      | The index, a start-here tutorial, and a glossary                                                 |
 | `AGENTS.md`, `README.md`                     | Agent guidance and the repository's own front page                                               |
@@ -50,7 +50,7 @@ appropriate local `file:` path. Running publication again for the same tag produ
 | `apps/*/wrangler.jsonc`        | A static-assets Worker serving `dist/`; `pnpm run deploy` deploys every app that has one             |
 | `apps/*/playwright.config.ts`  | Spreads `@williecubed/playwright-config` and starts the app's `preview` server                       |
 | `.github/workflows/deploy.yml` | Validates, then runs `pnpm run deploy` on every push to `main` with the Cloudflare secrets           |
-| root `preview` and `deploy`    | `turbo run preview` and `willie deploy`                                                              |
+| root `preview` and `deploy`    | `turbo run preview` and `cube deploy`                                                                |
 
 The Astro example also adds `prettier-plugin-astro` to its Prettier config and extends
 `@williecubed/typescript-config/astro.json`; the React example extends `react-library.json` and

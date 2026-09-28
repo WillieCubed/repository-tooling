@@ -94,24 +94,6 @@ importers:
       '@astrojs/sitemap':
         specifier: 'catalog:'
         version: 3.7.4
-      '@lasvegasfortransit/cli':
-        specifier: workspace:*
-        version: link:packages/cli
-      '@lasvegasfortransit/eslint-config':
-        specifier: workspace:*
-        version: link:packages/eslint-config
-      '@lasvegasfortransit/playwright-config':
-        specifier: workspace:*
-        version: link:packages/playwright-config
-      '@lasvegasfortransit/prettier-config':
-        specifier: workspace:*
-        version: link:packages/prettier-config
-      '@lasvegasfortransit/typescript-config':
-        specifier: workspace:*
-        version: link:packages/typescript-config
-      '@lasvegasfortransit/vitest-config':
-        specifier: workspace:*
-        version: link:packages/vitest-config
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.62.1
@@ -130,6 +112,24 @@ importers:
       '@vitejs/plugin-react':
         specifier: 'catalog:'
         version: 6.1.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+      '@williecubed/cli':
+        specifier: workspace:*
+        version: link:packages/cli
+      '@williecubed/eslint-config':
+        specifier: workspace:*
+        version: link:packages/eslint-config
+      '@williecubed/playwright-config':
+        specifier: workspace:*
+        version: link:packages/playwright-config
+      '@williecubed/prettier-config':
+        specifier: workspace:*
+        version: link:packages/prettier-config
+      '@williecubed/typescript-config':
+        specifier: workspace:*
+        version: link:packages/typescript-config
+      '@williecubed/vitest-config':
+        specifier: workspace:*
+        version: link:packages/vitest-config
       astro:
         specifier: 'catalog:'
         version: 7.2.10(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@24.13.3)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0)

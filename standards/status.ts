@@ -4,6 +4,7 @@ import { appendFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { presetRecord, sourceRepository } from '../standard.config.ts';
 import {
   BRANCH_PREFIX,
   OWNER,
@@ -140,13 +141,13 @@ export function pluginRef(settings: string | null): string | null {
     extraKnownMarketplaces?: Record<string, { source?: { repo?: string; ref?: string } }>;
   };
   const marketplace = Object.values(parsed.extraKnownMarketplaces ?? {}).find(
-    ({ source }) => source?.repo === `${OWNER}/repository-tooling`,
+    ({ source }) => source?.repo === sourceRepository,
   );
   return marketplace?.source?.ref ?? null;
 }
 
 function readState(entry: RegistryEntry): RepositoryState {
-  const manifest = readRaw(entry.name, '.lvbt/web-platform.json');
+  const manifest = readRaw(entry.name, presetRecord);
   const release = manifest ? (JSON.parse(manifest) as { release: string | null }).release : null;
   const rulesets = (
     JSON.parse(gh(['api', `repos/${OWNER}/${entry.name}/rulesets`])) as { name: string }[]

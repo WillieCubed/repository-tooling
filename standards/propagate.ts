@@ -4,7 +4,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-export const OWNER = 'LasVegasForTransit';
+import { presetRecord, sourceRepository, standard } from '../standard.config.ts';
+
+export const OWNER = standard.owner;
 export const BRANCH_PREFIX = 'automation/repository-standard-';
 const STABLE_TAG = /^v(\d+)\.(\d+)\.(\d+)$/;
 
@@ -106,7 +108,7 @@ export function releaseNotesPath(tag: string): string {
 }
 
 export function pullRequestTitle(tag: string): string {
-  return `chore: update LVBT repository standard to ${tag}`;
+  return `chore: update ${OWNER} repository standard to ${tag}`;
 }
 
 export function pullRequestBody(options: {
@@ -116,20 +118,20 @@ export function pullRequestBody(options: {
   automerge: boolean;
 }): string {
   const { tag, kind, hasNotes, automerge } = options;
-  const source = `https://github.com/${OWNER}/repository-tooling`;
+  const source = `https://github.com/${sourceRepository}`;
   const notes = hasNotes
     ? `The [release notes](${source}/blob/${tag}/${releaseNotesPath(tag)}) say what changes for a repository that updates.`
     : `The [${tag} release](${source}/releases/tag/${tag}) describes what changed.`;
   const change =
     kind === 'template'
       ? `The files are generated from the reviewed ${tag} example in repository-tooling.`
-      : `The vendored standard in \`.lvbt/web-platform/\` is replaced by ${tag}, and the release's own migrations update the files it manages.`;
+      : `The vendored standard in \`${standard.vendorDir}/\` is replaced by ${tag}, and the release's own migrations update the files it manages.`;
   return [
-    '# TL;DR',
+    '## TL;DR',
     '',
-    `Moves this repository to LVBT repository standard ${tag}.`,
+    `Moves this repository to ${OWNER} repository standard ${tag}.`,
     '',
-    '# Overview of Changes',
+    '## Changes',
     '',
     `${change} ${notes}`,
     '',
@@ -137,7 +139,7 @@ export function pullRequestBody(options: {
       ? "This pull request was opened by this repository's `Standard update` workflow. It is a patch release, so it merges itself once `Validate` passes. If `Validate` fails, fix the repository on this branch; a newer release closes this pull request and opens its own."
       : "This pull request was opened by this repository's `Standard update` workflow. It is a minor release, which can change how the repository works, so a maintainer merges it after reading the release notes. If `Validate` fails, fix the repository on this branch; a newer release closes this pull request and opens its own.",
     '',
-    '# Follow-ups',
+    '## Follow-ups and Next Work',
     '',
     'None.',
     '',
@@ -152,7 +154,7 @@ export type Runner = (command: string, args: string[], cwd: string) => string;
 
 /** Writes a file for git or gh to read, outside the checkout so no repository check sees it. */
 export async function withTemporaryFile<T>(content: string, use: (file: string) => T | Promise<T>) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'lvbt-propagate-'));
+  const directory = await mkdtemp(path.join(os.tmpdir(), `${standard.cliName}-propagate-`));
   try {
     const file = path.join(directory, 'content');
     await writeFile(file, content);
@@ -172,7 +174,7 @@ export const run: Runner = (command, args, cwd) =>
   }).trim();
 
 async function currentRelease(target: string): Promise<string | null> {
-  const file = path.join(target, '.lvbt/web-platform.json');
+  const file = path.join(target, presetRecord);
   if (!existsSync(file)) return null;
   const { release } = JSON.parse(await readFile(file, 'utf8')) as { release: string | null };
   return release;
@@ -273,9 +275,9 @@ export async function applyRelease(options: {
       'git',
       [
         '-c',
-        'user.name=lvbt-bot',
+        `user.name=${standard.bot.name}`,
         '-c',
-        'user.email=noreply@lasvegasfortransit.org',
+        `user.email=${standard.bot.email}`,
         'commit',
         '--quiet',
         '--no-verify',

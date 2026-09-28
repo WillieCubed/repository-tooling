@@ -9,7 +9,7 @@ test('reconciles only declared nonsecret variables and preserves unrelated value
   ]);
   const writes: { method: string; endpoint: string }[] = [];
   const resources = provisionVariables(
-    { repository: 'LasVegasForTransit/labs', accountId: 'account', zoneId: 'zone' },
+    { repository: 'WillieCubed/wpp', accountId: 'account', zoneId: 'zone' },
     () => Promise.resolve({ variables: [...variables].map(([name, value]) => ({ name, value })) }),
     (method, endpoint, body) => {
       writes.push({ method, endpoint });
@@ -34,7 +34,7 @@ test('reconciles one explicitly named repository variable', async () => {
   let value: string | null = null;
   const resource = provisionRepositoryVariable(
     {
-      repository: 'LasVegasForTransit/labs',
+      repository: 'WillieCubed/wpp',
       name: 'CLOUDFLARE_PREVIEWS_ENABLED',
       value: 'true',
     },

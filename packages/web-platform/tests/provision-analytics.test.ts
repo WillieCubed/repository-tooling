@@ -6,7 +6,7 @@ const target = {
   accountId: 'account',
   zoneId: 'zone',
   hostname: 'labs.example.org',
-  repository: 'LasVegasForTransit/labs',
+  repository: 'WillieCubed/wpp',
   environment: 'production',
 };
 
@@ -43,8 +43,8 @@ test('creates one analytics site, publishes its token, and reruns without writes
   expect(variableWrites).toEqual([
     {
       method: 'POST',
-      endpoint: 'repos/LasVegasForTransit/labs/environments/production/variables',
-      body: { name: 'PUBLIC_LVBT_CWA_TOKEN', value: 'public-token' },
+      endpoint: 'repos/WillieCubed/wpp/environments/production/variables',
+      body: { name: 'PUBLIC_CWA_TOKEN', value: 'public-token' },
     },
   ]);
   expect(variables.get('UNRELATED')).toBe('keep');
@@ -61,7 +61,7 @@ test('updates a stale analytics variable without creating another site', async (
       rules: [{ host: target.hostname, inclusive: true, is_paused: false }],
     },
   ];
-  const variables = new Map([['PUBLIC_LVBT_CWA_TOKEN', 'stale-token']]);
+  const variables = new Map([['PUBLIC_CWA_TOKEN', 'stale-token']]);
   let siteWrites = 0;
   const resources = provisionAnalytics(target, {
     readSites: () => Promise.resolve(sites),
@@ -79,7 +79,7 @@ test('updates a stale analytics variable without creating another site', async (
 
   expect((await reconcileResources(resources, true)).ok).toBe(true);
   expect(siteWrites).toBe(0);
-  expect(variables.get('PUBLIC_LVBT_CWA_TOKEN')).toBe('current-token');
+  expect(variables.get('PUBLIC_CWA_TOKEN')).toBe('current-token');
 });
 
 test('recognizes a hostname-created analytics site when rules are omitted', async () => {
@@ -108,7 +108,7 @@ test('recognizes a hostname-created analytics site when rules are omitted', asyn
 
   expect((await reconcileResources(resources, true)).ok).toBe(true);
   expect(siteWrites).toBe(0);
-  expect(variables.get('PUBLIC_LVBT_CWA_TOKEN')).toBe('current-token');
+  expect(variables.get('PUBLIC_CWA_TOKEN')).toBe('current-token');
 });
 
 test('refuses duplicate or conflicting analytics sites', async () => {

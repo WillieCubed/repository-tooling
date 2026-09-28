@@ -1,12 +1,12 @@
 {
-  "name": "@lasvegasfortransit/playwright-config",
+  "name": "@williecubed/playwright-config",
   "version": "0.5.1",
-  "description": "The Playwright configuration every LVBT repository spreads into its own: end-to-end tests under tests/e2e, desktop and mobile projects, traces on failure.",
+  "description": "The Playwright configuration every personal repository spreads into its own: end-to-end tests under tests/e2e, desktop and mobile projects, traces on failure.",
   "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LasVegasForTransit/repository-tooling.git",
+    "url": "https://github.com/WillieCubed/repository-tooling.git",
     "directory": "packages/playwright-config"
   },
   "publishConfig": {

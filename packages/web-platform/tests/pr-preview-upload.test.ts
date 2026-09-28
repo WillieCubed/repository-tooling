@@ -6,7 +6,7 @@ import { uploadPreview } from '../src/pr-preview-upload.ts';
 
 test.each([
   { account_id: 'other' },
-  { vars: { PUBLIC_LVBT_CWA_TOKEN: 'production-token' } },
+  { vars: { PUBLIC_CWA_TOKEN: 'production-token' } },
   { workers_dev: true },
   { preview_urls: false },
 ])('refuses unsafe preview configuration before provider writes: %j', async (override) => {
@@ -16,7 +16,7 @@ test.each([
     await writeFile(
       path.join(root, 'wrangler.json'),
       JSON.stringify({
-        name: 'lvbt-labs-home',
+        name: 'wpp-home',
         compatibility_date: '2026-08-31',
         assets: { directory: path.join(root, 'assets') },
         routes: [],
@@ -29,7 +29,7 @@ test.each([
       uploadPreview(
         {
           directory: root,
-          worker: 'lvbt-labs-home',
+          worker: 'wpp-home',
           mode: 'version',
           repository: 'example/labs',
           pullRequest: 2,
@@ -63,7 +63,7 @@ test.each([false, true])(
       await writeFile(
         path.join(root, 'wrangler.json'),
         JSON.stringify({
-          name: 'lvbt-labs-home',
+          name: 'wpp-home',
           compatibility_date: '2026-08-31',
           assets: { directory: path.join(root, 'assets') },
           routes: [],
@@ -74,7 +74,7 @@ test.each([false, true])(
       const operation = uploadPreview(
         {
           directory: root,
-          worker: 'lvbt-labs-home',
+          worker: 'wpp-home',
           mode: 'version',
           repository: 'example/labs',
           pullRequest: 2,
@@ -82,7 +82,7 @@ test.each([false, true])(
           accountId: 'account',
         },
         {
-          list: () => Promise.resolve([{ id: 'lvbt-labs-home' }]),
+          list: () => Promise.resolve([{ id: 'wpp-home' }]),
           get: (endpoint) =>
             Promise.resolve(
               endpoint.endsWith('/deployments')
@@ -113,9 +113,9 @@ test.each([false, true])(
             JSON.stringify({
               type: 'version-upload',
               version: 1,
-              worker_name: 'lvbt-labs-home',
+              worker_name: 'wpp-home',
               version_id: version,
-              preview_url: `https://12345678-lvbt-labs-home.example.workers.dev`,
+              preview_url: `https://12345678-wpp-home.example.workers.dev`,
             }),
           );
         },
@@ -140,7 +140,7 @@ test('deploys an existing isolated staging Worker and verifies its active versio
     await writeFile(
       path.join(root, 'wrangler.json'),
       JSON.stringify({
-        name: 'lvbt-labs-map-staging',
+        name: 'wpp-map-staging',
         main: './src/worker.ts',
         compatibility_date: '2026-08-31',
         assets: { directory: path.join(root, 'assets') },
@@ -155,7 +155,7 @@ test('deploys an existing isolated staging Worker and verifies its active versio
     const receipt = await uploadPreview(
       {
         directory: root,
-        worker: 'lvbt-labs-map-staging',
+        worker: 'wpp-map-staging',
         mode: 'staging',
         repository: 'example/labs',
         pullRequest: 2,
@@ -163,7 +163,7 @@ test('deploys an existing isolated staging Worker and verifies its active versio
         accountId: 'account',
       },
       {
-        list: () => Promise.resolve([{ id: 'lvbt-labs-map-staging' }]),
+        list: () => Promise.resolve([{ id: 'wpp-map-staging' }]),
         get: (endpoint) =>
           Promise.resolve(
             endpoint.endsWith('/deployments')
@@ -186,9 +186,9 @@ test('deploys an existing isolated staging Worker and verifies its active versio
           JSON.stringify({
             type: 'deploy',
             version: 1,
-            worker_name: 'lvbt-labs-map-staging',
+            worker_name: 'wpp-map-staging',
             version_id: deployed,
-            targets: ['https://lvbt-labs-map-staging.example.workers.dev/'],
+            targets: ['https://wpp-map-staging.example.workers.dev/'],
           }),
         );
       },
@@ -196,7 +196,7 @@ test('deploys an existing isolated staging Worker and verifies its active versio
 
     expect(receipt).toEqual({
       version: deployed,
-      url: 'https://lvbt-labs-map-staging.example.workers.dev/',
+      url: 'https://wpp-map-staging.example.workers.dev/',
       previousVersion: previous,
     });
     expect(argsSeen[0]?.[0]).toBe('deploy');

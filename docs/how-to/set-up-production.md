@@ -119,7 +119,7 @@ The last line should read `Ready for production.` Delete the Cloudflare token yo
 at <https://dash.cloudflare.com/profile/api-tokens> if it has not expired yet.
 
 To check production from CI, run the same command with `CLOUDFLARE_API_TOKEN` (for Wrangler),
-`GH_TOKEN` (for `gh`), and `WILLIE_CLOUDFLARE_SETUP_TOKEN` (a read-only token for Turnstile and
+`GH_TOKEN` (for `gh`), and `CUBE_CLOUDFLARE_SETUP_TOKEN` (a read-only token for Turnstile and
 Access) in the environment. It exits 1 when production is not ready.
 
 ## Running it again, and replacing a value
@@ -231,7 +231,7 @@ applications:
 
 1. Open the link the command prints. It opens "Create Custom Token" at
    <https://dash.cloudflare.com/profile/api-tokens> with the permissions filled in.
-2. Name it `willie setup <site>`.
+2. Name it `cube setup <site>`.
 3. Check that "Permissions" has exactly these three rows, each set to "Account": "Turnstile" with
    "Edit", "Access: Apps and Policies" with "Edit", and "Access: Organizations, Identity Providers,
    and Groups" with "Read". Add any that is missing with "+ Add more".

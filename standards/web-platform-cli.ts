@@ -6,11 +6,12 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { sourceRepository, standard } from '../standard.config.ts';
 import { ownedFileDrift } from './owned-files.ts';
 import { applyPreset, verifyPreset, type WebPreset } from './web-platform.ts';
-import { readCommit, readRelease } from './web-platform-source.ts';
+import { readCommit, readRelease, STANDARD_CONFIG } from './web-platform-source.ts';
 
-const upstream = 'https://github.com/LasVegasForTransit/repository-tooling.git';
+const upstream = `https://github.com/${sourceRepository}.git`;
 
 type SourceIdentity = { release: string; commit?: never } | { release?: never; commit: string };
 
@@ -34,9 +35,12 @@ function readSource(repository: string, identity: SourceIdentity) {
  * update that installs it rather than in the next one. A preset without an updater uses this one.
  */
 async function applyIncoming(root: string, bundle: WebPreset, dryRun: boolean) {
-  const names = Object.keys(bundle.files).filter((name) => name.startsWith('standards/'));
+  // The updater reads the owner's values from the standard configuration beside it.
+  const names = Object.keys(bundle.files).filter(
+    (name) => name.startsWith('standards/') || name === STANDARD_CONFIG,
+  );
   if (!names.includes('standards/web-platform.ts')) return applyPreset(root, bundle, dryRun);
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'lvbt-updater-'));
+  const directory = await mkdtemp(path.join(os.tmpdir(), `${standard.cliName}-updater-`));
   try {
     for (const name of names) {
       await mkdir(path.dirname(path.join(directory, name)), { recursive: true });
@@ -58,7 +62,7 @@ async function update(
   dryRun: boolean,
 ) {
   if (source) return applyIncoming(root, readSource(source, identity), dryRun);
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'lvbt-standards-'));
+  const directory = await mkdtemp(path.join(os.tmpdir(), `${standard.cliName}-standards-`));
   try {
     if (identity.release) {
       execFileSync(
@@ -96,10 +100,10 @@ async function update(
 /** Verifies the vendored preset and the files the standard owns in the repository. */
 async function check(root: string, json: boolean | undefined) {
   const metadata = await verifyPreset(root);
-  // Warnings until v0.6.0, when these fail and the update restores the standard's copies.
+  // Warnings until v0.7.0, when these fail and the update restores the standard's copies.
   for (const problem of await ownedFileDrift(root, metadata.release))
     process.stderr.write(
-      `warning: ${problem} This file belongs to the standard; from v0.6.0 \`pnpm standards:check\` fails on it. Make the change in repository-tooling instead.\n`,
+      `warning: ${problem} This file belongs to the standard; from v0.7.0 \`pnpm standards:check\` fails on it. Make the change in repository-tooling instead.\n`,
     );
   process.stdout.write(`${JSON.stringify({ ok: true, metadata }, null, json ? 0 : 2)}\n`);
 }

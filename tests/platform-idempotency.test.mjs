@@ -5,7 +5,7 @@ import { sampleManifest } from './support/platform.mjs';
 import { bootstrapOnce, freshWorld, worldRepository } from './support/platform-world.mjs';
 
 /**
- * `lvbt bootstrap --production` run more than once against the same fake
+ * `cube bootstrap --production` run more than once against the same fake
  * services. Every step checks before it acts, so a finished setup is left
  * alone, and an unfinished one resumes where it stopped.
  */

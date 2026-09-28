@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/LasVegasForTransit/repository-tooling/blob/main/packages/cli/platform.schema.json",
-  "title": "LVBT production platform manifest",
+  "$id": "https://github.com/WillieCubed/repository-tooling/blob/main/packages/cli/platform.schema.json",
+  "title": "WillieCubed production platform manifest",
   "description": "Everything one app needs in production on Cloudflare and GitHub. `pnpm preflight --production` checks it; `pnpm bootstrap --production` sets up what is missing.",
   "type": "object",
   "additionalProperties": false,
@@ -18,7 +18,7 @@
     "name": {
       "type": "string",
       "minLength": 1,
-      "description": "What people call the production site, such as lvwwd.org. Reports and token names use it."
+      "description": "What people call the production site, such as party.willie.page. Reports and token names use it."
     },
     "cloudflare": { "$ref": "#/$defs/cloudflare" },
     "d1": {

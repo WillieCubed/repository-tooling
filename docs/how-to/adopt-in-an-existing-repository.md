@@ -38,7 +38,7 @@ Copy these from the example, overwriting your versions:
 
 Merge these by hand, keeping what the repository already has:
 
-- `.claude/settings.json`: the `willie` marketplace entry and `enabledPlugins`
+- `.claude/settings.json`: the `cube` marketplace entry and `enabledPlugins`
 - `.github/workflows/ci.yml`: a job named `Validate` that runs `pnpm check`
 - `AGENTS.md`: the standard paragraphs above your own
 

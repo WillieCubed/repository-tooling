@@ -5,10 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { presetRecord, sourceRepository, standard } from '../standard.config.ts';
 import { OWNER, type RegistryEntry, applyRelease, latestRelease } from './propagate.ts';
 import { proposeRelease } from './propose.ts';
 
-const UPSTREAM = `https://github.com/${OWNER}/repository-tooling.git`;
+const UPSTREAM = `https://github.com/${sourceRepository}.git`;
 
 const git = (args: string[], cwd?: string) =>
   execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
@@ -36,7 +37,7 @@ export function repositoryEntry(name: string, isTemplate: boolean): RegistryEntr
 }
 
 async function vendoredRelease(root: string): Promise<string | null> {
-  const file = path.join(root, '.lvbt/web-platform.json');
+  const file = path.join(root, presetRecord);
   if (!existsSync(file)) return null;
   return (JSON.parse(await readFile(file, 'utf8')) as { release: string | null }).release;
 }
@@ -58,7 +59,7 @@ export async function main(): Promise<void> {
   const tag = readLatestRelease();
   const tooling = path.resolve(import.meta.dirname, '..');
 
-  const source = await mkdtemp(path.join(os.tmpdir(), 'lvbt-release-'));
+  const source = await mkdtemp(path.join(os.tmpdir(), `${standard.cliName}-release-`));
   try {
     git(['clone', '--quiet', '--depth', '1', '--branch', tag, '--single-branch', UPSTREAM, source]);
     const current = await vendoredRelease(root);

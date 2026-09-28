@@ -42,13 +42,13 @@ snapshots. LVBT is not touched.
 
 ## Decisions (settled)
 
-| Topic                | Decision                                                                                                                                                                                                                                                                                                                                                                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scope                | Personal (WillieCubed) repos only. LVBT keeps its own tooling.                                                                                                                                                                                                                                                                                                                                    |
-| Mechanism            | Fork LVBT's `repository-tooling` into **`WillieCubed/repository-tooling`**. Move every hard-coded org value into one `standard.config.ts`: owner, npm scope `@williecubed`, CLI name `willie`, vendor dir `.williecubed/web-platform/`, CF account, Access team `williecubed`, zone `willie.page`. Promote this to a multi-venture engine only if a second venture needs it (prefer-local-scope). |
-| Dependencies         | **One enforced pnpm `catalog:`**, the same in every repo (LVBT model). This **replaces** the old Nerve "no catalogs" rule. Pins stay exact, and versions change only through the CLI.                                                                                                                                                                                                             |
-| Lint/format          | **ESLint + Prettier.** Fork LVBT's strict config and add `eslint-plugin-astro`, `eslint-plugin-mdx` and `prettier-plugin-astro`. TypeScript stays on **6.x** until typescript-eslint supports TS 7.1. Revisit Oxc when Oxlint can lint Astro templates.                                                                                                                                           |
-| Admin on Vercel apps | A separate Cloudflare Worker (`apps/admin`) at `admin.<domain>`, behind Access, reaching the DB through Hyperdrive. Vercel doesn't support proxying through Cloudflare, so Access can't sit in front of Vercel directly.                                                                                                                                                                          |
+| Topic                | Decision                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scope                | Personal (WillieCubed) repos only. LVBT keeps its own tooling.                                                                                                                                                                                                                                                                                                                                  |
+| Mechanism            | Fork LVBT's `repository-tooling` into **`WillieCubed/repository-tooling`**. Move every hard-coded org value into one `standard.config.ts`: owner, npm scope `@williecubed`, CLI name `cube`, vendor dir `.williecubed/web-platform/`, CF account, Access team `williecubed`, zone `willie.page`. Promote this to a multi-venture engine only if a second venture needs it (prefer-local-scope). |
+| Dependencies         | **One enforced pnpm `catalog:`**, the same in every repo (LVBT model). This **replaces** the old Nerve "no catalogs" rule. Pins stay exact, and versions change only through the CLI.                                                                                                                                                                                                           |
+| Lint/format          | **ESLint + Prettier.** Fork LVBT's strict config and add `eslint-plugin-astro`, `eslint-plugin-mdx` and `prettier-plugin-astro`. TypeScript stays on **6.x** until typescript-eslint supports TS 7.1. Revisit Oxc when Oxlint can lint Astro templates.                                                                                                                                         |
+| Admin on Vercel apps | A separate Cloudflare Worker (`apps/admin`) at `admin.<domain>`, behind Access, reaching the DB through Hyperdrive. Vercel doesn't support proxying through Cloudflare, so Access can't sit in front of Vercel directly.                                                                                                                                                                        |
 
 ## The standard itself (contents of `WillieCubed/repository-tooling`)
 
@@ -166,8 +166,8 @@ snapshots. LVBT is not touched.
   - **new:** the `access` app (hostname, path, `allow.emails`; the AUD is written back into wrangler
     vars),
   - **new:** zone rules (Bot Fight Mode, rate-limit rules scoped to the hostname).
-- `willie bootstrap --production [--check]` is idempotent and asks before changing anything. It
-  works like WPP's `scripts/bootstrap.sh`, and secrets go in through stdin.
+- `cube bootstrap --production [--check]` is idempotent and asks before changing anything. It works
+  like WPP's `scripts/bootstrap.sh`, and secrets go in through stdin.
 - It includes the least-privilege deploy-token flow from `wpp/scripts/set-deploy-token.sh`.
 - Vercel projects declare the Vercel project and its env. Provisioning goes through the Vercel CLI
   and Marketplace (Neon), or Stripe Projects.
@@ -207,7 +207,7 @@ snapshots. LVBT is not touched.
   - Make `bootstrap --production` create the Zero Trust org and identity provider when they are
     missing, add `--account`/`--zone` overrides and `pnpm teardown` for the drill, and add Vercel
     and Neon resources to `platform.json`.
-  - Ship the config packages (adding Astro and MDX), `willie` CLI, the security, admin and data
+  - Ship the config packages (adding Astro and MDX), `cube` CLI, the security, admin and data
     packages, `template-astro-worker`, `WillieCubed/.github`, and a registry of repos.
   - Migrate **WPP**:
     - Restructure into Turborepo `apps/site`.
@@ -269,7 +269,7 @@ snapshots. LVBT is not touched.
   - `curl -I https://party.willie.page/admin` without a session redirects to
     `williecubed.cloudflareaccess.com`.
   - An admin edit writes an `audit_events` row.
-  - `willie bootstrap --production --check` reports no drift.
+  - `cube bootstrap --production --check` reports no drift.
   - The CSV export escapes a cell that starts with `=`.
 - **`standard-status`** shows WPP as current, and a test release opens a self-update PR in WPP.
 - **Continuity drill (WPP):**

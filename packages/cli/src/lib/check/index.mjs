@@ -12,7 +12,7 @@ const checks = {
 };
 
 /**
- * `lvbt check [name...]`: the repository-shape rules every LVBT repository
+ * `cube check [name...]`: the repository-shape rules every personal repository
  * shares, run together by `pnpm check`. Each result names its fix.
  */
 export function check({ cwd, options }) {

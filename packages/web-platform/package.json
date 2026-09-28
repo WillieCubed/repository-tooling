@@ -1,12 +1,12 @@
 {
-  "name": "@lasvegasfortransit/web-platform",
+  "name": "@williecubed/web-platform",
   "version": "0.5.1",
-  "description": "Provider-neutral deployment, provisioning, and validation primitives for LVBT web repositories.",
+  "description": "Provider-neutral deployment, provisioning, and validation primitives for WillieCubed web repositories.",
   "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LasVegasForTransit/repository-tooling.git",
+    "url": "https://github.com/WillieCubed/repository-tooling.git",
     "directory": "packages/web-platform"
   },
   "publishConfig": {

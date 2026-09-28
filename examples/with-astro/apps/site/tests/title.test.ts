@@ -8,6 +8,6 @@ describe('pageTitle', () => {
   });
 
   it('puts the page before the site name elsewhere', () => {
-    expect(pageTitle('About')).toBe('About · LVBT site');
+    expect(pageTitle('About')).toBe('About · Example site');
   });
 });

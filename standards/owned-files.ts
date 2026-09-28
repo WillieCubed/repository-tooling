@@ -1,12 +1,13 @@
 import { chmod, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { sourceRepository, standard } from '../standard.config.ts';
 import type { WebPreset } from './web-platform.ts';
 
 /**
  * Files every repository copies from the example and never edits: the adoption guide's "copy these,
  * overwriting your versions" list. `standards:check` warns when one differs from the vendored
- * release; from v0.6.0 it fails, and the update restores the standard's copy.
+ * release; from v0.7.0 it fails, and the update restores the standard's copy.
  */
 export const OWNED_FILES = [
   '.githooks/commit-msg',
@@ -43,8 +44,9 @@ const SHADOWING_PRETTIER_CONFIGS = [
 ];
 
 const SETTINGS = '.claude/settings.json';
-const MARKETPLACE_REF =
-  /("repo"\s*:\s*"LasVegasForTransit\/repository-tooling"\s*,\s*"ref"\s*:\s*")([^"]*)(")/;
+const MARKETPLACE_REF = new RegExp(
+  `("repo"\\s*:\\s*"${sourceRepository.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\s*,\\s*"ref"\\s*:\\s*")([^"]*)(")`,
+);
 
 async function readOptional(file: string): Promise<string | null> {
   return readFile(file, 'utf8').catch(() => null);
@@ -100,7 +102,7 @@ export async function syncPluginRef(
 }
 
 async function ownedFileProblem(root: string, name: string): Promise<string | undefined> {
-  const vendored = path.join(root, '.lvbt/web-platform', REFERENCE, name);
+  const vendored = path.join(root, standard.vendorDir, REFERENCE, name);
   const expected = await readOptional(vendored);
   if (expected === null) return undefined;
   const actual = await readOptional(path.join(root, name));

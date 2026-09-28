@@ -7,7 +7,7 @@ const target = {
   zoneId: 'zone',
   zoneName: 'example.org',
   hostname: 'labs.example.org',
-  service: 'lvbt-labs-home',
+  service: 'wpp-home',
 };
 
 test('attaches one Worker custom domain and reruns without writes', async () => {
@@ -31,7 +31,7 @@ test('attaches one Worker custom domain and reruns without writes', async () => 
       zone_id: 'zone',
       zone_name: 'example.org',
       hostname: 'labs.example.org',
-      service: 'lvbt-labs-home',
+      service: 'wpp-home',
     },
   ]);
   expect((await reconcileResources([resource], true)).changed).toBe(false);

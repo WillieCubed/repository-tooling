@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
+import { standard } from '../standard.config.ts';
 import {
   OWNED_FILES,
   SEEDED_FILES,
@@ -29,7 +30,7 @@ async function exampleFiles() {
 async function bundle(release = 'v9.9.9') {
   return {
     formatVersion: 1,
-    preset: 'lvbt-web',
+    preset: standard.preset,
     release,
     commit: 'a'.repeat(40),
     files: await exampleFiles(),
@@ -40,7 +41,7 @@ async function bundle(release = 'v9.9.9') {
 }
 
 async function repository(t) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'lvbt-owned-files-'));
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'standard-owned-files-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   return directory;
 }
@@ -92,7 +93,7 @@ test('the plugin ref follows the installed release, and check reports drift', as
   );
   assert.deepEqual(await syncPluginRef(directory, await bundle(null), false), []);
 
-  const vendored = path.join(directory, '.lvbt/web-platform', reference);
+  const vendored = path.join(directory, standard.vendorDir, reference);
   for (const name of OWNED_FILES) {
     await mkdir(path.dirname(path.join(vendored, name)), { recursive: true });
     await writeFile(path.join(vendored, name), `${name}\n`);

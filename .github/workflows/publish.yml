@@ -1,4 +1,4 @@
-# Publishes every packages/* to the organization GitHub Packages registry.
+# Publishes every packages/* to the GitHub Packages registry under the owner's scope.
 name: Publish packages
 
 on:

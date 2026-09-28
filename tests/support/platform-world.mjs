@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { platformBootstrap } from '../../packages/cli/src/lib/platform/index.mjs';
+import { setupTokenVariable } from '../../standard.config.ts';
 import { sampleManifest, scriptedIo } from './platform.mjs';
 
 /**
@@ -339,7 +340,7 @@ export function worldRun(world) {
 
 /** A repository with the sample manifest, its wrangler config, and its migrations. */
 export async function worldRepository(manifest = sampleManifest()) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'lvbt-world-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'standard-world-'));
   const site = path.join(root, 'apps/site');
   await mkdir(path.join(site, 'migrations'), { recursive: true });
   await writeFile(path.join(site, 'platform.json'), JSON.stringify(manifest, null, 2));
@@ -353,7 +354,7 @@ export async function worldRepository(manifest = sampleManifest()) {
 }
 
 /**
- * One run of `lvbt bootstrap --production` against the world. `rules` answer
+ * One run of `cube bootstrap --production` against the world. `rules` answer
  * the questions as scriptedIo does. Returns what the run changed and asked.
  */
 export async function bootstrapOnce(world, repository, { rules = [], options = {} } = {}) {
@@ -368,7 +369,7 @@ export async function bootstrapOnce(world, repository, { rules = [], options = {
       services: {
         run: worldRun(world),
         request: worldRequest(world),
-        env: { LVBT_CLOUDFLARE_SETUP_TOKEN: 'setup-token' },
+        env: { [setupTokenVariable]: 'setup-token' },
         confirmations: {
           where: 'the test world',
           read: () => new Set(world.confirmed),

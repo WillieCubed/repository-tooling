@@ -1,10 +1,10 @@
-# LVBT site repository
+# Site repository
 
-A Turborepo workspace following the LVBT repository standard, with an Astro site under `apps/site`
-that deploys to Cloudflare Workers as static assets. It was created with:
+A Turborepo workspace following the WillieCubed repository standard, with an Astro site under
+`apps/site` that deploys to Cloudflare Workers as static assets. It was created with:
 
 ```bash
-npx create-turbo@latest --example https://github.com/LasVegasForTransit/repository-tooling/tree/main/examples/with-astro
+npx create-turbo@latest --example https://github.com/WillieCubed/repository-tooling/tree/main/examples/with-astro
 ```
 
 ## Getting started
@@ -16,7 +16,7 @@ pnpm dev         # the site at http://127.0.0.1:4321
 ```
 
 Then rename the root package and the Worker in `apps/site/wrangler.jsonc`, set `site` in
-`apps/site/astro.config.ts`, and replace the scopes in `.lvbt/commit-scopes.txt` with this
+`apps/site/astro.config.ts`, and replace the scopes in `.williecubed/commit-scopes.txt` with this
 repository's boundaries.
 
 ## Layout
@@ -28,5 +28,5 @@ repository's boundaries.
 `pnpm run deploy` builds and runs `wrangler deploy` for every app with a wrangler config;
 `.github/workflows/deploy.yml` does the same on every push to `main`.
 
-Lint, format, TypeScript, and test settings extend the `@lasvegasfortransit/*` packages from
-[`LasVegasForTransit/repository-tooling`](https://github.com/LasVegasForTransit/repository-tooling).
+Lint, format, TypeScript, and test settings extend the `@williecubed/*` packages from
+[`WillieCubed/repository-tooling`](https://github.com/WillieCubed/repository-tooling).

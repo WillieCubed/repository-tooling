@@ -25,7 +25,7 @@ D1 is used through prepared statements or Drizzle; the app picks one and does no
 ## Migrations
 
 - Migrations are append-only. A shipped migration is never edited; a correction is a new migration.
-  `willie check migrations` enforces it.
+  `cube check migrations` enforces it.
 - A migration ships in the same commit as the feature that needs it.
 - D1 migrations do not contain `BEGIN` or `COMMIT`, because D1 wraps each migration in a
   transaction.

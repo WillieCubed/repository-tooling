@@ -1,15 +1,15 @@
 {
   "extraKnownMarketplaces": {
-    "lvbt": {
+    "cube": {
       "source": {
         "source": "github",
-        "repo": "LasVegasForTransit/repository-tooling",
+        "repo": "WillieCubed/repository-tooling",
         "ref": "v0.5.1"
       }
     }
   },
   "enabledPlugins": {
-    "lvbt-contributions@lvbt": true
+    "willie-contributions@cube": true
   },
   "hooks": {
     "PostToolUse": [

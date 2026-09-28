@@ -1,14 +1,14 @@
 {
-  "name": "lvbt",
+  "name": "cube",
   "interface": {
-    "displayName": "Las Vegans for Better Transit"
+    "displayName": "WillieCubed"
   },
   "plugins": [
     {
-      "name": "lvbt-contributions",
+      "name": "willie-contributions",
       "source": {
         "source": "local",
-        "path": "../../plugins/lvbt-contributions"
+        "path": "../../plugins/willie-contributions"
       },
       "policy": {
         "installation": "AVAILABLE",

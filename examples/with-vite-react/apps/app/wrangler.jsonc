@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   // The Worker name. Rename it before the first deploy.
-  "name": "lvbt-app",
+  "name": "example-app",
   "compatibility_date": "2026-08-31",
   "preview_urls": true,
   "assets": {

@@ -5,14 +5,18 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
+import { standard } from '../standard.config.ts';
+
 const repositoryRoot = path.resolve(import.meta.dirname, '..');
 const helper = path.join(
   repositoryRoot,
-  'packages/cli/plugins/lvbt-contributions/scripts/github-create.mjs',
+  'packages/cli/plugins',
+  standard.pluginName,
+  'scripts/github-create.mjs',
 );
 
 async function bodyFile(body) {
-  const directory = await mkdtemp(path.join(tmpdir(), 'lvbt-github-create-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'standard-github-create-'));
   const file = path.join(directory, 'body.md');
   await writeFile(file, body);
   return file;
@@ -27,7 +31,7 @@ function run(args, env = {}) {
 }
 
 async function fakeGh(source) {
-  const directory = await mkdtemp(path.join(tmpdir(), 'lvbt-fake-gh-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'standard-fake-gh-'));
   await writeFile(path.join(directory, 'gh'), `#!/usr/bin/env node\n${source}`, {
     mode: 0o755,
   });
@@ -97,16 +101,16 @@ Add a useful improvement.
 });
 
 test('a readable pull request body passes the conventional title rule', async () => {
-  const file = await bodyFile(`# TL;DR
+  const file = await bodyFile(`## TL;DR
 
-People opening an LVBT pull request receive one readable contribution shape.
+People opening a pull request receive one readable contribution shape.
 
-# Overview of Changes
+## Changes
 
 The shared template keeps the summary, rationale, and unfinished product work
 visible without asking reviewers to infer the change from a file list.
 
-# Follow-ups
+## Follow-ups and Next Work
 
 - [ ] Publish the revised organization contribution template
 `);
@@ -125,15 +129,15 @@ visible without asking reviewers to infer the change from a file list.
 });
 
 test('a pull request title accepts the developer-experience scope', async () => {
-  const file = await bodyFile(`# TL;DR
+  const file = await bodyFile(`## TL;DR
 
 People can rely on one contribution policy across repositories.
 
-# Overview of Changes
+## Changes
 
 The repository-wide policy has one named owner.
 
-# Follow-ups
+## Follow-ups and Next Work
 
 - [ ] Publish the shared policy
 `);
@@ -150,15 +154,15 @@ The repository-wide policy has one named owner.
 });
 
 test('a pull request title rejects an invented scope', async () => {
-  const file = await bodyFile(`# TL;DR
+  const file = await bodyFile(`## TL;DR
 
 People can rely on one contribution policy across repositories.
 
-# Overview of Changes
+## Changes
 
 The repository-wide policy has one named owner.
 
-# Follow-ups
+## Follow-ups and Next Work
 
 - [ ] Publish the shared policy
 `);
@@ -176,15 +180,15 @@ The repository-wide policy has one named owner.
 });
 
 test('a non-conventional pull request title is rejected', async () => {
-  const file = await bodyFile(`# TL;DR
+  const file = await bodyFile(`## TL;DR
 
 Restore the workflow.
 
-# Overview of Changes
+## Changes
 
 The repository now follows the shared standard.
 
-# Follow-ups
+## Follow-ups and Next Work
 `);
   const result = run(['pr', '--title', 'Standardize everything', '--body-file', file, '--dry-run']);
 
@@ -237,15 +241,15 @@ Both imports remain.
 # Additional context
 `;
   const file = await bodyFile(body);
-  const directory = await mkdtemp(path.join(tmpdir(), 'lvbt-gh-log-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'standard-gh-log-'));
   const log = path.join(directory, 'calls.log');
   const bin = await fakeGh(`
 const fs = require('node:fs');
 fs.appendFileSync(process.env.FAKE_GH_LOG, process.argv.slice(2).join(' ') + '\\n');
 if (process.argv[2] === 'issue' && process.argv[3] === 'create') {
-  console.log('https://github.com/LasVegasForTransit/example/issues/1');
+  console.log('https://github.com/WillieCubed/example/issues/1');
 } else {
-  console.log(JSON.stringify({ number: 1, title: 'Changed title', body: '', url: 'https://github.com/LasVegasForTransit/example/issues/1' }));
+  console.log(JSON.stringify({ number: 1, title: 'Changed title', body: '', url: 'https://github.com/WillieCubed/example/issues/1' }));
 }
 `);
   const result = run(

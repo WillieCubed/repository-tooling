@@ -1,12 +1,12 @@
 {
-  "name": "@lasvegasfortransit/cli",
+  "name": "@williecubed/cli",
   "version": "0.5.1",
-  "description": "The lvbt command every LVBT repository runs for bootstrap, preflight, and deploy, plus the production platform setup, the shared git hooks, and the lvbt-contributions agent plugin.",
+  "description": "The cube command every personal repository runs for bootstrap, preflight, and deploy, plus the production platform setup, the shared git hooks, and the willie-contributions agent plugin.",
   "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LasVegasForTransit/repository-tooling.git",
+    "url": "https://github.com/WillieCubed/repository-tooling.git",
     "directory": "packages/cli"
   },
   "publishConfig": {
@@ -14,7 +14,7 @@
     "access": "restricted"
   },
   "bin": {
-    "lvbt": "src/cli.mjs"
+    "cube": "src/cli.mjs"
   },
   "files": [
     "src",

@@ -1,5 +1,5 @@
 {
-  "extends": "@lasvegasfortransit/typescript-config/react-library.json",
+  "extends": "@williecubed/typescript-config/react-library.json",
   "compilerOptions": {
     "types": ["vite/client", "node"]
   },

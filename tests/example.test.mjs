@@ -16,6 +16,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test, { after } from 'node:test';
 
+import { marketplace, standard } from '../standard.config.ts';
+
 // Every copy made below is removed when the file's tests finish, so repeated
 // runs do not accumulate example copies under the system temp directory.
 export const copies = [];
@@ -28,6 +30,8 @@ const cli = path.join(sourceRoot, 'packages/cli/src/cli.mjs');
 const version = JSON.parse(
   await readFile(path.join(sourceRoot, 'packages/cli/package.json'), 'utf8'),
 ).version;
+const scope = standard.npmScope;
+const cliName = standard.cliName;
 const sharedPackages =
   'cli eslint-config playwright-config prettier-config typescript-config vitest-config'.split(' ');
 
@@ -79,22 +83,19 @@ async function workspacePackages(root) {
  * including its `.bin`, so the example's own scripts run unchanged.
  */
 export async function installedCopy(name) {
-  const repository = await mkdtemp(path.join(tmpdir(), `lvbt-${name}-`));
+  const repository = await mkdtemp(path.join(tmpdir(), `standard-${name}-`));
   copies.push(repository);
   await cp(exampleDirectory(name), repository, { recursive: true });
   git(repository, 'init', '-q', '-b', 'main');
   const modules = path.join(repository, 'node_modules');
-  await mkdir(path.join(modules, '@lasvegasfortransit'), { recursive: true });
+  await mkdir(path.join(modules, scope), { recursive: true });
   for (const shared of sharedPackages) {
-    await symlink(
-      path.join(sourceRoot, 'packages', shared),
-      path.join(modules, '@lasvegasfortransit', shared),
-    );
+    await symlink(path.join(sourceRoot, 'packages', shared), path.join(modules, scope, shared));
   }
   const sourceModules = path.join(sourceRoot, 'node_modules');
   await symlink(path.join(sourceModules, '.bin'), path.join(modules, '.bin'));
   for (const entry of await readdir(sourceModules)) {
-    if (entry.startsWith('.') || entry === '@lasvegasfortransit') continue;
+    if (entry.startsWith('.') || entry === scope) continue;
     if (entry.startsWith('@')) {
       await mkdir(path.join(modules, entry), { recursive: true });
       for (const scoped of await readdir(path.join(sourceModules, entry))) {
@@ -137,18 +138,18 @@ for (const [name, { uses, deploys }] of Object.entries(examples)) {
       Object.assign(specifiers, manifest.dependencies, manifest.devDependencies);
     }
     for (const [dependency, range] of Object.entries(specifiers)) {
-      if (dependency.startsWith('@lasvegasfortransit/')) {
+      if (dependency.startsWith(`${scope}/`)) {
         assert.equal(range, version, `${dependency} must be pinned to ${version}`);
       }
     }
     for (const shared of uses) {
-      assert.ok(
-        specifiers[`@lasvegasfortransit/${shared}`],
-        `@lasvegasfortransit/${shared} must be a dependency`,
-      );
+      assert.ok(specifiers[`${scope}/${shared}`], `${scope}/${shared} must be a dependency`);
     }
     const settings = await json(path.join(example, '.claude/settings.json'));
-    assert.equal(settings.extraKnownMarketplaces.lvbt.source.ref, `v${version}`);
+    const known = settings.extraKnownMarketplaces[marketplace];
+    assert.equal(known.source.repo, `${standard.owner}/repository-tooling`);
+    assert.equal(known.source.ref, `v${version}`);
+    assert.equal(settings.enabledPlugins[`${standard.pluginName}@${marketplace}`], true);
   });
 
   test(`${name}: carries the same version catalog as the packages`, async () => {
@@ -186,14 +187,14 @@ for (const [name, { uses, deploys }] of Object.entries(examples)) {
     for (const script of scripts) {
       assert.ok(root.scripts[script], `root script ${script} must exist`);
     }
-    assert.equal(root.scripts.bootstrap, 'lvbt bootstrap');
+    assert.equal(root.scripts.bootstrap, `${cliName} bootstrap`);
     // pnpm install must succeed without a .git directory (a tarball, a container build stage).
     assert.match(root.scripts.prepare, /\|\| true$/);
     assert.equal(
       root.scripts.check,
-      'pnpm format:check && markdownlint-cli2 && lvbt check && turbo run lint check-types test validate',
+      `pnpm format:check && markdownlint-cli2 && ${cliName} check && turbo run lint check-types test validate`,
     );
-    if (deploys) assert.equal(root.scripts.deploy, 'lvbt deploy');
+    if (deploys) assert.equal(root.scripts.deploy, `${cliName} deploy`);
     for (const directory of await workspacePackages(example)) {
       const manifest = await json(path.join(example, directory, 'package.json'));
       for (const script of ['lint', 'check-types', 'test']) {
@@ -250,7 +251,7 @@ for (const [name, { uses, deploys }] of Object.entries(examples)) {
   });
 }
 
-test('lvbt check reports the file that breaks a shape rule', async () => {
+test('cube check reports the file that breaks a shape rule', async () => {
   const repository = await installedCopy('basic');
   await writeFile(path.join(repository, 'packages/example/src/greet.helper.ts'), 'export {};\n');
   // Astro endpoints such as src/pages/robots.txt.ts are routes, so the extra dot is allowed there.
@@ -308,7 +309,7 @@ test('lvbt check reports the file that breaks a shape rule', async () => {
   assert.doesNotMatch(result.stdout, /coverage\//);
 });
 
-test('lvbt check debt lets a newly adopted rule be recorded once but never lets a known rule grow', async () => {
+test('cube check debt lets a newly adopted rule be recorded once but never lets a known rule grow', async () => {
   const repository = await installedCopy('basic');
   const ledger = path.join(repository, 'packages/example/eslint-suppressions.json');
   const commit = (message) => {
@@ -414,7 +415,7 @@ test('source manifests use one published version rather than a development prere
   assert.equal(packageJson.version, version);
   assert.match(version, /^\d+\.\d+\.\d+$/, 'main must not use a development prerelease version');
   for (const name of ['eslint-config', 'prettier-config']) {
-    assert.equal(packageJson.devDependencies[`@lasvegasfortransit/${name}`], 'workspace:*');
+    assert.equal(packageJson.devDependencies[`${scope}/${name}`], 'workspace:*');
   }
   for (const name of sharedPackages) {
     const manifest = await json(path.join(sourceRoot, 'packages', name, 'package.json'));
@@ -447,6 +448,6 @@ test('generated repositories exclude the immutable vendored preset from formatti
       path.join(sourceRoot, 'examples', directory, '.prettierignore'),
       'utf8',
     );
-    assert.match(ignore, /^\.lvbt\/web-platform\/$/m);
+    assert.ok(ignore.split('\n').includes(`${standard.vendorDir}/`), directory);
   }
 });

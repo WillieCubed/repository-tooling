@@ -3,7 +3,7 @@ import { githubDoctor } from '../src/doctor-github.ts';
 import standard from '../../../standards/ruleset.json' with { type: 'json' };
 
 const target = {
-  repository: 'LasVegasForTransit/labs',
+  repository: 'WillieCubed/wpp',
   branch: 'main',
   environment: 'production',
   accountId: 'account',
@@ -33,7 +33,7 @@ const fixture: Record<string, unknown> = {
     ],
   },
   '/environments/production/variables': {
-    variables: [{ name: 'PUBLIC_LVBT_CWA_TOKEN', value: 'public-analytics-id' }],
+    variables: [{ name: 'PUBLIC_CWA_TOKEN', value: 'public-analytics-id' }],
   },
   '/environments/preview': { id: 42 },
   '/environments/preview/secrets': { secrets: [{ name: 'CLOUDFLARE_PREVIEW_API_TOKEN' }] },

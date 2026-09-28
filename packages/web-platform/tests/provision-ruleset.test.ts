@@ -10,7 +10,7 @@ test('creates and verifies the pinned repository ruleset once', async () => {
   const read = (endpoint: string) =>
     Promise.resolve(endpoint.endsWith('/rulesets') ? summary : details);
   const resource = provisionRepositoryRuleset(
-    { repository: 'LasVegasForTransit/labs', ruleset: standard },
+    { repository: 'WillieCubed/wpp', ruleset: standard },
     read,
     (method, endpoint, body) => {
       writes.push({ method, endpoint, body });
@@ -25,7 +25,7 @@ test('creates and verifies the pinned repository ruleset once', async () => {
   expect(writes).toEqual([
     {
       method: 'POST',
-      endpoint: 'repos/LasVegasForTransit/labs/rulesets',
+      endpoint: 'repos/WillieCubed/wpp/rulesets',
       body: standard,
     },
   ]);
@@ -38,7 +38,7 @@ test('updates the one named repository ruleset and rejects duplicates', async ()
   let details: unknown = { ...standard, rules: [] };
   const writes: { method: string; endpoint: string }[] = [];
   const resource = provisionRepositoryRuleset(
-    { repository: 'LasVegasForTransit/labs', ruleset: standard },
+    { repository: 'WillieCubed/wpp', ruleset: standard },
     (endpoint) => Promise.resolve(endpoint.endsWith('/rulesets') ? summaries : details),
     (method, endpoint) => {
       writes.push({ method, endpoint });
@@ -48,12 +48,10 @@ test('updates the one named repository ruleset and rejects duplicates', async ()
   );
 
   expect((await reconcileResources([resource], true)).ok).toBe(true);
-  expect(writes).toEqual([
-    { method: 'PUT', endpoint: 'repos/LasVegasForTransit/labs/rulesets/42' },
-  ]);
+  expect(writes).toEqual([{ method: 'PUT', endpoint: 'repos/WillieCubed/wpp/rulesets/42' }]);
 
   const duplicate = provisionRepositoryRuleset(
-    { repository: 'LasVegasForTransit/labs', ruleset: standard },
+    { repository: 'WillieCubed/wpp', ruleset: standard },
     () => Promise.resolve([...summaries, { ...summaries[0], id: 43 }]),
     () => Promise.resolve(),
   );
@@ -69,7 +67,7 @@ test('accepts provider fields added inside managed rule parameters', async () =>
     require_extra_approval_for_unattributed_changes: true,
   });
   const resource = provisionRepositoryRuleset(
-    { repository: 'LasVegasForTransit/labs', ruleset: standard },
+    { repository: 'WillieCubed/wpp', ruleset: standard },
     (endpoint) =>
       Promise.resolve(
         endpoint.endsWith('/rulesets')

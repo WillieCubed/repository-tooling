@@ -7,10 +7,10 @@ export function App() {
 
   return (
     <main className="mx-auto max-w-2xl p-8 font-sans text-gray-900">
-      <h1 className="text-3xl font-bold">LVBT app</h1>
+      <h1 className="text-3xl font-bold">Example app</h1>
       <p className="mt-4">
-        A Vite and React app on Cloudflare Workers, following the LVBT repository standard. Replace
-        this page.
+        A Vite and React app on Cloudflare Workers, following the WillieCubed repository standard.
+        Replace this page.
       </p>
       <button
         type="button"

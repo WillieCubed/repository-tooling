@@ -20,7 +20,7 @@ overrides:
   smol-toml: 1.8.0
   svgo: 4.1.0
 
-# The organization version baseline. Every LVBT repository carries this same
+# The organization version baseline. Every personal repository carries this same
 # catalog, so a package declares "catalog:" and two repositories cannot drift
 # onto different versions of one tool without it showing up as a change here.
 # Renovate keeps it current.

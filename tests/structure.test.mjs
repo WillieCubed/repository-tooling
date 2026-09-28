@@ -4,6 +4,8 @@ import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 
+import { commitScopes, standard } from '../standard.config.ts';
+
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
 
@@ -11,11 +13,11 @@ test('the pull request template stays human-readable and exact', async () => {
   const template = await read('community-health/pull_request_template.md');
   assert.equal(
     template,
-    `# TL;DR
+    `## TL;DR
 
-# Overview of Changes
+## Changes
 
-# Follow-ups
+## Follow-ups and Next Work
 `,
   );
   assert.doesNotMatch(template, /<!--/);
@@ -43,15 +45,14 @@ test('the organization registry contains every active repository', async () => {
   const registry = JSON.parse(await read('standards/repositories.json'));
   assert.deepEqual(registry.repositories.map(({ name }) => name).sort(), [
     '.github',
-    'analytics',
-    'labs',
+    'putin',
+    'reports',
     'repository-tooling',
     'template-basic',
     'template-with-astro',
     'template-with-vite-react',
-    'transit-mapper',
     'website',
-    'week-without-driving',
+    'wpp',
   ]);
   for (const entry of registry.repositories) {
     assert.ok(
@@ -74,15 +75,17 @@ test('the organization registry contains every active repository', async () => {
   }
 });
 
-test('every stable release since 0.2.6 has release notes', async () => {
+// Releases before 0.6.0 belong to the upstream standard this repository was forked from, and their
+// notes stay there; docs/reference/standard-config.md records the fork.
+test('every stable release since 0.6.0 has release notes', async () => {
   const { version } = JSON.parse(await read('package.json'));
   const tags = execFileSync('git', ['-C', root, 'tag', '--list', 'v*'], { encoding: 'utf8' })
     .split('\n')
     .filter((tag) => /^v\d+\.\d+\.\d+$/.test(tag));
   const versions = new Set([version, ...tags.map((tag) => tag.slice(1))]);
   for (const release of versions) {
-    const [major, minor, patch] = release.split('.').map(Number);
-    if (major === 0 && (minor < 2 || (minor === 2 && patch < 6))) continue;
+    const [major, minor] = release.split('.').map(Number);
+    if (major === 0 && minor < 6) continue;
     await access(
       path.join(root, `docs/reference/release-${release.replaceAll('.', '-')}.md`),
     ).catch(() =>
@@ -94,27 +97,24 @@ test('every stable release since 0.2.6 has release notes', async () => {
 });
 
 test('both harness manifests publish one plugin version', async () => {
-  const codex = JSON.parse(
-    await read('packages/cli/plugins/lvbt-contributions/.codex-plugin/plugin.json'),
-  );
-  const claude = JSON.parse(
-    await read('packages/cli/plugins/lvbt-contributions/.claude-plugin/plugin.json'),
-  );
-  assert.equal(codex.name, 'lvbt-contributions');
+  const plugin = `packages/cli/plugins/${standard.pluginName}`;
+  const codex = JSON.parse(await read(`${plugin}/.codex-plugin/plugin.json`));
+  const claude = JSON.parse(await read(`${plugin}/.claude-plugin/plugin.json`));
+  assert.equal(codex.name, standard.pluginName);
   assert.equal(claude.name, codex.name);
   assert.equal(claude.version, codex.version);
 });
 
-test('the source repository uses the TransitMapper package-manager contract', async () => {
+test('the source repository uses the standard package-manager contract', async () => {
   const packageJson = JSON.parse(await read('package.json'));
   const readme = await read('README.md');
   const agents = await read('AGENTS.md');
 
   assert.equal(packageJson.packageManager, 'pnpm@11.25.0');
-  assert.equal(packageJson.scripts.bootstrap, 'lvbt bootstrap');
-  assert.equal(packageJson.scripts.preflight, 'lvbt preflight');
+  assert.equal(packageJson.scripts.bootstrap, `${standard.cliName} bootstrap`);
+  assert.equal(packageJson.scripts.preflight, `${standard.cliName} preflight`);
   assert.equal(packageJson.scripts.build, 'pnpm check-types');
-  // Tolerant of a missing .git so `npx github:LasVegasForTransit/repository-tooling`
+  // Tolerant of a missing .git so `npx github:<owner>/repository-tooling`
   // can install this package outside a checkout to bootstrap a new repository.
   assert.equal(
     packageJson.scripts.prepare,
@@ -137,7 +137,7 @@ test('continuous integration uses the same pnpm setup contract', async () => {
   assert.match(setup, /pnpm\/action-setup@/);
   assert.match(setup, /cache: pnpm/);
   assert.match(setup, /registry-url: https:\/\/npm\.pkg\.github\.com/);
-  assert.match(setup, /scope: '@lasvegasfortransit'/);
+  assert.ok(setup.includes(`scope: '${standard.npmScope}'`));
   assert.match(setup, /pnpm install --frozen-lockfile/);
   assert.match(setup, /NODE_AUTH_TOKEN: \$\{\{ github\.token \}\}/);
 });
@@ -146,7 +146,7 @@ test('generated repositories authenticate GitHub Packages during installation', 
   for (const profile of ['basic', 'with-astro', 'with-vite-react']) {
     const setup = await read(`examples/${profile}/.github/actions/setup-node-pnpm/action.yml`);
     assert.match(setup, /registry-url: https:\/\/npm\.pkg\.github\.com/);
-    assert.match(setup, /scope: '@lasvegasfortransit'/);
+    assert.ok(setup.includes(`scope: '${standard.npmScope}'`));
     assert.match(setup, /NODE_AUTH_TOKEN: \$\{\{ github\.token \}\}/);
   }
 });
@@ -172,20 +172,17 @@ test('the source repository installs the shared commit-subject validator', async
 });
 
 test('the contribution policy leaves scopes to each repository', async () => {
-  const readme = await read('README.md');
-  const skill = await read(
-    'packages/cli/plugins/lvbt-contributions/skills/github-contribution/SKILL.md',
-  );
-  const scopes = await read('.lvbt/commit-scopes.txt');
-  const commitTypes = await read(
-    'packages/cli/plugins/lvbt-contributions/standards/commit-types.txt',
-  );
+  const agents = await read('AGENTS.md');
+  const plugin = `packages/cli/plugins/${standard.pluginName}`;
+  const skill = await read(`${plugin}/skills/github-contribution/SKILL.md`);
+  const scopes = await read(commitScopes);
+  const commitTypes = await read(`${plugin}/standards/commit-types.txt`);
 
-  assert.match(readme, /commit scopes are optional/i);
-  assert.match(readme, /\.lvbt\/commit-scopes\.txt/);
-  assert.match(readme, /repository scopes are complete local\s+policy/i);
-  assert.doesNotMatch(readme, /rules may add to\s+the organization standard/i);
-  assert.match(skill, /\.lvbt\/commit-scopes\.txt/);
+  assert.match(agents, /commit scopes are optional/i);
+  assert.ok(agents.includes(`\`${commitScopes}\``), `AGENTS.md names ${commitScopes}`);
+  assert.match(agents, /the complete\s+list of durable boundaries for this repository/i);
+  assert.doesNotMatch(agents, /rules may add to\s+the organization standard/i);
+  assert.ok(skill.includes(commitScopes), `the skill names ${commitScopes}`);
   assert.match(scopes, /^tooling$/m);
   assert.match(commitTypes, /^feat$/m);
 });

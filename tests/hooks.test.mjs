@@ -5,7 +5,13 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
-const pluginRoot = path.resolve(import.meta.dirname, '../packages/cli/plugins/lvbt-contributions');
+import { commitScopes, standard } from '../standard.config.ts';
+
+const pluginRoot = path.resolve(
+  import.meta.dirname,
+  '../packages/cli/plugins',
+  standard.pluginName,
+);
 const repositoryRoot = path.resolve(import.meta.dirname, '..');
 const subjectValidator = path.join(pluginRoot, 'scripts/validate-commit-subject.mjs');
 
@@ -24,14 +30,14 @@ function validateSubject(subject, cwd = repositoryRoot) {
 }
 
 async function repositoryWithScopes(scopes) {
-  const directory = await mkdtemp(path.join(tmpdir(), 'lvbt-commit-scopes-'));
-  await mkdir(path.join(directory, '.lvbt'));
-  await writeFile(path.join(directory, '.lvbt/commit-scopes.txt'), `${scopes.join('\n')}\n`);
+  const directory = await mkdtemp(path.join(tmpdir(), 'standard-commit-scopes-'));
+  await mkdir(path.dirname(path.join(directory, commitScopes)));
+  await writeFile(path.join(directory, commitScopes), `${scopes.join('\n')}\n`);
   return directory;
 }
 
 async function commitMessageFile(subject) {
-  const directory = await mkdtemp(path.join(tmpdir(), 'lvbt-commit-message-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'standard-commit-message-'));
   const file = path.join(directory, 'COMMIT_EDITMSG');
   await writeFile(file, `${subject}\n`);
   return file;
@@ -117,11 +123,11 @@ test('the shared validator reads scopes from the calling repository', async () =
 });
 
 test('the shared validator requires each repository to declare its scopes', async () => {
-  const repository = await mkdtemp(path.join(tmpdir(), 'lvbt-commit-scopes-'));
+  const repository = await mkdtemp(path.join(tmpdir(), 'standard-commit-scopes-'));
   const result = validateSubject('chore: standardize contribution tooling', repository);
 
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /\.lvbt\/commit-scopes\.txt/);
+  assert.ok(result.stderr.includes(commitScopes), result.stderr);
 });
 
 test('the shared validator rejects catch-all scopes', () => {
@@ -165,7 +171,7 @@ test('the source repository commit hook rejects an invented scope', async () => 
 });
 
 test('the pre-push hook clears repository-local Git variables before checks', async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'lvbt-pre-push-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'standard-pre-push-'));
   const resultFile = path.join(directory, 'result');
   const pnpm = path.join(directory, 'pnpm');
   await writeFile(

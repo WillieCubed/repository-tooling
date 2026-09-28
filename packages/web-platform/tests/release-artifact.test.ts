@@ -11,7 +11,7 @@ test('includes same-named data files outside the release marker location in the 
   try {
     await mkdir(path.join(directory, 'data'));
     await writeFile(path.join(directory, 'index.html'), '<h1>Map</h1>');
-    const data = path.join(directory, 'data/lvbt-release.json');
+    const data = path.join(directory, 'data/release.json');
     await writeFile(data, '{"value":1}');
     const first = await sealArtifact(directory, identity);
     await writeFile(data, '{"value":2}');
@@ -27,9 +27,9 @@ test('seals assets deterministically and detects changed bytes', async () => {
     await writeFile(path.join(directory, 'index.html'), '<h1>Map</h1>');
     const first = await sealArtifact(directory, identity);
     expect(await sealArtifact(directory, identity)).toEqual(first);
-    expect(
-      JSON.parse(await readFile(path.join(directory, 'map/lvbt-release.json'), 'utf8')),
-    ).toEqual(first);
+    expect(JSON.parse(await readFile(path.join(directory, 'map/release.json'), 'utf8'))).toEqual(
+      first,
+    );
     await writeFile(path.join(directory, 'index.html'), '<h1>Updated map</h1>');
     expect((await sealArtifact(directory, identity)).artifactHash).not.toBe(first.artifactHash);
   } finally {
@@ -43,9 +43,9 @@ test('supports prefixed static asset layouts and refuses symlinked content', asy
     await mkdir(path.join(directory, 'map'));
     await writeFile(path.join(directory, 'map/index.html'), '<h1>Map</h1>');
     const marker = await sealArtifact(directory, identity);
-    expect(
-      JSON.parse(await readFile(path.join(directory, 'map/lvbt-release.json'), 'utf8')),
-    ).toEqual(marker);
+    expect(JSON.parse(await readFile(path.join(directory, 'map/release.json'), 'utf8'))).toEqual(
+      marker,
+    );
     await symlink('/etc/hosts', path.join(directory, 'external'));
     await expect(sealArtifact(directory, identity)).rejects.toThrow(/symbolic link/);
   } finally {

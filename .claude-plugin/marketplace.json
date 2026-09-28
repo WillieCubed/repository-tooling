@@ -1,14 +1,14 @@
 {
-  "name": "lvbt",
+  "name": "cube",
   "owner": {
-    "name": "Las Vegans for Better Transit"
+    "name": "WillieCubed"
   },
   "plugins": [
     {
-      "name": "lvbt-contributions",
-      "description": "Create readable LVBT GitHub issues and pull requests.",
+      "name": "willie-contributions",
+      "description": "Create readable GitHub issues and pull requests in WillieCubed repositories.",
       "version": "0.5.1",
-      "source": "./packages/cli/plugins/lvbt-contributions"
+      "source": "./packages/cli/plugins/willie-contributions"
     }
   ]
 }

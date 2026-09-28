@@ -7,7 +7,7 @@ test('sets a missing environment secret without reading its value', async () => 
   let writes = 0;
   const resource = provisionEnvironmentSecret(
     {
-      repository: 'LasVegasForTransit/labs',
+      repository: 'WillieCubed/wpp',
       environment: 'production',
       name: 'CLOUDFLARE_API_TOKEN',
     },

@@ -5,11 +5,12 @@ import { mkdtemp, mkdir, readFile, rm, stat, symlink, writeFile } from 'node:fs/
 import os from 'node:os';
 import path from 'node:path';
 
-import { applyPreset, verifyPreset, fingerprint } from '../standards/web-platform.ts';
+import { standard } from '../standard.config.ts';
+import { applyPreset, fingerprint, LEGACY_SCOPE, verifyPreset } from '../standards/web-platform.ts';
 import { readCommit, readRelease } from '../standards/web-platform-source.ts';
 
 async function fixture(run) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'lvbt-preset-'));
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'standard-preset-'));
   try {
     await run(directory);
   } finally {
@@ -18,7 +19,13 @@ async function fixture(run) {
 }
 
 function preset(files) {
-  return { formatVersion: 1, preset: 'lvbt-web', release: 'v1.0.0', commit: 'a'.repeat(40), files };
+  return {
+    formatVersion: 1,
+    preset: standard.preset,
+    release: 'v1.0.0',
+    commit: 'a'.repeat(40),
+    files,
+  };
 }
 
 test('preserves executable hooks from the source release', () =>
@@ -27,7 +34,7 @@ test('preserves executable hooks from the source release', () =>
       ...preset({ 'hooks/commit-msg': '#!/bin/sh\n' }),
       executables: ['hooks/commit-msg'],
     });
-    assert.ok((await stat(path.join(root, '.lvbt/web-platform/hooks/commit-msg'))).mode & 0o111);
+    assert.ok((await stat(path.join(root, standard.vendorDir, 'hooks/commit-msg'))).mode & 0o111);
   }));
 
 test('vendors exact bytes and verifies them without a source repository', () =>
@@ -35,7 +42,7 @@ test('vendors exact bytes and verifies them without a source repository', () =>
     const bundle = preset({ 'catalog.json': '{"node":"24.20.0"}\n' });
     await applyPreset(root, bundle);
     assert.equal(
-      await readFile(path.join(root, '.lvbt/web-platform/catalog.json'), 'utf8'),
+      await readFile(path.join(root, standard.vendorDir, 'catalog.json'), 'utf8'),
       bundle.files['catalog.json'],
     );
     const metadata = await verifyPreset(root);
@@ -58,7 +65,7 @@ test('records an unpublished preset by commit without assigning a release', () =
 test('refuses to overwrite locally edited vendor files', () =>
   fixture(async (root) => {
     await applyPreset(root, preset({ 'catalog.json': '{}' }));
-    await writeFile(path.join(root, '.lvbt/web-platform/catalog.json'), 'edited');
+    await writeFile(path.join(root, standard.vendorDir, 'catalog.json'), 'edited');
     await assert.rejects(verifyPreset(root), /integrity/i);
     await assert.rejects(applyPreset(root, preset({ 'catalog.json': 'new' })), /integrity/i);
   }));
@@ -78,7 +85,10 @@ test('dry run leaves files unchanged and reports additions, changes, and removal
       consumerChanged: [],
     });
     await verifyPreset(root);
-    assert.equal(await readFile(path.join(root, '.lvbt/web-platform/shared.txt'), 'utf8'), 'first');
+    assert.equal(
+      await readFile(path.join(root, standard.vendorDir, 'shared.txt'), 'utf8'),
+      'first',
+    );
   }));
 
 test('rejects traversal before creating files', () =>
@@ -89,15 +99,15 @@ test('rejects traversal before creating files', () =>
 test('detects unexpected files', () =>
   fixture(async (root) => {
     await applyPreset(root, preset({ 'catalog.json': '{}' }));
-    await mkdir(path.join(root, '.lvbt/web-platform/extra'));
-    await writeFile(path.join(root, '.lvbt/web-platform/extra/file'), 'unexpected');
+    await mkdir(path.join(root, standard.vendorDir, 'extra'));
+    await writeFile(path.join(root, standard.vendorDir, 'extra/file'), 'unexpected');
     await assert.rejects(verifyPreset(root), /integrity/i);
   }));
 
 test('detects symbolic links rather than following them', () =>
   fixture(async (root) => {
     await applyPreset(root, preset({ 'catalog.json': '{}' }));
-    const file = path.join(root, '.lvbt/web-platform/catalog.json');
+    const file = path.join(root, standard.vendorDir, 'catalog.json');
     await rm(file);
     await writeFile(path.join(root, 'outside'), '{}');
     await symlink(path.join(root, 'outside'), file);
@@ -116,7 +126,7 @@ test('an applied update replaces removed files and is idempotent', () =>
       removed: [],
       consumerChanged: [],
     });
-    await assert.rejects(readFile(path.join(root, '.lvbt/web-platform/old')), { code: 'ENOENT' });
+    await assert.rejects(readFile(path.join(root, standard.vendorDir, 'old')), { code: 'ENOENT' });
   }));
 
 test('migrates only legacy platform package references', () =>
@@ -125,22 +135,25 @@ test('migrates only legacy platform package references', () =>
       path.join(root, 'package.json'),
       JSON.stringify({
         dependencies: {
-          '@lvbt/brand': 'workspace:*',
-          '@lvbt/cli': 'file:.lvbt/web-platform/packages/cli',
+          [`${LEGACY_SCOPE}/brand`]: 'workspace:*',
+          [`${LEGACY_SCOPE}/cli`]: `file:${standard.vendorDir}/packages/cli`,
         },
       }),
     );
-    await writeFile(path.join(root, 'prettier.config.mjs'), "import '@lvbt/prettier-config';\n");
+    await writeFile(
+      path.join(root, 'prettier.config.mjs'),
+      `import '${LEGACY_SCOPE}/prettier-config';\n`,
+    );
     const plan = await applyPreset(root, preset({ 'catalog.json': '{}' }));
     assert.deepEqual(plan.consumerChanged, ['package.json', 'prettier.config.mjs']);
-    assert.match(
-      await readFile(path.join(root, 'package.json'), 'utf8'),
-      /@lasvegasfortransit\/cli/,
-    );
-    assert.match(await readFile(path.join(root, 'package.json'), 'utf8'), /"@lvbt\/brand"/);
-    assert.match(
+    const manifest = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+    assert.deepEqual(Object.keys(manifest.dependencies), [
+      `${LEGACY_SCOPE}/brand`,
+      `${standard.npmScope}/cli`,
+    ]);
+    assert.equal(
       await readFile(path.join(root, 'prettier.config.mjs'), 'utf8'),
-      /@lasvegasfortransit\/prettier-config/,
+      `import '${standard.npmScope}/prettier-config';\n`,
     );
   }));
 

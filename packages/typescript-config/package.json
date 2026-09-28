@@ -1,11 +1,11 @@
 {
-  "name": "@lasvegasfortransit/typescript-config",
+  "name": "@williecubed/typescript-config",
   "version": "0.5.1",
-  "description": "TypeScript configurations every LVBT repository extends.",
+  "description": "TypeScript configurations every personal repository extends.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LasVegasForTransit/repository-tooling.git",
+    "url": "https://github.com/WillieCubed/repository-tooling.git",
     "directory": "packages/typescript-config"
   },
   "publishConfig": {

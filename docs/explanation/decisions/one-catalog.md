@@ -5,7 +5,7 @@ Decided 2026-09-28.
 ## Decision
 
 Every personal repository uses one pnpm version catalog, identical to `packages/cli/catalog.json`,
-and packages depend on `"catalog:"`. Versions stay exact. `willie check contract` fails when a
+and packages depend on `"catalog:"`. Versions stay exact. `cube check contract` fails when a
 repository's catalog differs, and a standard update changes every repository's versions in one
 reviewed pull request.
 

@@ -1,5 +1,5 @@
 /**
- * The shared Vitest configuration for every LVBT repository. Unit tests live
+ * The shared Vitest configuration for every personal repository. Unit tests live
  * under `tests/` and end in `.test.ts` or `.test.tsx`. End-to-end tests under
  * `tests/e2e/` end in `.spec.ts` and belong to Playwright, so Vitest never
  * collects them. A suite with no tests fails, so a mis-glob cannot pass CI
@@ -8,7 +8,7 @@
  * Spread it into a package's vitest.config.ts:
  *
  *   import { defineConfig } from 'vitest/config';
- *   import { sharedConfig } from '@lasvegasfortransit/vitest-config';
+ *   import { sharedConfig } from '@williecubed/vitest-config';
  *   export default defineConfig({ ...sharedConfig });
  *
  * @type {import("vitest/config").UserConfig}

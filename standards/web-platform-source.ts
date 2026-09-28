@@ -1,12 +1,17 @@
 import { execFileSync } from 'node:child_process';
 
+import { standard } from '../standard.config.ts';
 import type { WebPreset } from './web-platform.ts';
+
+/** The file that holds the owner's values; the vendored standards scripts import it. */
+export const STANDARD_CONFIG = 'standard.config.ts';
 
 const paths = [
   'packages',
   'examples/with-astro',
   'examples/with-vite-react',
   'standards',
+  STANDARD_CONFIG,
   'LICENSE',
 ];
 
@@ -30,7 +35,7 @@ function readPreset(repository: string, ref: string, release: string | null): We
   }
   if (!files['packages/cli/catalog.json'])
     throw new Error('Release has no organization dependency catalog.');
-  return { formatVersion: 1, preset: 'lvbt-web', release, commit, files, executables };
+  return { formatVersion: 1, preset: standard.preset, release, commit, files, executables };
 }
 
 export function readRelease(repository: string, release: string): WebPreset {

@@ -6,11 +6,11 @@ test('uploads a missing Worker once and verifies its provider identity', async (
   const workers: { id: string }[] = [];
   let uploads = 0;
   const resource = provisionWorkerPresence(
-    { name: 'lvbt-labs-map' },
+    { name: 'wpp-map' },
     () => Promise.resolve(workers),
     () => {
       uploads += 1;
-      workers.push({ id: 'lvbt-labs-map' });
+      workers.push({ id: 'wpp-map' });
       return Promise.resolve();
     },
   );
@@ -26,8 +26,8 @@ test('uploads a missing Worker once and verifies its provider identity', async (
 test('refuses duplicate Worker identities without uploading', async () => {
   let uploads = 0;
   const resource = provisionWorkerPresence(
-    { name: 'lvbt-labs-map' },
-    () => Promise.resolve([{ id: 'lvbt-labs-map' }, { id: 'lvbt-labs-map' }]),
+    { name: 'wpp-map' },
+    () => Promise.resolve([{ id: 'wpp-map' }, { id: 'wpp-map' }]),
     () => {
       uploads += 1;
       return Promise.resolve();
@@ -42,7 +42,7 @@ test('enables version previews without enabling the workers.dev route', async ()
   let settings = { enabled: false, previews_enabled: false };
   const writes: unknown[] = [];
   const resource = provisionWorkerPreviewUrls(
-    { name: 'lvbt-labs-home' },
+    { name: 'wpp-home' },
     () => Promise.resolve(settings),
     (next) => {
       writes.push(next);
@@ -53,7 +53,7 @@ test('enables version previews without enabling the workers.dev route', async ()
 
   expect((await reconcileResources([resource], false)).operations).toEqual([
     {
-      id: 'cloudflare.worker-previews.lvbt-labs-home',
+      id: 'cloudflare.worker-previews.wpp-home',
       before: { enabled: false, previews_enabled: false },
       after: { enabled: false, previews_enabled: true },
       status: 'planned',

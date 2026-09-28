@@ -2,7 +2,7 @@
 
 How a personal repository's documentation is laid out, which documents it must have, and how they
 are written. `pnpm check` enforces the layout, the required documents, and their required sections
-through `willie check documents` and markdownlint.
+through `cube check documents` and markdownlint.
 
 ## Layout
 
@@ -83,8 +83,8 @@ carry copies.
 
 ## Enforcement
 
-| Check                    | What fails it                                                   |
-| ------------------------ | --------------------------------------------------------------- |
-| markdownlint-cli2        | Style errors, lines over 100 characters, broken relative links  |
-| `willie check documents` | A missing required document, or a missing or misordered section |
-| `willie check filenames` | A document outside the layout, or a name that is not kebab-case |
+| Check                  | What fails it                                                   |
+| ---------------------- | --------------------------------------------------------------- |
+| markdownlint-cli2      | Style errors, lines over 100 characters, broken relative links  |
+| `cube check documents` | A missing required document, or a missing or misordered section |
+| `cube check filenames` | A document outside the layout, or a name that is not kebab-case |

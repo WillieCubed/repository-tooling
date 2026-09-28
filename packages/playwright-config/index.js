@@ -12,14 +12,14 @@ export const foregroundServerEnvironment = {
 };
 
 /**
- * The shared Playwright configuration for every LVBT repository. End-to-end
+ * The shared Playwright configuration for every personal repository. End-to-end
  * tests live under `tests/e2e/` and end in `.spec.ts`; every suite runs on one
  * desktop and one mobile Chromium profile; a failing test keeps its trace.
  *
  * Spread it into a package's playwright.config.ts and add the web server:
  *
  *   import { defineConfig } from '@playwright/test';
- *   import { sharedConfig } from '@lasvegasfortransit/playwright-config';
+ *   import { sharedConfig } from '@williecubed/playwright-config';
  *   export default defineConfig({
  *     ...sharedConfig,
  *     webServer: {

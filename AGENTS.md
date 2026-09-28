@@ -6,7 +6,7 @@ agent instructions. `CLAUDE.md` is a symlink to this file; edit this one.
 This repository is a pnpm workspace that follows Turborepo conventions. `packages/` holds the shared
 packages every personal repository installs: `eslint-config`, `typescript-config`,
 `prettier-config`, `vitest-config`, `playwright-config`, `web-platform`, the security packages
-(`access`, `edge-security`, `audit`, `data`), and `cli` (the `willie` command, the git hooks under
+(`access`, `edge-security`, `audit`, `data`), and `cli` (the `cube` command, the git hooks under
 `hooks/`, the contribution plugin under `plugins/`, and the version catalog in `catalog.json`).
 `examples/` holds the repositories the templates are published from; each is a complete, runnable
 Turborepo workspace, and a test proves it passes its own checks. The catalog in every

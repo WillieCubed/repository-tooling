@@ -1,5 +1,5 @@
 {
-  "name": "@lasvegasfortransit/app",
+  "name": "@williecubed/app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -17,10 +17,10 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@lasvegasfortransit/eslint-config": "0.5.1",
-    "@lasvegasfortransit/playwright-config": "0.5.1",
-    "@lasvegasfortransit/typescript-config": "0.5.1",
-    "@lasvegasfortransit/vitest-config": "0.5.1",
+    "@williecubed/eslint-config": "0.5.1",
+    "@williecubed/playwright-config": "0.5.1",
+    "@williecubed/typescript-config": "0.5.1",
+    "@williecubed/vitest-config": "0.5.1",
     "@playwright/test": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",

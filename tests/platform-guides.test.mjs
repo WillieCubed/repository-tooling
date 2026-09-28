@@ -13,6 +13,7 @@ import {
   turnstileGuide,
   zeroTrustGuide,
 } from '../packages/cli/src/lib/platform/guides.mjs';
+import { standard } from '../standard.config.ts';
 import { sampleManifest } from './support/platform.mjs';
 
 /**
@@ -24,34 +25,40 @@ import { sampleManifest } from './support/platform.mjs';
 
 const everyStep = (guide) => guide.steps.join('\n');
 
+const teamDomain = `${standard.cloudflare.accessTeam}.cloudflareaccess.com`;
+
 test('the Google sign-in guide gives the exact origin and redirect for the team domain', () => {
-  const steps = everyStep(
-    googleWorkspaceGuide('lvbt.cloudflareaccess.com', 'lasvegasfortransit.org'),
-  );
-  assert.match(steps, /exactly https:\/\/lvbt\.cloudflareaccess\.com$/m);
-  assert.ok(steps.includes('https://lvbt.cloudflareaccess.com/cdn-cgi/access/callback'));
-  assert.ok(steps.includes('lasvegasfortransit.org'));
+  const steps = everyStep(googleWorkspaceGuide('team.cloudflareaccess.com', 'example.org'));
+  assert.match(steps, /exactly https:\/\/team\.cloudflareaccess\.com$/m);
+  assert.ok(steps.includes('https://team.cloudflareaccess.com/cdn-cgi/access/callback'));
+  assert.ok(steps.includes('example.org'));
+});
+
+test("the Google sign-in guide defaults to the owner's team domain", () => {
+  const steps = everyStep(googleWorkspaceGuide(undefined, 'example.org'));
+  assert.match(steps, new RegExp(`exactly https://${teamDomain.replaceAll('.', '\\.')}$`, 'm'));
 });
 
 test('the team domain and the team name are never confused', () => {
   const guides = [zeroTrustGuide(sampleManifest()), teamDomainGuide('ACCESS_TEAM_DOMAIN')];
   for (const guide of guides) {
     const steps = everyStep(guide);
-    assert.ok(steps.includes('lvbt.cloudflareaccess.com'));
-    assert.ok(!steps.includes('lasvegasfortransit.cloudflareaccess.com'));
+    assert.ok(steps.includes(teamDomain));
+    // The team name is only a label, so no address is ever built from it.
+    assert.ok(!steps.includes(`${standard.owner}.cloudflareaccess.com`));
   }
   assert.match(everyStep(teamDomainGuide('ACCESS_TEAM_DOMAIN')), /Overview.*Account details/);
 });
 
 test('each Access destination is split into the subdomain, domain, and path the form asks for', () => {
-  assert.deepEqual(hostnameParts('lvwwd.org/api/admin/*', 'lvwwd.org'), {
+  assert.deepEqual(hostnameParts('willie.page/api/admin/*', 'willie.page'), {
     subdomain: '',
-    domain: 'lvwwd.org',
+    domain: 'willie.page',
     path: 'api/admin/*',
   });
-  assert.deepEqual(hostnameParts('staff.lasvegasfortransit.org', 'lasvegasfortransit.org'), {
-    subdomain: 'staff',
-    domain: 'lasvegasfortransit.org',
+  assert.deepEqual(hostnameParts('party.willie.page', 'willie.page'), {
+    subdomain: 'party',
+    domain: 'willie.page',
     path: '',
   });
 });

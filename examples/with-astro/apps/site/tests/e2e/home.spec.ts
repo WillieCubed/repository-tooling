@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { expectNoAccessibilityViolations } from '@lasvegasfortransit/playwright-config/accessibility';
-import { monitorPageHealth } from '@lasvegasfortransit/playwright-config/page-health';
+import { expectNoAccessibilityViolations } from '@williecubed/playwright-config/accessibility';
+import { monitorPageHealth } from '@williecubed/playwright-config/page-health';
 
 test('the home page has one main heading', async ({ page }) => {
   const health = monitorPageHealth(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('LVBT site');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Example site');
   await expectNoAccessibilityViolations(page);
   health.assertNoErrors();
 });

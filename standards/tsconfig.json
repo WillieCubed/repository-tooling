@@ -3,5 +3,5 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true
   },
-  "include": ["*.ts", "../packages/web-platform/src/**/*.ts"]
+  "include": ["*.ts", "../standard.config.ts", "../packages/web-platform/src/**/*.ts"]
 }

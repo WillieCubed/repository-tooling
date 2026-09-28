@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { presetRecord, standard, stateDir } from '../standard.config.ts';
 import { syncAstroTypesBeforeLint } from './astro-sync.ts';
 import {
   AGENT_WORKTREES,
@@ -50,17 +51,17 @@ async function readTree(directory: string, prefix = ''): Promise<Record<string, 
 
 export async function verifyPreset(root: string): Promise<PresetMetadata> {
   const metadata = JSON.parse(
-    await readFile(path.join(root, '.lvbt/web-platform.json'), 'utf8'),
+    await readFile(path.join(root, presetRecord), 'utf8'),
   ) as PresetMetadata;
-  const files = await readTree(path.join(root, '.lvbt/web-platform'));
+  const files = await readTree(path.join(root, standard.vendorDir));
   const executables: string[] = [];
   for (const name of Object.keys(files).sort()) {
-    if ((await stat(path.join(root, '.lvbt/web-platform', name))).mode & 0o111)
+    if ((await stat(path.join(root, standard.vendorDir, name))).mode & 0o111)
       executables.push(name);
   }
   if (
     metadata.formatVersion !== 1 ||
-    metadata.preset !== 'lvbt-web' ||
+    metadata.preset !== standard.preset ||
     (metadata.release !== null && !/^v\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/.test(metadata.release)) ||
     !/^[a-f0-9]{40}$/.test(metadata.commit) ||
     metadata.contentHash !== fingerprint(files) ||
@@ -77,7 +78,7 @@ function validateBundle(bundle: WebPreset): void {
   }
   if (
     bundle.formatVersion !== 1 ||
-    bundle.preset !== 'lvbt-web' ||
+    bundle.preset !== standard.preset ||
     (bundle.release !== null && !/^v\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/.test(bundle.release)) ||
     !/^[a-f0-9]{40}$/.test(bundle.commit)
   )
@@ -97,14 +98,13 @@ function validateBundle(bundle: WebPreset): void {
 }
 
 async function install(root: string, bundle: WebPreset): Promise<void> {
-  const base = path.join(root, '.lvbt');
-  const target = path.join(base, 'web-platform');
-  const staging = path.join(base, `web-platform-${randomUUID()}`);
+  const target = path.join(root, standard.vendorDir);
+  const staging = `${target}-${randomUUID()}`;
   const backup = `${staging}-backup`;
-  const metadataPath = path.join(base, 'web-platform.json');
+  const metadataPath = path.join(root, presetRecord);
   const metadata: PresetMetadata = {
     formatVersion: 1,
-    preset: 'lvbt-web',
+    preset: standard.preset,
     release: bundle.release,
     commit: bundle.commit,
     contentHash: fingerprint(bundle.files),
@@ -139,10 +139,10 @@ async function install(root: string, bundle: WebPreset): Promise<void> {
 export async function applyPreset(root: string, bundle: WebPreset, dryRun = false) {
   validateBundle(bundle);
   let previous: Record<string, string> = {};
-  if (existsSync(path.join(root, '.lvbt/web-platform.json'))) {
+  if (existsSync(path.join(root, presetRecord))) {
     await verifyPreset(root);
-    previous = await readTree(path.join(root, '.lvbt/web-platform'));
-  } else if (existsSync(path.join(root, '.lvbt/web-platform'))) {
+    previous = await readTree(path.join(root, standard.vendorDir));
+  } else if (existsSync(path.join(root, standard.vendorDir))) {
     throw new Error('Untracked preset directory exists; refusing to replace it.');
   }
   const names = Object.keys(bundle.files).sort();
@@ -183,6 +183,11 @@ const SKIPPED_DIRECTORIES = new Set([
   'playwright-report',
   'blob-report',
 ]);
+/**
+ * The package scope of the standard this one was forked from. A repository that started from it
+ * moves to this owner's packages; docs/reference/web-preset.md describes the migration.
+ */
+export const LEGACY_SCOPE = '@lasvegasfortransit';
 const LEGACY_PLATFORM_PACKAGES = [
   'cli',
   'eslint-config',
@@ -197,7 +202,7 @@ async function consumerFiles(root: string, relative = ''): Promise<string[]> {
   const directory = path.join(root, relative);
   const files: string[] = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (entry.name === '.lvbt' && relative === '') continue;
+    if (entry.name === stateDir && relative === '') continue;
     if (entry.isDirectory()) {
       const directory = path.join(relative, entry.name);
       // A nested checkout, such as an agent worktree under .claude/worktrees/, is another branch's,
@@ -222,7 +227,7 @@ async function migrateLegacyPackageScope(root: string, dryRun: boolean): Promise
     if (source === null || source.includes('\0')) continue;
     let next = source;
     for (const name of LEGACY_PLATFORM_PACKAGES)
-      next = next.replaceAll(`@lvbt/${name}`, `@lasvegasfortransit/${name}`);
+      next = next.replaceAll(`${LEGACY_SCOPE}/${name}`, `${standard.npmScope}/${name}`);
     if (next === source) continue;
     changed.push(relative.split(path.sep).join('/'));
     if (!dryRun) await writeFile(file, next);

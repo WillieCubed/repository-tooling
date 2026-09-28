@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
+import { standard } from '../standard.mjs';
+
 /**
  * Every workspace package declares the tasks the standard runs, every
  * dependency version comes from the catalog, and test material lives under
@@ -26,23 +28,24 @@ const IGNORED = new Set([
 
 const STANDARD_CATALOG = new URL('../../../catalog.json', import.meta.url);
 
+const SCOPE = `${standard.npmScope}/`;
+/** A package this standard publishes: its scope, then a plain package name. */
+const isStandardPackage = (name) =>
+  name.startsWith(SCOPE) && /^[a-z0-9-]+$/.test(name.slice(SCOPE.length));
+
 /** Version specifiers the standard permits besides the catalog. */
 function allowedRange(name, range) {
   return (
     range.startsWith('catalog:') ||
     range.startsWith('workspace:') ||
-    (/^@lasvegasfortransit\/[a-z0-9-]+$/.test(name) && /^\d+\.\d+\.\d+$/.test(range)) ||
+    (isStandardPackage(name) && /^\d+\.\d+\.\d+$/.test(range)) ||
     range.startsWith('link:')
   );
 }
 
 function vendoredRange(root, directory, name, range) {
-  if (!/^@lasvegasfortransit\/[a-z0-9-]+$/.test(name) || !range.startsWith('file:')) return false;
-  const expected = path.resolve(
-    root,
-    '.lvbt/web-platform/packages',
-    name.slice('@lasvegasfortransit/'.length),
-  );
+  if (!isStandardPackage(name) || !range.startsWith('file:')) return false;
+  const expected = path.resolve(root, standard.vendorDir, 'packages', name.slice(SCOPE.length));
   if (path.resolve(root, directory, range.slice('file:'.length)) !== expected) return false;
   try {
     return JSON.parse(readFileSync(path.join(expected, 'package.json'), 'utf8')).name === name;
@@ -89,16 +92,16 @@ export function catalogEntries(text) {
 
 /**
  * Shared catalog versions belong to the standard; a repository adds entries but never re-pins one.
- * These are warnings until standard v0.6.0, which moves the entries and fails on any that differ.
+ * These are warnings until standard v0.7.0, which moves the entries and fails on any that differ.
  */
 function catalogWarnings(root) {
-  const standard = JSON.parse(readFileSync(STANDARD_CATALOG, 'utf8')).catalog;
+  const catalog = JSON.parse(readFileSync(STANDARD_CATALOG, 'utf8')).catalog;
   const entries = catalogEntries(readFileSync(path.join(root, 'pnpm-workspace.yaml'), 'utf8'));
   return Object.entries(entries)
-    .filter(([name, version]) => Object.hasOwn(standard, name) && standard[name] !== version)
+    .filter(([name, version]) => Object.hasOwn(catalog, name) && catalog[name] !== version)
     .map(
       ([name, version]) =>
-        `warning: pnpm-workspace.yaml pins "${name}" to "${version}"; the standard's catalog has "${standard[name]}" (from v0.6.0 this fails)`,
+        `warning: pnpm-workspace.yaml pins "${name}" to "${version}"; the standard's catalog has "${catalog[name]}" (from v0.7.0 this fails)`,
     );
 }
 

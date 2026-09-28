@@ -17,7 +17,7 @@ fi
 
 # Filenames are checked against the staged tree, so a misnamed file is caught
 # at the commit rather than at push or in CI.
-if ! pnpm --silent exec lvbt check filenames --staged; then
+if ! pnpm --silent exec cube check filenames --staged; then
   printf '\n  Commit blocked: a source or test filename is out of contract.\n' >&2
   printf '    fix:  rename the file and update its imports\n\n' >&2
   exit 1

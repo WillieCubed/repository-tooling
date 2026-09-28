@@ -13,8 +13,8 @@
   },
   "packageRules": [
     {
-      "groupName": "LVBT repository standard",
-      "matchPackageNames": ["@lasvegasfortransit/*"]
+      "groupName": "WillieCubed repository standard",
+      "matchPackageNames": ["@williecubed/*"]
     },
     {
       "groupName": "dev dependencies (non-major)",

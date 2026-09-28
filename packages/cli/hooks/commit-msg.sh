@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
-# Validates the whole commit message against the organization grammar and the
-# repository's own scope list (.lvbt/commit-scopes.txt, read from the current
-# directory, which git sets to the repository root for hooks).
+# Validates the whole commit message against the shared grammar and the
+# repository's own scope list (.williecubed/commit-scopes.txt, read from the
+# current directory, which git sets to the repository root for hooks).
 set -eu
 
 MESSAGE_FILE="$1"
@@ -13,4 +13,4 @@ case "$SUBJECT" in
 esac
 
 HOOKS_DIR=$(cd "$(dirname "$0")" && pwd)
-exec node "$HOOKS_DIR/../plugins/lvbt-contributions/scripts/validate-commit-message.mjs" "$MESSAGE_FILE"
+exec node "$HOOKS_DIR/../plugins/willie-contributions/scripts/validate-commit-message.mjs" "$MESSAGE_FILE"

@@ -37,7 +37,7 @@ a lint error.
 - `no-console` allows `warn` and `error` only. `switch-exhaustiveness-check` is an error.
 - `@ts-ignore` and `@ts-nocheck` are banned. `@ts-expect-error` needs a description.
 - Existing findings in an adopting repository go into `eslint-suppressions.json`, and
-  `willie check debt` fails if that ledger grows.
+  `cube check debt` fails if that ledger grows.
 
 ## Environment
 
@@ -60,8 +60,8 @@ but never returned.
 ## Dependencies
 
 - One version catalog. Every repository's `pnpm-workspace.yaml` carries the catalog from
-  `packages/cli/catalog.json`, and packages depend on `"catalog:"`. `willie check contract` fails
-  when a repository's catalog differs.
+  `packages/cli/catalog.json`, and packages depend on `"catalog:"`. `cube check contract` fails when
+  a repository's catalog differs.
 - Versions are exact and change only through the pnpm CLI or a standard update, never by editing a
   manifest by hand.
 - A package version must be one day old before it installs (`minimumReleaseAge: 1440`).

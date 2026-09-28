@@ -1,5 +1,5 @@
 {
-  "name": "@lasvegasfortransit/example",
+  "name": "@williecubed/example",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,9 +16,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@lasvegasfortransit/eslint-config": "0.5.1",
-    "@lasvegasfortransit/typescript-config": "0.5.1",
-    "@lasvegasfortransit/vitest-config": "0.5.1",
+    "@williecubed/eslint-config": "0.5.1",
+    "@williecubed/typescript-config": "0.5.1",
+    "@williecubed/vitest-config": "0.5.1",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",

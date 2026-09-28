@@ -144,7 +144,7 @@ export async function uploadPreview(
   const previousVersion = exists ? await current() : null;
   if (target.mode !== 'temporary' && previousVersion === null)
     throw new Error('Version and staging previews require an existing deployment.');
-  const owner = `LVBT preview ${target.repository}#${target.pullRequest} `;
+  const owner = `Preview ${target.repository}#${target.pullRequest} `;
   if (previousVersion) {
     const version = z
       .object({

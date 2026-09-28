@@ -2,8 +2,9 @@
 
 The `willie-web` preset vendors an exact repository-tooling snapshot into
 `.williecubed/web-platform/`. It contains the shared packages, dependency catalog, Astro and React
-templates, and the updater. Consumer configuration imports these packages through local `file:`
-dependencies; shared rules remain owned by repository-tooling.
+templates, the updater, and the `standard.config.ts` the updater reads. Consumer configuration
+imports these packages through local `file:` dependencies; shared rules remain owned by
+repository-tooling.
 
 Published template repositories receive this snapshot automatically. The publication workflow copies
 the authoritative example, applies the exact release tag, rewrites its `@williecubed/*`

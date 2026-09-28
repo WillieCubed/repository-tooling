@@ -3,7 +3,7 @@ import { reconcileResources } from '../src/provision-reconcile.ts';
 import { provisionRepository } from '../src/provision-repository.ts';
 
 const desired = {
-  full_name: 'LasVegasForTransit/new-lab',
+  full_name: 'example-org/new-lab',
   private: false,
   archived: false,
   default_branch: 'main',
@@ -31,7 +31,7 @@ test('creates a missing public organization repository once', async () => {
   expect(writes).toEqual([
     {
       method: 'POST',
-      endpoint: 'orgs/LasVegasForTransit/repos',
+      endpoint: 'orgs/example-org/repos',
       body: {
         name: 'new-lab',
         private: false,
@@ -60,5 +60,5 @@ test('reconciles managed settings on an existing repository', async () => {
   );
 
   expect((await reconcileResources([resource], true)).ok).toBe(true);
-  expect(writes).toEqual([{ method: 'PATCH', endpoint: 'repos/LasVegasForTransit/new-lab' }]);
+  expect(writes).toEqual([{ method: 'PATCH', endpoint: 'repos/example-org/new-lab' }]);
 });

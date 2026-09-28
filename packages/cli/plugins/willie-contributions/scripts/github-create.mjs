@@ -117,9 +117,9 @@ if (options.kind === 'issue') {
   if (subjectError) {
     fail(subjectError);
   }
-  validateSections(body, ['TL;DR', 'Overview of Changes'], ['Follow-ups']);
-  if (!headings(body).some(({ title }) => title === 'Follow-ups')) {
-    fail('Missing required section "Follow-ups".');
+  validateSections(body, ['TL;DR', 'Changes'], ['Follow-ups and Next Work']);
+  if (!headings(body).some(({ title }) => title === 'Follow-ups and Next Work')) {
+    fail('Missing required section "Follow-ups and Next Work".');
   }
 }
 

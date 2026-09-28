@@ -60,7 +60,7 @@ export function provisionAnalytics(
   providers: AnalyticsProviders,
 ): ProvisionResource[] {
   const target = targetSchema.parse(input);
-  const variableName = 'PUBLIC_LVBT_CWA_TOKEN';
+  const variableName = 'PUBLIC_CWA_TOKEN';
   const endpoint = `repos/${target.repository}/environments/${encodeURIComponent(target.environment)}/variables`;
   const loadToken = async () => analyticsToken(await providers.readSites(), target.hostname);
   return [

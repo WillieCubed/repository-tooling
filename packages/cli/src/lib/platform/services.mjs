@@ -3,6 +3,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { standard } from '../standard.mjs';
+
 /**
  * The outside world the platform command talks to, behind small interfaces
  * so tests replace them: a command runner, the Cloudflare API, and DNS. Secret
@@ -180,7 +182,7 @@ export function dnsResolver(request = fetch) {
  */
 export function confirmationFile(env = process.env) {
   const base = env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-  return path.join(base, 'lvbt', 'confirmations.json');
+  return path.join(base, standard.cliName, 'confirmations.json');
 }
 
 export function confirmationStore(file = confirmationFile()) {

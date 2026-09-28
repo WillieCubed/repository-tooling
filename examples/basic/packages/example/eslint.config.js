@@ -1,3 +1,3 @@
-import { config } from '@lasvegasfortransit/eslint-config/base';
+import { config } from '@williecubed/eslint-config/base';
 
 export default config;

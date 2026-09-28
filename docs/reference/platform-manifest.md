@@ -9,7 +9,7 @@ under `.williecubed/`, because that directory is vendored.
 
 `pnpm preflight --production` compares the manifest with what exists and prints a readiness report.
 `pnpm bootstrap --production` sets up what is missing. `pnpm check` validates the manifest's shape
-on every commit through `willie check platform`. The [command reference](cli.md#production-checks)
+on every commit through `cube check platform`. The [command reference](cli.md#production-checks)
 describes the commands; this page describes the file.
 
 The schema ships in `@williecubed/cli` as `platform.schema.json`. Point `$schema` at it so an editor
@@ -249,7 +249,7 @@ its service is set up.
 
 ## Rules the schema cannot express
 
-`willie check platform` also fails when a name is declared twice, when a resource feeds a secret or
+`cube check platform` also fails when a name is declared twice, when a resource feeds a secret or
 var the manifest does not declare, when a fed secret does not target the Worker, when an Access
 application allows a Google group without the `google-apps` identity provider, when a GitHub target
 has no `github.repository`, and when a `pattern` is not a valid regular expression.

@@ -135,12 +135,12 @@ export async function cloudflareDoctor(target: CloudflareTarget, read: Cloudflar
     ),
     await check(
       'domain',
-      'The Labs custom domain belongs to the home Worker in the declared zone.',
+      'The site custom domain belongs to the home Worker in the declared zone.',
       async () => validDomain(await domains(), target),
     ),
     await check(
       'routes',
-      'Home owns the catchall; every published lab owns its exact and subtree routes without conflicting patterns.',
+      'Home owns the catchall; every published app owns its exact and subtree routes without conflicting patterns.',
       async () => validRoutes(await read.list(`${zone}/workers/routes`), target),
     ),
     await check(
@@ -148,7 +148,7 @@ export async function cloudflareDoctor(target: CloudflareTarget, read: Cloudflar
       'The Worker custom domain has Cloudflare-managed DNS and a certificate.',
       async () => validDns(await domains(), target),
     ),
-    await check('workers', 'Every published lab has its declared Worker.', async () => {
+    await check('workers', 'Every published app has its declared Worker.', async () => {
       const workers = z
         .array(z.object({ id: z.string() }))
         .parse(await read.list(`${account}/workers/scripts`));
@@ -170,7 +170,7 @@ export async function cloudflareDoctor(target: CloudflareTarget, read: Cloudflar
         );
       },
     ),
-    await check('analytics', 'One Web Analytics site includes the Labs hostname.', async () =>
+    await check('analytics', 'One Web Analytics site includes the site hostname.', async () =>
       validAnalytics(await read.list(`${account}/rum/site_info/list`), target.hostname),
     ),
   ];

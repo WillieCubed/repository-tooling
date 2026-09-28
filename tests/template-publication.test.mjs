@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
+import { standard } from '../standard.config.ts';
 import { materializeTemplate } from '../standards/template-publication.ts';
 import { verifyPreset } from '../standards/web-platform.ts';
 
@@ -44,12 +45,12 @@ function assertVendoredDependencies(target, file, manifest) {
   const fields = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
   const dependencies = fields.flatMap((field) => Object.entries(manifest[field] ?? {}));
   for (const [name, specifier] of dependencies) {
-    if (!name.startsWith('@lasvegasfortransit/')) continue;
-    const packageName = name.slice('@lasvegasfortransit/'.length);
+    if (!name.startsWith(`${standard.npmScope}/`)) continue;
+    const packageName = name.slice(`${standard.npmScope}/`.length);
     assert.ok(specifier.startsWith('file:'), `${file}: ${name} must use a file dependency`);
     assert.equal(
       path.resolve(path.dirname(file), specifier.slice('file:'.length)),
-      path.join(target, '.lvbt/web-platform/packages', packageName),
+      path.join(target, standard.vendorDir, 'packages', packageName),
     );
   }
 }
@@ -98,7 +99,7 @@ test('template publication respects protected branches through a reviewed pull r
 });
 
 test('template publication vendors one exact release and is byte-for-byte idempotent', async (t) => {
-  const fixture = await mkdtemp(path.join(os.tmpdir(), 'lvbt-template-publication-'));
+  const fixture = await mkdtemp(path.join(os.tmpdir(), 'standard-template-publication-'));
   t.after(() => rm(fixture, { recursive: true, force: true }));
   const source = path.join(fixture, 'source');
   execFileSync('git', ['clone', '--quiet', '--shared', root, source]);
@@ -111,14 +112,9 @@ test('template publication vendors one exact release and is byte-for-byte idempo
     const metadata = await verifyPreset(target);
     assert.equal(metadata.release, 'v99.0.0');
     const rootManifest = JSON.parse(await readFile(path.join(target, 'package.json'), 'utf8'));
-    assert.equal(
-      rootManifest.scripts['standards:update'],
-      'node .lvbt/web-platform/standards/web-platform-cli.ts update',
-    );
-    assert.equal(
-      rootManifest.scripts['standards:check'],
-      'node .lvbt/web-platform/standards/web-platform-cli.ts check',
-    );
+    const cli = `node ${standard.vendorDir}/standards/web-platform-cli.ts`;
+    assert.equal(rootManifest.scripts['standards:update'], `${cli} update`);
+    assert.equal(rootManifest.scripts['standards:check'], `${cli} check`);
     assert.match(rootManifest.scripts.check, /^pnpm standards:check && /);
 
     for (const [file, manifest] of await manifests(target))

@@ -1,13 +1,15 @@
+import { setupTokenVariable } from '../standard.mjs';
+
 /**
  * The shape every plan item shares. An item's `level` decides whether it
  * blocks production: `required` items fail the check, while `later` (a
  * feature not built yet) and `recommended` items only warn. `action` is what
- * `lvbt bootstrap --production` does about it; a `manual` action carries
+ * `cube bootstrap --production` does about it; a `manual` action carries
  * dashboard steps instead.
  */
 
 export const SETUP = 'pnpm bootstrap --production';
-export const TOKEN_HINT = `needs a Cloudflare API token: run ${SETUP}, or set LVBT_CLOUDFLARE_SETUP_TOKEN`;
+export const TOKEN_HINT = `needs a Cloudflare API token: run ${SETUP}, or set ${setupTokenVariable}`;
 export const GH_HINT = 'sign in: gh auth login';
 
 export function item(fields) {
