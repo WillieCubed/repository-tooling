@@ -62,6 +62,16 @@ await page.goto('/');
 health.assertNoErrors();
 ```
 
+A test for a page that should return an error status names the status it expects. The browser still
+logs that document's response as a console error; the monitor leaves that one out and reports every
+other failure:
+
+```ts
+const health = monitorPageHealth(page, { expectedDocumentStatus: 404 });
+await page.goto('/nowhere');
+health.assertNoErrors();
+```
+
 ```js
 // prettier.config.js (repository root)
 import config from '@williecubed/prettier-config';
