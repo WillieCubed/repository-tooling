@@ -18,9 +18,9 @@ repository created from the example, reached by copying files from it.
 In the root `package.json`, add the dev dependencies and the standard scripts exactly as
 `examples/basic/package.json` declares them (`bootstrap`, `preflight`, `check`, `check:fix`,
 `format`, `format:check`, `lint`, `check-types`, `test`, `build`, `dev`, `prepare`). In each
-workspace package, add `@lasvegasfortransit/eslint-config`, `@lasvegasfortransit/typescript-config`,
-and `@lasvegasfortransit/vitest-config` as `examples/basic/packages/example/package.json` does, and
-give it `lint`, `check-types`, `test`, and `build` scripts.
+workspace package, add `@williecubed/eslint-config`, `@williecubed/typescript-config`, and
+`@williecubed/vitest-config` as `examples/basic/packages/example/package.json` does, and give it
+`lint`, `check-types`, `test`, and `build` scripts.
 
 Copy the `catalog:` block of `examples/basic/pnpm-workspace.yaml` into yours and switch tool
 versions to `catalog:`. Copy `turbo.json` if the repository has none.
@@ -38,7 +38,7 @@ Copy these from the example, overwriting your versions:
 
 Merge these by hand, keeping what the repository already has:
 
-- `.claude/settings.json`: the `lvbt` marketplace entry and `enabledPlugins`
+- `.claude/settings.json`: the `willie` marketplace entry and `enabledPlugins`
 - `.github/workflows/ci.yml`: a job named `Validate` that runs `pnpm check`
 - `AGENTS.md`: the standard paragraphs above your own
 
@@ -48,15 +48,14 @@ the shared one.
 
 ## 3. Remove the old mechanism
 
-If the repository was adopted before v0.2.0, delete `plugins/lvbt-contributions/`,
-`.lvbt/repository-tooling.json`, `scripts/check-repository-tooling.ts`, and the
-`check:repository-tooling` script. Keep `.lvbt/commit-scopes.txt`.
+If the repository was adopted before v0.2.0, delete `plugins/willie-contributions/`,
+`.williecubed/repository-tooling.json`, `scripts/check-repository-tooling.ts`, and the
+`check:repository-tooling` script. Keep `.williecubed/commit-scopes.txt`.
 
 ## 4. Verify and commit
 
 ```bash
 pnpm bootstrap
 pnpm check
-git add -A
-git commit -m "chore(dx): adopt the LVBT repository standard"
+git restore --staged . && git add -A && git commit -m "chore(dx): adopt the repository standard"
 ```

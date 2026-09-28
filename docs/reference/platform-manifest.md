@@ -5,19 +5,19 @@ production: its Cloudflare Worker, D1 databases, R2 buckets, Turnstile widgets, 
 email sending domain, secrets, vars, GitHub environment secrets, and the values that must never be
 set there. The repository owns it. It lives next to the app's production `wrangler.jsonc`, usually
 at `apps/<app>/platform.json`, or at the repository root for a single-app repository. It never lives
-under `.lvbt/`, because that directory is vendored.
+under `.williecubed/`, because that directory is vendored.
 
 `pnpm preflight --production` compares the manifest with what exists and prints a readiness report.
 `pnpm bootstrap --production` sets up what is missing. `pnpm check` validates the manifest's shape
-on every commit through `lvbt check platform`. The [command reference](cli.md#production-checks)
+on every commit through `willie check platform`. The [command reference](cli.md#production-checks)
 describes the commands; this page describes the file.
 
-The schema ships in `@lasvegasfortransit/cli` as `platform.schema.json`. Point `$schema` at it so an
-editor completes and checks the fields as you type:
+The schema ships in `@williecubed/cli` as `platform.schema.json`. Point `$schema` at it so an editor
+completes and checks the fields as you type:
 
 ```json
 {
-  "$schema": "../../node_modules/@lasvegasfortransit/cli/platform.schema.json",
+  "$schema": "../../node_modules/@williecubed/cli/platform.schema.json",
   "version": 1,
   "name": "example.org",
   "cloudflare": {
@@ -42,8 +42,8 @@ editor completes and checks the fields as you type:
 }
 ```
 
-The complete lvwwd.org manifest in `LasVegasForTransit/week-without-driving` at
-`apps/site/platform.json` uses every section.
+WPP's manifest at `apps/site/platform.json` in `WillieCubed/wpp` is the reference: a Worker, a D1
+database, a KV namespace, an Access application, secrets, and zone rules.
 
 ## Top-level fields
 
@@ -51,12 +51,13 @@ The complete lvwwd.org manifest in `LasVegasForTransit/week-without-driving` at
 | ------------ | -------- | ------------------------------------------------------------------------ |
 | `$schema`    | no       | The path to `platform.schema.json`, for editors.                         |
 | `version`    | yes      | Always `1`.                                                              |
-| `name`       | yes      | What people call the production site, such as `lvwwd.org`.               |
+| `name`       | yes      | What people call the production site, such as `party.willie.page`.       |
 | `cloudflare` | yes      | The account, zone, and Worker. See below.                                |
 | `d1`         | no       | D1 databases the Worker binds.                                           |
 | `r2`         | no       | R2 buckets the Worker binds.                                             |
 | `turnstile`  | no       | Turnstile widgets.                                                       |
 | `access`     | no       | Cloudflare Access applications.                                          |
+| `zoneRules`  | no       | Bot Fight Mode and rate-limit rules scoped to the app's hostname.        |
 | `email`      | no       | Domains the Worker sends email from.                                     |
 | `secrets`    | no       | Secret values on the Worker or in GitHub environments. Never the values. |
 | `vars`       | no       | Plain-text vars that must be in the wrangler config.                     |
@@ -68,7 +69,7 @@ The complete lvwwd.org manifest in `LasVegasForTransit/week-without-driving` at
 | Field            | Required | Meaning                                                                                 |
 | ---------------- | -------- | --------------------------------------------------------------------------------------- |
 | `accountId`      | yes      | The 32-character ID of the account that owns the Worker and the zone.                   |
-| `zone.name`      | yes      | The zone, such as `lvwwd.org`.                                                          |
+| `zone.name`      | yes      | The zone, such as `willie.page`.                                                        |
 | `zone.id`        | yes      | The zone's 32-character ID, from the zone's Overview page in the dashboard.             |
 | `worker`         | yes      | The production Worker's name. It must equal `name` in the wrangler config.              |
 | `wranglerConfig` | no       | The production wrangler config, relative to the manifest. Defaults to `wrangler.jsonc`. |
@@ -112,23 +113,44 @@ existing widget to cover more domains, it keeps the widget's other settings.
 | `name`             | yes      | The application's name in Zero Trust.                                                                                                                                        |
 | `destinations`     | yes      | Host and path pairs to protect. List both `example.org/admin` and `example.org/admin/*`: a path does not cover the paths under it, and a wildcard does not cover its parent. |
 | `sessionDuration`  | no       | How long a sign-in lasts, such as `24h`. Defaults to `24h`.                                                                                                                  |
-| `identityProvider` | yes      | `google-apps` for Google Workspace, or `onetimepin` for an emailed code.                                                                                                     |
-| `allow`            | yes      | Exactly one of `googleGroup` (a Workspace group address), `emailDomain`, or `emails`.                                                                                        |
+| `identityProvider` | yes      | `onetimepin` for an emailed code (the default for personal repositories), `google` for Google accounts, or `google-apps` for Google Workspace.                               |
+| `allow`            | yes      | Exactly one of `emails`, `emailDomain`, or `googleGroup` (a Workspace group address).                                                                                        |
 | `teamDomainSecret` | yes      | The Worker secret that carries the Zero Trust team domain.                                                                                                                   |
 | `audienceSecret`   | yes      | The Worker secret that carries the application's audience (AUD) tag.                                                                                                         |
 
-Setup creates a reusable policy named `<name> allow` and the application, with instant sign-in
-through the one identity provider, then stores the new audience tag on the Worker straight away,
-since any older one belongs to another application. It stores the team domain only when the
-`teamDomainSecret` is not set yet. The check fails when the application does not protect a declared
-path, has another session length, offers another identity provider, lacks an allow policy for the
-declared people, or has an allow policy that lets everyone in; fixing that last one detaches the
-policy that lets everyone in. Turning on Cloudflare One (Zero Trust), connecting Google Workspace,
-and creating a `googleGroup` have no API, so setup shows the dashboard steps for them. Setup cannot
-read Google Groups either, so it asks the person to confirm the group exists and remembers a yes on
-that computer; until then, the group is reported as a warning. When Cloudflare One is already on,
-the report shows its team domain, such as `lvbt.cloudflareaccess.com`, and its team name, and skips
-those steps.
+Setup creates a reusable policy named `<name> allow` for the declared people, then the application,
+with instant sign-in through the one identity provider, then stores the new audience tag on the
+Worker straight away, since any older one belongs to another application. It stores the team domain
+only when the `teamDomainSecret` is not set yet. The check fails when the application does not
+protect a declared path, has another session length, offers another identity provider, lacks an
+allow policy for the declared people, or has an allow policy that lets everyone in; fixing that last
+one detaches the policy that lets everyone in.
+
+When the account has no Zero Trust organization yet, setup creates one with the team domain from the
+standard's defaults, and when the declared identity provider is missing, setup adds it. Both have
+Cloudflare API endpoints, so no dashboard step is needed. `onetimepin` needs nothing else. A
+`google` provider needs an OAuth client id and secret, which the manifest lists as secrets with
+steps. Setup cannot read Google Groups, so for a `googleGroup` it asks the person to confirm the
+group exists and remembers a yes on that computer; until then, the group is reported as a warning.
+
+## `zoneRules`
+
+Protection that runs at the zone, before the Worker, so a blocked request costs nothing.
+
+| Field                   | Required | Meaning                                                                             |
+| ----------------------- | -------- | ----------------------------------------------------------------------------------- |
+| `botFightMode`          | no       | `true` to require Bot Fight Mode on the zone.                                       |
+| `rateLimits`            | no       | Rate-limit rules, each scoped to the app's hostname.                                |
+| `rateLimits[].name`     | yes      | The rule's name in the dashboard, such as `Throttle RSVP writes`.                   |
+| `rateLimits[].paths`    | yes      | Path prefixes the rule counts, such as `/rsvp/`.                                    |
+| `rateLimits[].requests` | yes      | Requests allowed per period from one IP address.                                    |
+| `rateLimits[].period`   | yes      | The counting period in seconds. The free plan allows only `10`.                     |
+| `rateLimits[].blockFor` | yes      | How long a blocked IP address stays blocked, in seconds. The free plan allows `10`. |
+
+Every rule includes a hostname condition for the app. A zone such as `willie.page` carries several
+apps, and a rule without the hostname would throttle the other apps' paths too. The check fails when
+a declared rule is missing, has different limits, or lacks the hostname condition. The in-Worker
+rate-limit binding stays the real per-client limit; the zone rule stops floods.
 
 ## `email`
 
@@ -173,7 +195,9 @@ is never left guessing where the value comes from; the
 [set-up guide](../how-to/set-up-production.md#what-to-enter-in-each-dashboard) has reviewed steps
 for the common ones to copy. A value a Turnstile widget or Access application feeds is asked for
 only when setup cannot read it, and then with the standard's own steps, which walk through creating
-the resource.
+the resource. Prefer `generate` or a value a created resource feeds over a typed secret: every typed
+secret is a step a person repeats when production is rebuilt, as
+[Rebuilding from source](../explanation/continuity.md) explains.
 
 Setup hides only credentials. A secret marked `"sensitive": false` is typed with visible input, and
 its value is printed when setup stores it and shown in the report beside "is set", as the value that
@@ -225,7 +249,7 @@ its service is set up.
 
 ## Rules the schema cannot express
 
-`lvbt check platform` also fails when a name is declared twice, when a resource feeds a secret or
+`willie check platform` also fails when a name is declared twice, when a resource feeds a secret or
 var the manifest does not declare, when a fed secret does not target the Worker, when an Access
 application allows a Google group without the `google-apps` identity provider, when a GitHub target
 has no `github.repository`, and when a `pattern` is not a valid regular expression.

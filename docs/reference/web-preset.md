@@ -1,16 +1,16 @@
 # Web preset
 
-The `lvbt-web` preset vendors an exact repository-tooling snapshot into `.lvbt/web-platform/`. It
-contains the shared packages, dependency catalog, Astro and React templates, and the updater.
-Consumer configuration imports these packages through local `file:` dependencies; shared rules
-remain owned by repository-tooling.
+The `willie-web` preset vendors an exact repository-tooling snapshot into
+`.williecubed/web-platform/`. It contains the shared packages, dependency catalog, Astro and React
+templates, and the updater. Consumer configuration imports these packages through local `file:`
+dependencies; shared rules remain owned by repository-tooling.
 
 Published template repositories receive this snapshot automatically. The publication workflow copies
-the authoritative example, applies the exact release tag, rewrites its `@lasvegasfortransit/*`
+the authoritative example, applies the exact release tag, rewrites its `@williecubed/*`
 dependencies, and generates the lockfile. Repeating publication for the same example and tag is
 idempotent.
 
-`.lvbt/web-platform.json` records the format version, preset name, source commit, and SHA-256
+`.williecubed/web-platform.json` records the format version, preset name, source commit, and SHA-256
 content hash. A published snapshot also records its release tag. An unpublished snapshot records
 `null` as its release. The hash covers the sorted file paths and exact UTF-8 contents. Integrity
 validation reads local files only and rejects edited, missing, additional, and symbolic-link files.
@@ -30,20 +30,20 @@ pnpm install
 pnpm check
 ```
 
-The updater fetches one explicit tag from `LasVegasForTransit/repository-tooling`. Dry run reports
-added, changed, and removed files without changing the consumer. Apply replaces the vendor tree and
-its provenance record. Locally edited vendor files stop the update rather than being erased. Commit
-the vendor diff, provenance, and regenerated lockfile together after reviewing the catalog and
+The updater fetches one explicit tag from `WillieCubed/repository-tooling`. Dry run reports added,
+changed, and removed files without changing the consumer. Apply replaces the vendor tree and its
+provenance record. Locally edited vendor files stop the update rather than being erased. Commit the
+vendor diff, provenance, and regenerated lockfile together after reviewing the catalog and
 templates.
 
 The update runs with the updater carried by the preset it installs, so a release's own changes apply
 in the same update. It also makes three small migrations in the consumer's own files and lists every
-file they touch under `consumerChanged`, in the dry run as well. It rewrites legacy `@lvbt/*`
-references to the platform packages as `@lasvegasfortransit/*`, skipping `.claude/worktrees/` and
-any other nested checkout. It adds the ignore rules the examples carry to the consumer's root ignore
-files where they are missing, and leaves every existing line, comment, and entry in place. A rule
-already written another way that covers the same paths, such as `.claude/worktrees/**`, counts as
-present, and added lines keep the file's line endings:
+file they touch under `consumerChanged`, in the dry run as well. It rewrites legacy
+`@lasvegasfortransit/*` references to the platform packages as `@williecubed/*`, skipping
+`.claude/worktrees/` and any other nested checkout. It adds the ignore rules the examples carry to
+the consumer's root ignore files where they are missing, and leaves every existing line, comment,
+and entry in place. A rule already written another way that covers the same paths, such as
+`.claude/worktrees/**`, counts as present, and added lines keep the file's line endings:
 
 - `.gitignore` gets Playwright's output (`test-results/`, `playwright-report/`, `blob-report/`, and
   `**/playwright/.cache/`) and agent worktrees (`.claude/worktrees/`).

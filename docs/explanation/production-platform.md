@@ -1,11 +1,11 @@
 # Why production is declared in a platform manifest
 
-Every LVBT repository that runs a Worker needs the same kinds of things in production: a database
-with its migrations applied, a bucket, a bot check, a sign-in in front of the admin pages, an email
-domain, secrets, and deploy credentials. Before this existed, each repository kept that knowledge in
-comments inside `wrangler.jsonc`, in TODO notes, and in one bespoke bootstrap script. A volunteer
-picking up production had to find all of it, and nothing told them when it was complete. This page
-explains how the standard replaces that.
+Every personal repository that runs a Worker needs the same kinds of things in production: a
+database with its migrations applied, a bucket, a bot check, a sign-in in front of the admin pages,
+an email domain, secrets, and deploy credentials. Before this existed, each repository kept that
+knowledge in comments inside the wrangler config, in its README, and in one bespoke bootstrap
+script, and the Access application and zone rules were set up by hand in the dashboard. Nothing said
+when production was complete. This page explains how the standard replaces that.
 
 ## One file says what production needs
 
@@ -58,8 +58,8 @@ it looks like. Deleting a forbidden secret is offered, never done without asking
 
 ## Where the design came from
 
-The website's bespoke bootstrap proved the ideas: a list of secrets with a purpose, a link, and
-click-by-click steps; values the tool can mint itself; a read-only doctor mode; and grouping by
-whether a live feature is waiting. The standard generalizes those into a schema and one command
-every repository shares, so the next repository gets them by writing a manifest rather than a
-script.
+LVBT's repository tooling generalized the ideas first: a list of secrets with a purpose, a link, and
+click-by-click steps; values the tool can mint itself; a read-only report; and grouping by whether a
+live feature is waiting. WPP's `scripts/bootstrap.sh` had reached the same shape on its own, with
+idempotent checks and secrets piped straight to Wrangler. The personal standard uses LVBT's schema
+and command, and adds what WPP set up by hand: the shared allowlist policy and zone rules.

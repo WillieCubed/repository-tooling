@@ -2,8 +2,8 @@
 
 This guide cuts a release of the standard so repositories can move to it. A release tag identifies
 the matching source and vendored preset. The shared packages publish to GitHub Packages under the
-`@lasvegasfortransit` scope. Published templates vendor the same release, so their standard stays
-available locally and validation remains network-free.
+`@williecubed` scope. Published templates vendor the same release, so their standard stays available
+locally and validation remains network-free.
 
 ## Before you start
 
@@ -19,9 +19,9 @@ number. A new backward-compatible consumer capability increments the minor numbe
 before 1.0 increments the minor number and includes an explicit migration path.
 
 In the release commit, set the root `package.json`, every `packages/*/package.json`, both plugin
-manifests under `packages/cli/plugins/lvbt-contributions/`, and `.claude-plugin/marketplace.json` to
-the same version. Pin the examples' `@lasvegasfortransit/*` dependencies and Claude marketplace ref
-to the tag `v<version>`. `pnpm check` fails when any of these disagree.
+manifests under `packages/cli/plugins/willie-contributions/`, and `.claude-plugin/marketplace.json`
+to the same version. Pin the examples' `@williecubed/*` dependencies and Claude marketplace ref to
+the tag `v<version>`. `pnpm check` fails when any of these disagree.
 
 Commit with `chore(tooling): release v0.3.0`.
 
@@ -37,14 +37,14 @@ the notes so the first line says what changes for a repository that updates. The
 `docs/reference/release-<version>.md` belongs in the release commit; `pnpm check` fails without it.
 
 Nothing else is needed to roll the release out. Every repository runs its own `Standard update`
-workflow each day. When it finds a release newer than the one in `.lvbt/web-platform.json`, it opens
-one pull request on the branch `automation/repository-standard-<tag>`, using only that workflow's
-own token:
+workflow each day. When it finds a release newer than the one in `.williecubed/web-platform.json`,
+it opens one pull request on the branch `automation/repository-standard-<tag>`, using only that
+workflow's own token:
 
 - A template repository is regenerated from its example (`examples/basic` for
-  [LasVegasForTransit/template-basic](https://github.com/LasVegasForTransit/template-basic),
-  `examples/with-astro` for `template-with-astro`, and `examples/with-vite-react` for
-  `template-with-vite-react`). These power GitHub's "Use this template" button.
+  [WillieCubed/template-basic](https://github.com/WillieCubed/template-basic), `examples/with-astro`
+  for `template-with-astro`, and `examples/with-vite-react` for `template-with-vite-react`). These
+  power GitHub's "Use this template" button.
 - Every other repository runs the release's own updater, so the release's migrations apply in one
   pass however old the repository's current release is.
 
@@ -65,8 +65,8 @@ enforces it, so every repository sees the warning in its own checks first.
 ## 3. Publish to GitHub Packages
 
 Trigger the `Publish packages` workflow with the release tag. It publishes every `packages/*` to
-`npm.pkg.github.com` under the `@lasvegasfortransit` scope. Contributors authenticate their local
-pnpm configuration to GitHub Packages; CI uses its repository token.
+`npm.pkg.github.com` under the `@williecubed` scope. Contributors authenticate their local pnpm
+configuration to GitHub Packages; CI uses its repository token.
 
 ## 4. Watch the repositories update
 

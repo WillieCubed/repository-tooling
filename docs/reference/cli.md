@@ -1,27 +1,27 @@
 # Command reference
 
-`lvbt` is the binary of `@lasvegasfortransit/cli`. A repository's standard scripts call it, so you
+`willie` is the binary of `@williecubed/cli`. A repository's standard scripts call it, so you
 normally run `pnpm bootstrap`, `pnpm preflight`, `pnpm check`, and `pnpm run deploy` rather than the
 binary. It needs Node.js 24.20 or newer on the 24 line, and git.
 
 ## Commands
 
-| Command                       | Purpose                                                                                           | Exit code                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------- |
-| `lvbt bootstrap`              | `pnpm install`, then the preflight checks                                                         | as preflight                |
-| `lvbt bootstrap --production` | The same, then set up everything the repository's `platform.json` declares, asking as it goes     | 0 ready, 1 open, 2 no tty   |
-| `lvbt preflight`              | Check Node, pnpm, dependencies, git hooks, scopes, GitHub CLI, Cloudflare                         | 0 pass, 1 fail              |
-| `lvbt preflight --production` | The same, then report whether production has everything `platform.json` declares; changes nothing | 0 ready, 1 not ready        |
-| `lvbt check [name ...]`       | The shared repository-shape rules: `filenames`, `contract`, `debt`, `platform` (all by default)   | 0 pass, 1 fail, 2 bad usage |
-| `lvbt deploy [--filter x]`    | `pnpm build`, then `wrangler deploy` in every app with a wrangler config                          | 0 done, 2 nothing to deploy |
-| `lvbt help`                   | Print usage                                                                                       | 0                           |
+| Command                         | Purpose                                                                                           | Exit code                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------- |
+| `willie bootstrap`              | `pnpm install`, then the preflight checks                                                         | as preflight                |
+| `willie bootstrap --production` | The same, then set up everything the repository's `platform.json` declares, asking as it goes     | 0 ready, 1 open, 2 no tty   |
+| `willie preflight`              | Check Node, pnpm, dependencies, git hooks, scopes, GitHub CLI, Cloudflare                         | 0 pass, 1 fail              |
+| `willie preflight --production` | The same, then report whether production has everything `platform.json` declares; changes nothing | 0 ready, 1 not ready        |
+| `willie check [name ...]`       | The shared repository-shape rules: `filenames`, `contract`, `debt`, `platform` (all by default)   | 0 pass, 1 fail, 2 bad usage |
+| `willie deploy [--filter x]`    | `pnpm build`, then `wrangler deploy` in every app with a wrangler config                          | 0 done, 2 nothing to deploy |
+| `willie help`                   | Print usage                                                                                       | 0                           |
 
-`lvbt check filenames --staged` checks the staged tree, which the pre-commit hook uses.
-`lvbt deploy --dry-run` builds and runs `wrangler deploy --dry-run`; `--filter apps/worker` limits
+`willie check filenames --staged` checks the staged tree, which the pre-commit hook uses.
+`willie deploy --dry-run` builds and runs `wrangler deploy --dry-run`; `--filter apps/worker` limits
 it to one app. With `--production`, `--filter apps/site` (or `site`) limits bootstrap and preflight
 to that app's `platform.json`; `--filter .` picks the one at the root.
 
-`lvbt bootstrap --production --rotate SIGNING_SECRET` replaces the stored value of a secret the
+`willie bootstrap --production --rotate SIGNING_SECRET` replaces the stored value of a secret the
 manifest declares; `--rotate` takes one name or several separated by commas, and only
 `bootstrap --production` accepts it.
 
@@ -38,15 +38,15 @@ Each failing check prints the command that fixes it.
 | pnpm          | `pnpm --version` equals `packageManager`          | `corepack prepare pnpm@<version> --activate`  |
 | dependencies  | `node_modules` exists                             | `pnpm install`                                |
 | git hooks     | `core.hooksPath` is `.githooks`                   | `pnpm install` (the prepare script sets it)   |
-| commit scopes | `.lvbt/commit-scopes.txt` exists                  | copy it from the example and list your scopes |
+| commit scopes | `.williecubed/commit-scopes.txt` exists           | copy it from the example and list your scopes |
 | GitHub CLI    | `gh auth status` succeeds                         | `brew install gh && gh auth login`            |
 | Cloudflare    | no wrangler config, or `wrangler whoami` succeeds | `pnpm exec wrangler login`                    |
 
 ## Production checks
 
-`lvbt preflight --production` and `lvbt bootstrap --production` read every `platform.json` at the
-repository root and under `apps/*`. The [platform manifest reference](platform-manifest.md) lists
-its fields. For each item, the report prints one line under its section:
+`willie preflight --production` and `willie bootstrap --production` read every `platform.json` at
+the repository root and under `apps/*`. The [platform manifest reference](platform-manifest.md)
+lists its fields. For each item, the report prints one line under its section:
 
 | Mark   | Meaning                                                                                                       |
 | ------ | ------------------------------------------------------------------------------------------------------------- |
@@ -62,10 +62,10 @@ The command reads with the credentials already on the machine. Workers, D1, R2, 
 come through the Cloudflare API with the token `wrangler login` created. Email records come from
 public DNS over HTTPS. GitHub environments and secret names come from `gh`. Turnstile and Access
 need a Cloudflare API token with more permissions than Wrangler's sign-in has; interactive runs ask
-for one, and non-interactive runs read it from `LVBT_CLOUDFLARE_SETUP_TOKEN`. Without it, those
+for one, and non-interactive runs read it from `WILLIE_CLOUDFLARE_SETUP_TOKEN`. Without it, those
 items are reported as `FAIL` with "could not check".
 
-`lvbt bootstrap --production` needs a terminal. It prints the same report, lists what it will do,
+`willie bootstrap --production` needs a terminal. It prints the same report, lists what it will do,
 and asks once before starting. Then it:
 
 - creates missing D1 databases and R2 buckets with Wrangler, and applies unapplied D1 migrations
@@ -85,7 +85,7 @@ and asks once before starting. Then it:
   on Zero Trust, connecting Google Workspace, creating a Google Group an Access application admits,
   verifying an email domain in Resend, and editing `vars` in the wrangler config. For a Google
   Group, which it cannot read, it asks whether the group exists and remembers a yes in
-  `~/.config/lvbt/confirmations.json` (or under `XDG_CONFIG_HOME`), a file that holds no secret.
+  `~/.config/willie/confirmations.json` (or under `XDG_CONFIG_HOME`), a file that holds no secret.
 
 Items that only a feature not built yet needs are offered after asking. Pressing Enter at any value
 skips it. The run ends with a fresh report and exits 1 while anything required is still open;
@@ -111,7 +111,7 @@ command-line arguments. The same goes for the Turnstile and Access token.
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `filenames` | Under `apps/*` and `packages/*`: `src/` files are `<name>.<ext>` (plus `.module.*`, `*.config.*`, `.gitkeep`); tests are `<name>.test.ts(x)`; `.spec.ts(x)` only under `tests/e2e/`; helpers and snapshots under `support/` or `snapshots/`                                                                                                                       |
 | `contract`  | Every package that ships code declares `lint`, `check-types`, `test`; every dependency is `catalog:`, `workspace:`, a repository-tooling tag, a verified vendored `file:` path, or `link:`; test material lives under `tests/`; every Astro project (a package with `astro` and its own `astro.config.*`) declares `sync`, and `turbo.json` runs it before `lint` |
-| `platform`  | Every `platform.json` at the root or under `apps/*` matches the schema `@lasvegasfortransit/cli` ships and names only secrets and vars it declares; a repository without one passes                                                                                                                                                                               |
+| `platform`  | Every `platform.json` at the root or under `apps/*` matches the schema `@williecubed/cli` ships and names only secrets and vars it declares; a repository without one passes                                                                                                                                                                                      |
 | `debt`      | `eslint-suppressions.json` ledgers never grow against `main`, and a changed file that carries suppressions shrinks (fewer findings or lines)                                                                                                                                                                                                                      |
 
 ## Standard scripts
@@ -120,19 +120,19 @@ Every repository's root `package.json` carries these, as `examples/basic/package
 Workspace packages carry `lint`, `check-types`, `test`, and `build` where they build, which is what
 `turbo run` fans out to.
 
-| Script                    | Command                                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `bootstrap`               | `lvbt bootstrap`                                                                                   |
-| `preflight`               | `lvbt preflight`                                                                                   |
-| `build` / `dev`           | `turbo run build` / `turbo run dev`                                                                |
-| `lint`                    | `turbo run lint`                                                                                   |
-| `check-types`             | `turbo run check-types`                                                                            |
-| `test` / `test:e2e`       | `turbo run test` / `turbo run test:e2e --concurrency=1` (suites bind ports, so one at a time)      |
-| `format` / `format:check` | `prettier --write .` / `prettier --check .`                                                        |
-| `check`                   | `pnpm format:check && markdownlint-cli2 && lvbt check && turbo run lint check-types test validate` |
-| `check:fix`               | `pnpm format && markdownlint-cli2 --fix && turbo run lint -- --fix`                                |
-| `prepare`                 | `git config --local core.hooksPath .githooks`                                                      |
-| `deploy` (deployable)     | `lvbt deploy`                                                                                      |
+| Script                    | Command                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `bootstrap`               | `willie bootstrap`                                                                                   |
+| `preflight`               | `willie preflight`                                                                                   |
+| `build` / `dev`           | `turbo run build` / `turbo run dev`                                                                  |
+| `lint`                    | `turbo run lint`                                                                                     |
+| `check-types`             | `turbo run check-types`                                                                              |
+| `test` / `test:e2e`       | `turbo run test` / `turbo run test:e2e --concurrency=1` (suites bind ports, so one at a time)        |
+| `format` / `format:check` | `prettier --write .` / `prettier --check .`                                                          |
+| `check`                   | `pnpm format:check && markdownlint-cli2 && willie check && turbo run lint check-types test validate` |
+| `check:fix`               | `pnpm format && markdownlint-cli2 --fix && turbo run lint -- --fix`                                  |
+| `prepare`                 | `git config --local core.hooksPath .githooks`                                                        |
+| `deploy` (deployable)     | `willie deploy`                                                                                      |
 
 Each workspace package script runs one command. When a task needs more than one step, give each step
 its own script and let Turbo order them, so it can cache and run each step separately. An Astro
@@ -152,8 +152,8 @@ wires the two together, so `turbo run check-types` runs both:
 ```
 
 The root `check` and `check:fix` scripts are the exception. They run the repository-wide tools that
-are not workspace tasks (Prettier, markdownlint, and `lvbt check`) and then hand over to Turbo, and
-their commands stay exactly as the table shows.
+are not workspace tasks (Prettier, markdownlint, and `willie check`) and then hand over to Turbo,
+and their commands stay exactly as the table shows.
 
 ## Repository-owned checks
 
@@ -165,12 +165,12 @@ specific checks such as dead-code, duplication, or dependency-boundary scans liv
 ## Git hooks
 
 The hooks under `.githooks/` are stubs that run the shared scripts in
-`node_modules/@lasvegasfortransit/cli/hooks/`. Repository-specific steps go below the shared call in
-the stub.
+`node_modules/@williecubed/cli/hooks/`. Repository-specific steps go below the shared call in the
+stub.
 
-| Hook                 | Shared behavior                                                                                                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pre-commit`         | Prettier on the staged files through lint-staged; gitleaks on the staged changes when it is installed (CI scans regardless)                                                              |
-| `prepare-commit-msg` | Adds a `Co-Authored-By` footer when a coding agent drives the commit                                                                                                                     |
-| `commit-msg`         | Conventional subject ≤ 72 characters with a scope from `.lvbt/commit-scopes.txt`; a body for `feat` and `fix`, wrapped at 72; attribution required and well-placed when an agent commits |
-| `pre-push`           | `pnpm check`                                                                                                                                                                             |
+| Hook                 | Shared behavior                                                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pre-commit`         | Prettier on the staged files through lint-staged; gitleaks on the staged changes when it is installed (CI scans regardless)                                                                     |
+| `prepare-commit-msg` | Adds a `Co-Authored-By` footer when a coding agent drives the commit                                                                                                                            |
+| `commit-msg`         | Conventional subject ≤ 72 characters with a scope from `.williecubed/commit-scopes.txt`; a body for `feat` and `fix`, wrapped at 72; attribution required and well-placed when an agent commits |
+| `pre-push`           | `pnpm check`                                                                                                                                                                                    |

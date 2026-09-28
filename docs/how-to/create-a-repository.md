@@ -1,12 +1,12 @@
 # Create a repository
 
-This guide starts a new LVBT repository that has the same structure, commands, and rules as every
-other one. The standard is a GitHub template repository, so creating one is a button click, and the
-shared rules arrive as ordinary dependencies.
+This guide starts a new personal repository that has the same structure, commands, and rules as
+every other one. The standard is a GitHub template repository, so creating one is a button click,
+and the shared rules arrive as ordinary dependencies.
 
 ## Before you start
 
-- You can create repositories in the `LasVegasForTransit` organization.
+- You can create repositories under the `WillieCubed` account.
 - Node.js 24 or newer and git are installed on your machine. pnpm is activated by Corepack if it is
   missing (`corepack enable`).
 - You know the repository's durable commit scopes: the two to six boundaries a change can belong to,
@@ -23,11 +23,11 @@ Pick the template that matches what the repository ships:
 | `template-with-vite-react` | An application: Vite and React on Cloudflare Workers      |
 
 Either open the template on GitHub (for example
-[LasVegasForTransit/template-basic](https://github.com/LasVegasForTransit/template-basic)) and press
-**Use this template → Create a new repository**, or from a terminal:
+[WillieCubed/template-basic](https://github.com/WillieCubed/template-basic)) and press **Use this
+template → Create a new repository**, or from a terminal:
 
 ```bash
-gh repo create LasVegasForTransit/<your-repo> --template LasVegasForTransit/template-basic --public --clone
+gh repo create WillieCubed/<your-repo> --template WillieCubed/template-basic --private --clone
 cd <your-repo>
 ```
 
@@ -46,9 +46,9 @@ pnpm check
 `bootstrap` installs dependencies (the `prepare` script points git at `.githooks`), then runs
 `preflight`, which confirms Node, pnpm, hooks, GitHub CLI, and Cloudflare access and names the fix
 for anything missing. `check` runs the format check, then lint, typecheck, and tests through
-Turborepo, exactly as CI does. Both pass on a fresh copy. The `@lasvegasfortransit/*` packages
-install from the versioned snapshot under `.lvbt/web-platform`, so no registry login is needed and
-`check` verifies the snapshot before using it.
+Turborepo, exactly as CI does. Both pass on a fresh copy. The `@williecubed/*` packages install from
+the versioned snapshot under `.williecubed/web-platform`, so no registry login is needed and `check`
+verifies the snapshot before using it.
 
 ## 3. Make it yours
 
@@ -56,8 +56,8 @@ install from the versioned snapshot under `.lvbt/web-platform`, so no registry l
 - Rename `packages/example`, `apps/site`, or `apps/app` to your first real package or app, or
   scaffold one with `turbo gen workspace` and delete the sample. Deployable templates also need the
   Worker name in `apps/*/wrangler.jsonc` and, for a site, `site` in `astro.config.ts`.
-- Replace the scopes in `.lvbt/commit-scopes.txt` with this repository's boundaries.
-- `.github/workflows/ci.yml` runs a job named `Validate`. Keep that name: the organization ruleset
+- Replace the scopes in `.williecubed/commit-scopes.txt` with this repository's boundaries.
+- `.github/workflows/ci.yml` runs a job named `Validate`. Keep that name: the standard ruleset
   requires it on every pull request. Add steps to the job.
 - `AGENTS.md` carries the paragraphs agents need. Add repository-specific guidance below them.
 
@@ -74,25 +74,24 @@ pnpm check
 ## 4. Commit and register
 
 ```bash
-git add -A
-git commit -m "chore(dx): start from the LVBT repository standard"
+git restore --staged . && git add -A && git commit -m "chore(dx): start from the repository standard"
 git push
 ```
 
 Then add the repository to `standards/repositories.json` here with `"kind": "consumer"`, so the
-organization ruleset applies and every release opens its update pull request. A deployable
-repository also needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets in a
-`production` environment before `.github/workflows/deploy.yml` can run.
+standard ruleset applies and every release opens its update pull request. A deployable repository
+also needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets in a `production`
+environment before `.github/workflows/deploy.yml` can run.
 
 ## Common problems
 
-**`pnpm standards:check` reports an integrity failure**: restore `.lvbt/web-platform` and
-`.lvbt/web-platform.json` from the same known-good commit. Do not accept an edited snapshot by
-recalculating its hash. Make the shared change in repository-tooling and apply its reviewed release
-or full commit instead.
+**`pnpm standards:check` reports an integrity failure**: restore `.williecubed/web-platform` and
+`.williecubed/web-platform.json` from the same known-good commit. Do not accept an edited snapshot
+by recalculating its hash. Make the shared change in repository-tooling and apply its reviewed
+release or full commit instead.
 
 **`turbo` cannot find a task**: every package must declare `lint`, `check-types`, and `test` scripts
 (and `build` where it builds). Copy them from `packages/example/package.json`.
 
-**The commit hook rejects your scope**: the scope is not in `.lvbt/commit-scopes.txt`. Add it if it
-is a durable boundary, or omit the scope.
+**The commit hook rejects your scope**: the scope is not in `.williecubed/commit-scopes.txt`. Add it
+if it is a durable boundary, or omit the scope.

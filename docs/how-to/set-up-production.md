@@ -10,21 +10,12 @@ nothing and say so.
 
 - `pnpm bootstrap` passes on your machine. That means Node.js, pnpm, the GitHub CLI (signed in with
   `gh auth login`), and Wrangler (signed in with `pnpm exec wrangler login`) all work.
-- Your Cloudflare user can administer the LVBT account (ID `2557b5c2e166292ded0f8425b73075e9`),
-  including Cloudflare One, which Cloudflare used to call Zero Trust. The account should be named
-  "Las Vegans for Better Transit"; if the switcher still shows "Las Vegas for Better…", open Manage
-  Account and rename it first.
+- Your Cloudflare user can administer the personal account (ID `18f90fa11cf0a87145be4a1517e41217`),
+  including Cloudflare One, which Cloudflare used to call Zero Trust. Its Access team is
+  `williecubed`.
 - Your GitHub user is an admin of the repository, so it can create environments and their secrets.
-- For email, you can sign in to the LVBT Resend account.
-- For admin sign-in through Google Workspace the first time in an account, a Google Workspace super
-  admin for lasvegasfortransit.org is at hand. After that, every repository reuses the same
-  connection. LVBT's is already connected.
-- For an Access application that admits a Google Group, a Google Workspace admin who can create
-  groups is at hand, unless the group already exists.
-- Everything LVBT owns belongs to an LVBT organization, team, or account, never to a personal one:
-  the LVBT Cloudflare account ("Las Vegans for Better Transit"), the lasvegasfortransit.org Google
-  Workspace and its Google Cloud organization, the LasVegasForTransit GitHub organization, and the
-  LVBT team in Resend.
+- For email, you can sign in to the Resend account.
+- The site's zone, usually `willie.page`, is in the same Cloudflare account.
 
 ## 1. Declare what production needs
 
@@ -59,17 +50,17 @@ pnpm preflight --production
 After the machine checks, this prints one line per item, grouped by section, and changes nothing:
 
 ```text
-lvwwd.org production (apps/site/platform.json)
+party.willie.page production (apps/site/platform.json)
 
 D1 databases
-  ok    lvwwd                   exists and is bound as DB
-  ok    lvwwd migrations        all 4 applied
+  ok    wpp                     exists and is bound as DB
+  ok    wpp migrations          all 12 applied
 
 Secrets
-  FAIL  RESEND_API_KEY → Worker lvwwd   is not set; needed for emailing "Open my week" links
-                                        next: pnpm bootstrap --production asks for it, with steps
+  FAIL  RSVP_TOKEN_KEY → Worker wpp   is not set; needed for signing guests' edit links
+                                      next: pnpm bootstrap --production generates it
 
-Not ready for production. 10 of 25 ready, 13 needed now, 2 recommended.
+Not ready for production. 10 of 14 ready, 3 needed now, 1 recommended.
 ```
 
 `FAIL` means production needs the item now. `WARN` means only a feature that is not built yet needs
@@ -95,12 +86,9 @@ once before it starts. Answer the questions as they come:
   value is for, whether it is fine to skip, the page to open, and numbered steps. It offers to open
   the page. Paste the value when asked; it does not appear on screen. A value that does not look
   right is asked for again. Press Enter to skip one for now.
-- **Dashboard steps.** A few things have no API: turning on Cloudflare One the first time,
-  connecting Google Workspace as the sign-in, creating a Google Group, and verifying the email
-  domain in Resend. For those, the command prints the steps, offers to open the page, and waits for
-  you to press Enter. For a Google Group, which setup cannot read, it asks instead whether the group
-  exists, and remembers a yes on your computer. When Cloudflare One is already on, as it is for
-  LVBT, the command only confirms the team domain (`lvbt.cloudflareaccess.com`) and moves on.
+- **Dashboard steps.** Only verifying an email domain in Resend has no API. For that, the command
+  prints the steps, offers to open the page, and waits for you to press Enter. Cloudflare One and
+  the sign-in method are created through the API when the account lacks them.
 - **Features not built yet.** Before it starts, the command asks whether to also set the values that
   only such features need. The default is to leave them for later.
 
@@ -131,7 +119,7 @@ The last line should read `Ready for production.` Delete the Cloudflare token yo
 at <https://dash.cloudflare.com/profile/api-tokens> if it has not expired yet.
 
 To check production from CI, run the same command with `CLOUDFLARE_API_TOKEN` (for Wrangler),
-`GH_TOKEN` (for `gh`), and `LVBT_CLOUDFLARE_SETUP_TOKEN` (a read-only token for Turnstile and
+`GH_TOKEN` (for `gh`), and `WILLIE_CLOUDFLARE_SETUP_TOKEN` (a read-only token for Turnstile and
 Access) in the environment. It exits 1 when production is not ready.
 
 ## Running it again, and replacing a value
@@ -169,177 +157,62 @@ The command prints these steps when it needs them. They are here too, so you can
 follow them without the command. Each one assumes you have never used the service before, and none
 asks you to copy a second value before you have pasted the first.
 
-### Cloudflare One (Zero Trust), the first time
+### Cloudflare One (Zero Trust) and the sign-in method
 
-Cloudflare One is already on for the LVBT account, so you only need this for a new account. Its team
-domain is `lvbt.cloudflareaccess.com`, and its team name is "Las Vegans for Better Transit". Keep
-the two apart: the team domain is the address of the sign-in page and the value every
-`ACCESS_TEAM_DOMAIN` secret holds, while the team name is only a label people see.
+`pnpm bootstrap --production` creates both when the account lacks them: the Zero Trust organization
+with the team domain `williecubed`, and the identity provider the manifest names. One-time PIN needs
+nothing more; Access emails a code to the address a person types, and the application's allow policy
+decides whether that address gets in.
 
-1. Open <https://one.dash.cloudflare.com/> and choose the LVBT account.
-2. When Cloudflare asks you to choose the team domain (its documentation calls this the team name),
-   type `lvbt`. The team domain becomes `lvbt.cloudflareaccess.com`.
-3. If it also asks for a team name, type `Las Vegans for Better Transit`. It changes nothing in any
-   configuration.
-4. Choose the Zero Trust Free plan. Cloudflare asks for payment details even for the Free plan, but
-   does not charge for it.
-5. Finish the onboarding.
+A manifest that names `google` instead needs an OAuth client, which only a person can create:
 
-To find both later, open Cloudflare One, then Overview, then Account details. It shows the Team
-domain and the Team name, each with a pencil icon that edits it. Do not change the team domain: the
-admin sign-in and the Google sign-in stop working until every `ACCESS_TEAM_DOMAIN` secret and the
-Google OAuth client below are updated to match.
+1. In a Google Cloud project you own, open "Google Auth Platform", then "Clients", and click "Create
+   client".
+2. Choose the application type "Web application".
+3. Add the authorized JavaScript origin `https://williecubed.cloudflareaccess.com` and the
+   authorized redirect URI `https://williecubed.cloudflareaccess.com/cdn-cgi/access/callback`.
+4. Click "Create". When setup asks for the client ID, copy it and paste it at the prompt. Then copy
+   the client secret and paste it at the next prompt.
 
-### Google Workspace as the sign-in
-
-A Google Workspace super admin for lasvegasfortransit.org should do the Google steps, because
-turning on "Trust internal apps" and approving group access both need one. The Cloudflare steps need
-a Cloudflare user who can administer the LVBT account.
-
-1. Use LVBT's one Google Cloud project, "LVBT Core" (ID `lvbt-core`):
-   <https://console.cloud.google.com/home/dashboard?project=lvbt-core>. Only if it does not exist,
-   click "New project", name it `LVBT Core`, make sure "Organization" is lasvegasfortransit.org, and
-   click "Create". If Google shows a Free Trial banner, dismiss it; none of this needs billing.
-2. Open <https://console.cloud.google.com/apis/library/admin.googleapis.com?project=lvbt-core> and
-   click "Enable" on "Admin SDK API". Access uses it to read which Google Groups a person is in.
-3. Open <https://admin.google.com/ac/owl> (Security, then Access and data control, then API
-   controls), click "Settings", turn on "Trust internal apps", and save. It is off by default, and
-   Access needs it.
-4. In a new browser tab, open Cloudflare One, go to Integrations, then Identity providers (not
-   "Cloud & SaaS" just above it: that is a different feature that asks for a service account; leave
-   it alone), and click "Add new identity provider", then "Google Workspace". Keep this tab open;
-   steps 8 and 9 fill it in, one value at a time.
-5. Back in Google Cloud, open <https://console.cloud.google.com/auth/clients?project=lvbt-core>. If
-   it says "Google Auth Platform not configured yet", click "Get started" and complete its four
-   steps. App Information: App name "Las Vegans for Better Transit", User support email
-   `tech@lasvegasfortransit.org` (a shared LVBT address, never a person's), then "Next". Audience:
-   "Internal", then "Next". Contact Information: `tech@lasvegasfortransit.org`, then "Next". Finish:
-   tick the box agreeing to the Google API Services: User Data Policy, click "Continue", then
-   "Create". Optionally, under "Branding", upload the square LVBT logo from the "Marketing &
-   Communications" shared drive as the App logo. Then open "Clients" again. If a client named
-   "Cloudflare Access" is listed, open it, check that it has the two addresses below, and under
-   "Client secrets" click "Add secret", because Google shows a secret only when it is made.
-   Otherwise click "Create client", choose the application type "Web application", and name it
-   `Cloudflare Access`.
-6. Under "Authorized JavaScript origins", click "Add URI" and enter exactly
-   `https://lvbt.cloudflareaccess.com`.
-7. Under "Authorized redirect URIs", click "Add URI" and enter exactly
-   `https://lvbt.cloudflareaccess.com/cdn-cgi/access/callback`. Click "Create" (or "Save").
-8. Skip service account keys and domain-wide delegation: nothing here uses one, and GitHub Actions
-   authenticates without one. Leave "Disable service account key creation" on if the project asks.
-9. Google shows the Client ID and the Client secret. Copy the Client ID, which ends in
-   `.apps.googleusercontent.com`, and paste it into "App ID" in the Cloudflare tab.
-10. Copy the Client secret and paste it into "Client secret" in the Cloudflare tab. Neither value is
-    stored in GitHub or on a Worker.
-11. In the Cloudflare tab, type `lasvegasfortransit.org` as the Google Workspace domain. Leave
-    "Proof Key for Code Exchange (PKCE)" on; only turn it off if step 13's "Test" fails with a
-    code-verifier error. Leave "Enable SCIM" off, along with "Enable user deprovisioning" and
-    "Remove user seat on deprovision", and leave the SCIM identity update behavior as "No action":
-    Google Workspace only sends SCIM to a handful of apps in its own catalog, and Cloudflare does
-    not document SCIM support for Google Workspace at all; Access re-checks group membership every
-    sign-in instead. Leave the email claim and OIDC Claims fields empty. Click "Save".
-12. Cloudflare shows a link. Open it signed in as the Google Workspace super admin and approve it,
-    so Access can read group membership.
-13. Back in Identity providers, click "Test" next to Google Workspace. It should show your name and
-    your groups. Add yourself to the Access group first (see the next section), or the test cannot
-    show it.
-
-### A Google Group for sign-in
-
-An Access application that admits a Google Group needs that group to exist first. LVBT's Access
-applications admit the existing group `staff@lasvegasfortransit.org`; lvwwd.org's volunteer admin
-pages admit `wwd-admin@lasvegasfortransit.org`. Setup cannot read Google Groups, so it shows these
-steps and then asks whether the group exists. After a yes, it does not ask again on that computer;
-it keeps the note in `~/.config/lvbt/confirmations.json`, which holds no secret.
-
-You need a Google Workspace admin account with the Groups administrator privilege.
-
-1. Open the Google Admin console at <https://admin.google.com> and go to Menu, then Directory, then
-   Groups. If the group is already listed, open it, click "Access settings", and check it before
-   relying on it: "Who can join the group" is "Only invited users" and "Allow external members in
-   the group" is off. Fix either if not, then skip to step 6.
-2. Only if it does not exist, click "Create group". Type a group name that says what it grants, such
-   as `Staff`. For the group email, type the part before the @, such as `staff`, and keep the domain
-   lasvegasfortransit.org. In Description, say who the group lets in. Under Group owner(s), add
-   yourself and anyone who will add or remove people later.
-3. Click "Next". Tick "Security", because the group controls access, and click "Next".
-4. Set Access type to "Restricted" and "Who can join the group" to "Only invited users". Leave
-   "Allow external members in the group" off. Click "Create Group".
-5. Open the group, click "Members", then "Add members". Type each person's @lasvegasfortransit.org
-   address, and add yourself before you click "Test" in Cloudflare One, so the test can show the
-   group. Click "Add To Group".
-6. Only accounts in the lasvegasfortransit.org Workspace can sign in through Access, so a personal
-   Gmail address does not work, even in the group.
-
-To let someone in later, open Directory, then Groups, then the group, then Members, and click "Add
-members". To take someone out, remove them from the group or suspend their Google account: point to
-them in the Members list and click "Remove", or Menu, then Directory, then Users, then their name,
-then "Suspend user". Either takes effect at their next sign-in, within the application's session
-length, usually 24 hours. To end their access immediately instead of waiting, also go to Cloudflare
-One, then Team & Resources, then Users, find them, and revoke their session.
+Changing the team domain later breaks every admin sign-in until every `ACCESS_TEAM_DOMAIN` secret,
+and the Google OAuth client if one is used, are updated to match.
 
 ### An Access application
 
 `pnpm bootstrap --production` creates the application when it has the Cloudflare token. To create it
 by hand instead, use exactly the names in `platform.json`, so setup recognizes what you made rather
 than creating a second one. It finds an application by its name, or else by its paths. The steps
-below use lvwwd.org's volunteer admin pages, and follow the page from top to bottom.
+below use WPP's admin pages on `party.willie.page`.
 
-1. Open <https://one.dash.cloudflare.com/> with the LVBT account ("Las Vegans for Better Transit")
-   and go to Access controls, then Applications. If the application is already listed, skip to
-   step 13.
-2. Click "Create new application" at the top right (some screens say "Add an application"). An
-   account with no applications yet shows only a list of prerequisites; the button is still at the
-   top right.
-3. In the "Add an application" dialog, under "Self-hosted and private", choose the "Public DNS" tab,
-   not "Private destinations", "Workers", or "Service auth". Click "Continue with Self-hosted and
-   private". The page is now "Create new self-hosted application".
-4. Under "Destinations", there should be public hostname rows. If you see a "Private IPs" row with
-   "Private IP address" and "Port" instead, "Private destinations" was chosen: click "+ Add public
-   hostname", then remove the empty private row, or go back and choose "Public DNS".
-5. Fill in one public hostname row per address, with "+ Add public hostname" for each extra row. For
-   lvwwd.org there are three rows, each with Subdomain empty and `lvwwd.org` chosen in the Domain
-   dropdown, and the paths `admin`, `admin/*`, and `api/admin/*`. A path does not cover the paths
-   under it, and a wildcard does not cover its parent, so all three are needed; with one missing,
-   that part of the site would be open to anyone. Match each row's Subdomain box exactly, including
-   a row that says Subdomain empty — the box starts empty regardless of what a row calls for, and
-   leaving it empty where a row names a subdomain puts the whole domain behind sign-in instead of
-   only the part named.
-6. Leave "Allow access through browser-based RDP, SSH, or VNC sessions" off.
-7. "Access policies" says "No policy associated". If "Add current policies" lists
-   `lvwwd.org volunteer admin allow`, choose it and go to step 9. Otherwise click "Create new
-   policy", name it exactly `lvwwd.org volunteer admin allow`, set the action to "Allow", and leave
-   "Policy session duration" at its default, "Same as application session duration".
-8. In the policy, add one Include rule: the selector "Google Groups" (an older Cloudflare UI calls
-   this "Google Workspace groups") with `wwd-admin@lasvegasfortransit.org`. That selector is offered
-   only once Google Workspace is a login method; if it is missing, the Google Workspace step was not
-   done. Until it is, use the selector "Emails" with the @lasvegasfortransit.org address of each
-   volunteer who needs in now; setup replaces that rule with the group once Google Workspace is
-   connected. Then click "+ Add require (AND)" and add a second condition, selector "Emails ending
-   in", value `@lasvegasfortransit.org`, as defence in depth. Do not add a Country rule: it would
-   lock out anyone signing in while travelling, for little real protection, since the rules above
-   already limit who gets in. Leave "Override global multi-factor authentication settings (MFA)" and
-   "Just-in-time access" off: MFA belongs in Google, not a Cloudflare Access rule; a Workspace admin
-   enforces 2-Step Verification in the Google Admin console instead. Save the policy. If it opened
-   in another tab, come back and choose it in "Add current policies".
-9. Skip "Policy tester".
-10. Under "Authentication", on the "Identity" tab, turn off "Accept all available identity
-    providers" (it is on by default). In "Choose available identity providers", choose only "Google
-    Workspace". Turn on "Apply instant authentication". Leave "Authenticate with Cloudflare One
-    Client" off. If "Google Workspace" is not in the list, the Google Workspace step was not done.
-11. Skip "Preview". Under "Details", type the name exactly: `lvwwd.org volunteer admin`. Keep
-    "Session Duration" at "24 hours".
-12. Click "Create".
-13. When setup asks for `ACCESS_AUD`, click "Configure" on the application. On the "Additional
-    settings" tab, under "Cookie settings", turn on "Enable Binding Cookie" if it is off, and leave
-    "HTTP Only" on and "SameSite" set to "Lax". Still on that tab, copy "Application Audience (AUD)
-    Tag" (64 lowercase letters and digits), and paste it at the prompt.
+1. Open <https://one.dash.cloudflare.com/> with the personal account and go to Access controls, then
+   Applications. If the application is already listed, skip to step 10.
+2. Click "Create new application" at the top right (some screens say "Add an application").
+3. In the "Add an application" dialog, under "Self-hosted and private", choose the "Public DNS" tab
+   and click "Continue with Self-hosted and private".
+4. Under "Destinations", fill in one public hostname row per path, with "+ Add public hostname" for
+   each extra row. For WPP there are two rows, each with Subdomain `party`, Domain `willie.page`,
+   and the paths `admin` and `admin/*`. A path does not cover the paths under it, and a wildcard
+   does not cover its parent, so both are needed; with one missing, that part of the site is open to
+   anyone.
+5. Under "Access policies", click "Create new policy", name it exactly `<name> allow` (such as
+   `party.willie.page admin allow`), set the action to "Allow", and add one Include rule with the
+   selector "Emails" and each address in the manifest's `allow.emails`. Do not add "Everyone" or an
+   email domain. Save it, then choose it under "Add current policies".
+6. Under "Authentication", turn off "Accept all available identity providers", choose only the
+   method `platform.json` names, and turn on "Apply instant authentication".
+7. Under "Details", type the name exactly as `access.name` in `platform.json`, such as
+   `party.willie.page admin`. Keep "Session Duration" at "24 hours".
+8. Click "Create".
+9. Open the application again with "Configure".
+10. On the "Additional settings" tab, under "Cookie settings", turn on "Enable Binding Cookie" if it
+    is off. When setup asks for `ACCESS_AUD`, copy "Application Audience (AUD) Tag" (64 lowercase
+    letters and digits) from the same tab and paste it at the prompt.
 
 ### A Turnstile widget
 
-1. Open <https://dash.cloudflare.com/2557b5c2e166292ded0f8425b73075e9/turnstile>. If a widget with
+1. Open <https://dash.cloudflare.com/18f90fa11cf0a87145be4a1517e41217/turnstile>. If a widget with
    the site's name is listed, click it and skip to step 5.
-2. Click "Add widget" and type the widget name, which is the site, such as `lvwwd.org`.
+2. Click "Add widget" and type the widget name, which is the site, such as `party.willie.page`.
 3. Under "Hostname management", add the site's hostname.
 4. Choose the widget mode "Managed", leave pre-clearance off, and click "Create".
 5. Copy the Site Key, which is public and starts with `0x`, and paste it into `"vars"` in the
@@ -358,33 +231,32 @@ applications:
 
 1. Open the link the command prints. It opens "Create Custom Token" at
    <https://dash.cloudflare.com/profile/api-tokens> with the permissions filled in.
-2. Name it `lvbt setup <site>`.
+2. Name it `willie setup <site>`.
 3. Check that "Permissions" has exactly these three rows, each set to "Account": "Turnstile" with
    "Edit", "Access: Apps and Policies" with "Edit", and "Access: Organizations, Identity Providers,
    and Groups" with "Read". Add any that is missing with "+ Add more".
-4. Under "Account Resources", choose "Include" and the LVBT account, not "All accounts".
+4. Under "Account Resources", choose "Include" and the personal account, not "All accounts".
 5. Under "TTL", set the end date to tomorrow.
 6. Click "Continue to summary", then "Create Token", then "Copy". Cloudflare shows it only once.
    Paste it into the terminal, and delete it when you finish.
 
 The deploy token lets the Deploy workflow publish the Worker. It becomes the GitHub environment
 secret `CLOUDFLARE_API_TOKEN` in the `production` environment. Make it an account API token, which
-belongs to the LVBT account rather than to you, so deploys keep working after you leave. Creating
-one needs the Super Administrator role on the account. Wrangler deploys with it because the workflow
-also sets `CLOUDFLARE_ACCOUNT_ID`; without that, Wrangler would ask Cloudflare for the token's
-memberships, which an account API token cannot read.
+belongs to the account rather than to your user, so deploys keep working if your user's access
+changes. Creating one needs the Super Administrator role on the account. Wrangler deploys with it
+because the workflow also sets `CLOUDFLARE_ACCOUNT_ID`; without that, Wrangler would ask Cloudflare
+for the token's memberships, which an account API token cannot read.
 
-1. Open the Cloudflare dashboard, choose the "Las Vegans for Better Transit" account, and go to
-   Manage Account, then "Account API Tokens"
-   (<https://dash.cloudflare.com/2557b5c2e166292ded0f8425b73075e9/api-tokens>). Click "Create
-   Token", then "Create Custom Token".
-2. Name it `<site> deploy (GitHub Actions)`, such as `lvwwd.org deploy (GitHub Actions)`.
+1. Open the Cloudflare dashboard, choose the personal account, and go to Manage Account, then
+   "Account API Tokens" (<https://dash.cloudflare.com/18f90fa11cf0a87145be4a1517e41217/api-tokens>).
+   Click "Create Token", then "Create Custom Token".
+2. Name it `<site> deploy (GitHub Actions)`, such as `party.willie.page deploy (GitHub Actions)`.
 3. Under "Permissions", add these rows: "Account", "Workers Scripts", "Edit"; "Account", "Account
    Settings", "Read"; and "Zone", "Workers Routes", "Edit". Add "Account", "D1", "Edit" only if the
    deploy workflow applies migrations, and "Account", "Workers R2 Storage", "Edit" only if it writes
    to a bucket.
 4. Under "Zone Resources", choose "Include", then "Specific zone", then the site's zone, such as
-   `lvwwd.org`.
+   `willie.page`.
 5. Leave the expiration empty, so deploys keep working. Click "Continue to summary", then "Create
    Token", then "Copy"; Cloudflare shows it only once. Paste it when setup asks for
    `CLOUDFLARE_API_TOKEN`. If it ever leaks, roll it on the same page and store the new one with
@@ -397,27 +269,26 @@ manage Turnstile.
 
 ### Resend
 
-1. Sign in at <https://resend.com/login>. If you have no account, sign up at
-   <https://resend.com/signup> with your @lasvegasfortransit.org address, and ask a maintainer to
-   invite you to the LVBT team.
-2. On the Domains page, click "Add Domain", type the sending domain (lvwwd.org sends from
-   `lvwwd.org`), choose the region "North Virginia (us-east-1)", and click "Add". The region must
-   match `email.region` in `platform.json`.
+1. Sign in at <https://resend.com/login>, or sign up at <https://resend.com/signup> if you have no
+   account.
+2. On the Domains page, click "Add Domain", type the sending domain (such as `notify.willie.page`),
+   choose the region "North Virginia (us-east-1)", and click "Add". The region must match
+   `email.region` in `platform.json`.
 3. On the domain's page, click "Sign in to Cloudflare" and approve the request. It adds every DNS
    record for you.
 4. To add the records by hand instead, open the zone's DNS records page in the Cloudflare dashboard
    and add each with TTL "Auto" and Proxy status "DNS only": an MX record named `send` with the mail
    server `feedback-smtp.us-east-1.amazonses.com` and priority 10; a TXT record named `send` with
    the content `v=spf1 include:amazonses.com ~all`; and a TXT record named `resend._domainkey` with
-   the long `p=` value Resend shows. For a subdomain such as `notify.lasvegasfortransit.org`, add
-   the subdomain to each name, as in `send.notify`.
+   the long `p=` value Resend shows. For a subdomain such as `notify.willie.page`, add the subdomain
+   to each name, as in `send.notify`.
 5. Add the DMARC record Resend recommends: a TXT record named `_dmarc` with the content
    `v=DMARC1; p=none;`.
 6. Click "Verify DNS Records" and wait until the domain's status says "Verified". It usually takes a
    few minutes; DNS can take up to 72 hours.
 7. Open <https://resend.com/api-keys> and click "Create API Key". Name it after the Worker, such as
-   `lvwwd.org Worker`, choose the permission "Sending access", choose the verified domain, and click
-   "Add".
+   `party.willie.page Worker`, choose the permission "Sending access", choose the verified domain,
+   and click "Add".
 8. Copy the key, which starts with `re_` and is shown only once, and paste it when setup asks for
    `RESEND_API_KEY`.
 
@@ -426,15 +297,14 @@ manage Turnstile.
 A site that counts visits with Cloudflare Web Analytics needs the site's token at build time. It is
 public, so it is a GitHub environment variable, not a secret.
 
-1. Open <https://dash.cloudflare.com/2557b5c2e166292ded0f8425b73075e9/web-analytics> and click "Add
-   a site". Type the site's hostname, such as `lvwwd.org`.
+1. Open <https://dash.cloudflare.com/18f90fa11cf0a87145be4a1517e41217/web-analytics> and click "Add
+   a site". Type the site's hostname, such as `party.willie.page`.
 2. Choose "Enable with JS Snippet installation", not the automatic option, because the site loads
    the beacon itself.
 3. Open "Manage site" to see the JS snippet. Copy only the token inside
    `data-cf-beacon='{"token": "..."}'`.
 4. In the GitHub repository, open Settings, then Environments, then `production`. Under "Environment
-   variables", click "Add environment variable", name it `PUBLIC_LVBT_CWA_TOKEN`, and paste the
-   token.
+   variables", click "Add environment variable", name it `PUBLIC_CWA_TOKEN`, and paste the token.
 
 ### GitHub environments
 
@@ -446,14 +316,14 @@ configure environments.
 
 ## When something goes wrong
 
-| What you see                                               | What to do                                                                                             |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `could not check: Wrangler has no credential`              | Run `pnpm exec wrangler login`, then the command again.                                                |
-| Turnstile or Access says `403` or `Authentication error`   | The token lacks a permission. Create a new one from the link; check every permission it lists.         |
-| `Zero Trust is not turned on for this account`             | Follow the first-time steps above, then run it again. Access items wait until it is on.                |
-| `does not bind DB to …` or a `database_id` mismatch        | Edit the wrangler config as the `next:` line says, through a pull request.                             |
-| Migrations "wait until" the config has a `database_id`     | Put the id the report shows in the wrangler config through a pull request, then run the command again. |
-| A secret "is set on … and setup cannot read that value"    | Run `pnpm bootstrap --production --rotate <NAME>` to store one new value everywhere.                   |
-| An email record stays missing after Resend says Verified   | DNS can take a few minutes to spread. Run the check again later.                                       |
-| `bootstrap --production … needs a terminal`                | Run it in a terminal, not through CI or a pipe. Use `pnpm preflight --production` to only check.       |
-| The Google sign-in fails after the team domain was changed | Change it back, or update every `ACCESS_TEAM_DOMAIN` and the Google OAuth client's two addresses.      |
+| What you see                                             | What to do                                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `could not check: Wrangler has no credential`            | Run `pnpm exec wrangler login`, then the command again.                                                |
+| Turnstile or Access says `403` or `Authentication error` | The token lacks a permission. Create a new one from the link; check every permission it lists.         |
+| `Zero Trust is not turned on for this account`           | Follow the first-time steps above, then run it again. Access items wait until it is on.                |
+| `does not bind DB to …` or a `database_id` mismatch      | Edit the wrangler config as the `next:` line says, through a pull request.                             |
+| Migrations "wait until" the config has a `database_id`   | Put the id the report shows in the wrangler config through a pull request, then run the command again. |
+| A secret "is set on … and setup cannot read that value"  | Run `pnpm bootstrap --production --rotate <NAME>` to store one new value everywhere.                   |
+| An email record stays missing after Resend says Verified | DNS can take a few minutes to spread. Run the check again later.                                       |
+| `bootstrap --production … needs a terminal`              | Run it in a terminal, not through CI or a pipe. Use `pnpm preflight --production` to only check.       |
+| Google sign-in fails after the team domain was changed   | Change it back, or update every `ACCESS_TEAM_DOMAIN` and the Google OAuth client's two addresses.      |

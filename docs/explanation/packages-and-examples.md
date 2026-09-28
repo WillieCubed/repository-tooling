@@ -1,8 +1,9 @@
 # Why packages and examples
 
-Every LVBT repository should have the same structure and the same behavior: the same commands, the
-same lint rules, the same TypeScript strictness, the same hooks, the same CI job. This page explains
-how that is achieved with nothing that a developer who has never heard of LVBT would find unusual.
+Every personal repository should have the same structure and the same behavior: the same commands,
+the same lint rules, the same TypeScript strictness, the same hooks, the same CI job. This page
+explains how that is achieved with nothing that a developer who has never seen this standard would
+find unusual.
 
 ## Turborepo's conventions, not ours
 
@@ -10,8 +11,8 @@ Turborepo already defines how a JavaScript monorepo shares configuration: `packa
 exporting a `config` per environment, `packages/typescript-config` with JSON files to extend,
 `packages/vitest-config` exporting a shared object, `turbo.json` naming the tasks, and
 `create-turbo --example` copying a runnable example to start a new repository. This repository does
-exactly that under the `@lasvegasfortransit` scope. A new contributor can read Turborepo's
-documentation and understand every file.
+exactly that under the `@williecubed` scope. A new contributor can read Turborepo's documentation
+and understand every file.
 
 ## Rules travel as packages
 
@@ -22,10 +23,10 @@ change to a rule is a versioned preset update, reviewed once here and then revie
 vendor diff in each consumer.
 
 Template publication vendors the exact bytes from a repository-tooling tag under
-`.lvbt/web-platform`, records their commit and content hash, and rewrites `@lasvegasfortransit/*`
-dependencies to local `file:` paths. The source packages publish through the organization GitHub
-Packages registry. The local snapshot needs neither registry credentials nor a network connection
-after it is committed.
+`.williecubed/web-platform`, records their commit and content hash, and rewrites `@williecubed/*`
+dependencies to local `file:` paths. The source packages publish through the GitHub Packages
+registry. The local snapshot needs neither registry credentials nor a network connection after it is
+committed.
 
 ## Structure travels as examples
 
@@ -47,7 +48,7 @@ snapshot. It does not generate or overwrite application-owned configuration.
 
 ## What this costs
 
-The organization must keep the packages small and stable, because every repository feels a change to
+The standard must keep the packages small and stable, because every repository feels a change to
 them. A repository that needs to diverge does so in its own file, on top of the shared rule, and
 says why in the commit. A release still needs a tag and release notes. Each repository's daily
 `Standard update` workflow then opens the preset update in that repository. A patch update merges
