@@ -1,6 +1,6 @@
 {
   "name": "@williecubed/cli",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "The cube command every personal repository runs for bootstrap, preflight, and deploy, plus the production platform setup, the shared git hooks, and the willie-contributions agent plugin.",
   "license": "MIT",
   "type": "module",

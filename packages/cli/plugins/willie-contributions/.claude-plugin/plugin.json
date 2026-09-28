@@ -1,6 +1,6 @@
 {
   "name": "willie-contributions",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Create readable GitHub issues and pull requests in WillieCubed repositories through the shared workflow.",
   "author": {
     "name": "WillieCubed",

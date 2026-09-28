@@ -1,6 +1,6 @@
 {
   "name": "@williecubed/prettier-config",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "The Prettier configuration every personal repository uses.",
   "license": "MIT",
   "type": "module",
