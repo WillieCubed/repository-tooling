@@ -78,10 +78,11 @@ git push
 
 Then add the repository to `standards/repositories.json` here with `"kind": "consumer"`, so the
 standard ruleset applies and `Standard status` tracks it. Its workflows install the `@williecubed/*`
-packages with their own token, so give the repository read access to each package in the package's
-settings on GitHub, under **Manage Actions access**. A deployable repository also needs the
-`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets in a `production` environment before
-`.github/workflows/deploy.yml` can run.
+packages with their own token. The packages are public, so the token needs only `packages: read`,
+which every template workflow that installs declares. A deployable repository deploys once its
+`production` environment has the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets; until
+then, `.github/workflows/deploy.yml` skips the deploy with a notice, so a new repository's first
+pushes stay green.
 
 ## Common problems
 

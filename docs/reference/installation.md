@@ -25,8 +25,8 @@ committed file could send the token to another registry.
 
 ## Authentication
 
-Installing needs a GitHub token with `read:packages`, and each consuming repository needs read
-access to the packages, granted in each package's settings on GitHub.
+Installing needs a GitHub token with `read:packages`. The packages are public, so any repository's
+workflow token can read them once the workflow grants `packages: read`.
 
 | Where     | Token                                                                         | Configuration                                                                                                                                                |
 | --------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |

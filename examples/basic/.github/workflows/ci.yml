@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: read
+  # Installs @williecubed/* from GitHub Packages with the workflow token.
+  packages: read
 
 concurrency:
   group: ci-${{ github.ref }}

@@ -1,6 +1,7 @@
 # Deploys every app with a wrangler config on each push to main, after the
-# same check pull requests run. Needs the CLOUDFLARE_API_TOKEN (Workers Scripts
-# edit) and CLOUDFLARE_ACCOUNT_ID repository secrets.
+# same check pull requests run. Uses the CLOUDFLARE_API_TOKEN (Workers Editor)
+# and CLOUDFLARE_ACCOUNT_ID secrets of the production environment, and skips
+# the deploy with a notice until the token exists.
 name: Deploy
 
 on:
@@ -10,6 +11,8 @@ on:
 
 permissions:
   contents: read
+  # Installs @williecubed/* from GitHub Packages with the workflow token.
+  packages: read
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -27,15 +30,31 @@ jobs:
     timeout-minutes: 15
     environment: production
     steps:
+      # A new repository has no deploy token until production is set up. Skip the deploy with a
+      # notice rather than fail every push to main before then.
+      - name: Check for the deploy token
+        id: token
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Not deployed: the production environment has no CLOUDFLARE_API_TOKEN."
+          fi
+
       - name: Checkout
+        if: steps.token.outputs.present == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Node + pnpm
+        if: steps.token.outputs.present == 'true'
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Deploy
+        if: steps.token.outputs.present == 'true'
         run: pnpm run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
