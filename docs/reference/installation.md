@@ -11,9 +11,9 @@ repository-tooling's code. The files every repository keeps identical ship insid
 | File                    | What it holds                                                                                                               |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `.npmrc`                | `@williecubed:registry=https://npm.pkg.github.com`, and no credential                                                       |
-| `package.json` (each)   | Every `@williecubed/*` dependency at the release's exact version, such as `"@williecubed/cli": "0.0.1"`                     |
+| `package.json` (each)   | Every `@williecubed/*` dependency at the release's exact version, such as `"@williecubed/cli": "0.0.2"`                     |
 | `pnpm-workspace.yaml`   | `minimumReleaseAgeExclude: ['@williecubed/*']`, so a release installs the day it is published despite `minimumReleaseAge`   |
-| `.claude/settings.json` | The `cube` marketplace at the release tag, such as `"ref": "v0.0.1"`, so Claude Code loads the plugin from the same release |
+| `.claude/settings.json` | The `cube` marketplace at the release tag, such as `"ref": "v0.0.2"`, so Claude Code loads the plugin from the same release |
 
 Every package in the workspace pins the same release. `cube check contract` fails on a
 `@williecubed/*` dependency written as a range, a `file:` path, or a dist-tag; `workspace:` and

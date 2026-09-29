@@ -17,10 +17,10 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@williecubed/eslint-config": "0.0.1",
-    "@williecubed/playwright-config": "0.0.1",
-    "@williecubed/typescript-config": "0.0.1",
-    "@williecubed/vitest-config": "0.0.1",
+    "@williecubed/eslint-config": "0.0.2",
+    "@williecubed/playwright-config": "0.0.2",
+    "@williecubed/typescript-config": "0.0.2",
+    "@williecubed/vitest-config": "0.0.2",
     "@playwright/test": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",

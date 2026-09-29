@@ -26,16 +26,16 @@ to the same version. Pin the examples' `@williecubed/*` dependencies to the vers
 Claude marketplace ref in each example and in `packages/cli/repository/.claude/settings.json` at the
 tag `v<version>`. `pnpm check` fails when any of these disagree.
 
-Commit with `chore(tooling): release v0.0.2`.
+Commit with `chore(tooling): release v0.0.3`.
 
 ## 2. Tag and push
 
 ```bash
-git tag v0.0.2
-git push origin main v0.0.2
+git tag v0.0.3
+git push origin main v0.0.3
 ```
 
-Create the GitHub release from the tag with `gh release create v0.0.2 --generate-notes`, then edit
+Create the GitHub release from the tag with `gh release create v0.0.3 --generate-notes`, then edit
 the notes so the first line says what changes for a repository that updates. The release notes page
 `docs/reference/release-<version>.md` belongs in the release commit; `pnpm check` fails without it.
 

@@ -1,6 +1,6 @@
 {
   "name": "@williecubed/eslint-config",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The ESLint configurations every personal repository uses.",
   "license": "MIT",
   "type": "module",

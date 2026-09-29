@@ -23,8 +23,8 @@
     "*": "prettier --write --ignore-unknown"
   },
   "devDependencies": {
-    "@williecubed/cli": "0.0.1",
-    "@williecubed/prettier-config": "0.0.1",
+    "@williecubed/cli": "0.0.2",
+    "@williecubed/prettier-config": "0.0.2",
     "lint-staged": "catalog:",
     "markdownlint-cli2": "catalog:",
     "markdownlint-rule-relative-links": "catalog:",

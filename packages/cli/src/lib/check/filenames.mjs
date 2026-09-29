@@ -15,7 +15,7 @@ const SOURCE_FILE = /^[^.]+\.[^.]+$/;
 // files (Astro requires src/content.config.ts).
 const CONVENTIONAL_SOURCE = /^[^.]+\.(?:module\.[a-z]+|config\.[a-z]+)$/;
 // A file kept only so git records an empty directory. A repository commits
-// nothing for a thing that does not exist yet; until standard v0.0.2 one warns.
+// nothing for a thing that does not exist yet; until standard v0.0.3 one warns.
 const PLACEHOLDER = /(?:^|\/)\.(?:git)?keep$/;
 // Documentation beside tests describes them and is not a suite.
 const DOCUMENT = /^[A-Z][A-Z0-9-]*\.md$/;
@@ -94,7 +94,7 @@ export function checkFilenames({ cwd, staged = false }) {
       ...violations.map(({ path, expected }) => `${path}\n      expected: ${expected}`),
       ...placeholders.map(
         (path) =>
-          `warning: ${path} holds a place for files that do not exist yet; delete it, and the directory arrives with its first real file (from v0.0.2 this fails)`,
+          `warning: ${path} holds a place for files that do not exist yet; delete it, and the directory arrives with its first real file (from v0.0.3 this fails)`,
       ),
     ],
     fix: 'rename each file to the expected form and update its imports',
