@@ -84,3 +84,9 @@ both. Exports are admin-only.
 Analytics is Cloudflare Web Analytics, in production only. It sets no cookies and stores no IP
 addresses. An app that needs product analytics beyond page views records that decision, and honors
 Global Privacy Control and Do Not Track.
+
+## Privacy page
+
+An app with accounts or payments publishes `/privacy`, written from its `data-inventory.md`, so the
+page and the inventory agree. It says what the app stores, why, for how long, and how to ask for
+deletion.

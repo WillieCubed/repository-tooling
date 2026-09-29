@@ -135,7 +135,10 @@ group exists and remembers a yes on that computer; until then, the group is repo
 
 ## `zoneRules`
 
-Protection that runs at the zone, before the Worker, so a blocked request costs nothing.
+Protection that runs at the zone, before the Worker, so a blocked request costs nothing. Only a
+project with a zone of its own declares it; on a shared zone such as `willie.page`, zone-wide
+settings belong to the zone, as
+[Infrastructure conventions](infrastructure-conventions.md#zone-wide-settings) explains.
 
 | Field                   | Required | Meaning                                                                             |
 | ----------------------- | -------- | ----------------------------------------------------------------------------------- |

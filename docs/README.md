@@ -16,6 +16,9 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [Data handling](reference/data-handling.md)
 - [Documentation standard](reference/documentation-standard.md)
 - [Engineering rules](reference/engineering-rules.md)
+- [Identity](reference/identity.md)
+- [Infrastructure conventions](reference/infrastructure-conventions.md)
+- [Resource usage](reference/resource-usage.md)
 - [Standard configuration](reference/standard-config.md)
 - [Command reference](reference/cli.md)
 - [Installation and updates](reference/installation.md)
@@ -39,7 +42,11 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [ESLint and Prettier](explanation/decisions/eslint-and-prettier.md)
 - [Vercel apps keep admin on Workers](explanation/decisions/vercel-admin-on-workers.md)
 - [Issue credentials again instead of storing them](explanation/decisions/issue-credentials-again.md)
+- [Publish the brand package from willie.page](explanation/decisions/brand-from-website.md)
+- [Zone-wide settings belong to the zone](explanation/decisions/zone-settings-belong-to-the-zone.md)
+- [Workers Paid for the personal account](explanation/decisions/workers-paid.md)
 
 ## Design records
 
 - [Personal repository standard](superpowers/specs/2026-09-28-personal-repository-standard-design.md)
+- [Identity, infrastructure, and resource standards](superpowers/specs/2026-09-28-identity-and-resources-design.md)

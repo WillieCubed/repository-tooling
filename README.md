@@ -26,15 +26,18 @@ It owns five things:
 
 ## The standard in brief
 
-| Topic         | Rule                                                                                                                            | Details                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Hosting       | Cloudflare Workers by default; Vercel only when a feature needs it                                                              | [Where a project runs](docs/explanation/hosting.md)                |
-| Admin         | Access at the edge, the token verified again in the Worker, failing closed, every change audited                                | [Admin](docs/reference/admin.md)                                   |
-| Data          | Validated at every boundary, no lookup oracles, retention and restore documented, safe exports                                  | [Data handling](docs/reference/data-handling.md)                   |
-| Documentation | Diátaxis inside domain directories, with required documents and sections                                                        | [Documentation standard](docs/reference/documentation-standard.md) |
-| Code          | Strict TypeScript, ESLint and Prettier with Astro and MDX, one version catalog, zero warnings                                   | [Engineering rules](docs/reference/engineering-rules.md)           |
-| Production    | Declared in `platform.json`, checked and set up by one idempotent command                                                       | [Platform manifest](docs/reference/platform-manifest.md)           |
-| Continuity    | Each project's source is enough to set up its production again in minutes; no secret is stored outside the services that use it | [Rebuilding from source](docs/explanation/continuity.md)           |
+| Topic          | Rule                                                                                                                                           | Details                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Hosting        | Cloudflare Workers by default; Vercel only when a feature needs it                                                                             | [Where a project runs](docs/explanation/hosting.md)                        |
+| Admin          | Access at the edge, the token verified again in the Worker, failing closed, every change audited                                               | [Admin](docs/reference/admin.md)                                           |
+| Data           | Validated at every boundary, no lookup oracles, retention and restore documented, safe exports                                                 | [Data handling](docs/reference/data-handling.md)                           |
+| Documentation  | Diátaxis inside domain directories, with required documents and sections                                                                       | [Documentation standard](docs/reference/documentation-standard.md)         |
+| Code           | Strict TypeScript, ESLint and Prettier with Astro and MDX, one version catalog, zero warnings                                                  | [Engineering rules](docs/reference/engineering-rules.md)                   |
+| Production     | Declared in `platform.json`, checked and set up by one idempotent command                                                                      | [Platform manifest](docs/reference/platform-manifest.md)                   |
+| Continuity     | Each project's source is enough to set up its production again in minutes; no secret is stored outside the services that use it                | [Rebuilding from source](docs/explanation/continuity.md)                   |
+| Identity       | Every web project links to willie.page with one author link and its head tag, from `@williecubed/brand`                                        | [Identity](docs/reference/identity.md)                                     |
+| Infrastructure | Account-unique names start with the Worker name, no `workers.dev` copies, zone-wide settings belong to the zone, unlisted sites send `noindex` | [Infrastructure conventions](docs/reference/infrastructure-conventions.md) |
+| Resources      | Each app documents its limits, paid endpoints are guarded, each provider caps each project, and local disk is kept clean                       | [Resource usage](docs/reference/resource-usage.md)                         |
 
 ## Create a repository
 

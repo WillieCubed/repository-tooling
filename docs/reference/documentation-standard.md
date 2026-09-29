@@ -37,7 +37,7 @@ produced are.
 | `development/tutorials/start-here.md`     | Every repository                | Free                                                             |
 | `development/reference/glossary.md`       | Every repository                | Free; each term has an anchor id                                 |
 | `development/explanation/architecture.md` | Every deployed app              | The twelve [arc42](https://arc42.org/overview) sections, exactly |
-| `operations/how-to/operations.md`         | Every deployed app              | Deploy, Roll back, Migrations, Restore, Incidents                |
+| `operations/how-to/operations.md`         | Every deployed app              | Deploy, Roll back, Migrations, Restore, Incidents, Limits        |
 | `security/reference/secrets.md`           | Every repository with a secret  | Inventory, Rotation, Prevention, Rules                           |
 | `security/reference/data-inventory.md`    | Every app storing personal data | Inventory, Retention, Deletion, Backups, Exports                 |
 | `security/reference/admin.md`             | Every app with admin            | Access, Routes, Audit actions, Webhooks                          |
@@ -46,7 +46,8 @@ produced are.
 
 - **Operations:** Deploy names the trigger and what runs. Roll back names the command and its
   limits. Migrations says when they apply relative to the deploy. Restore gives the restore command
-  and the date it was last rehearsed. Incidents says where logs are and what to check first.
+  and the date it was last rehearsed. Incidents says where logs are and what to check first. Limits
+  follows [Resource usage](resource-usage.md#a-limits-section-in-every-app).
 - **Secrets:** Inventory is a table of secret, where it lives, and what an attacker could do with
   it. Rotation has one `###` per secret. Prevention names what stops a secret reaching the
   repository. Rules lists handling constraints.
