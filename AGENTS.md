@@ -43,5 +43,7 @@ index: `git restore --staged . && git add <paths> && git commit -F <file>`.
 Nothing is published or tagged from this repository without the maintainer's explicit approval.
 `Publish packages` runs only by hand. Every repository's daily `Standard update` workflow picks up a
 new release published to GitHub Packages and opens an update pull request in that repository, using
-only that workflow's own token. A patch release's pull request merges itself; a minor release's
-waits for a maintainer. A new rule warns for at least one minor release before it fails.
+only that workflow's own token. From 0.1.0, a patch release's pull request merges itself and a minor
+release's waits for a maintainer; while the standard is on 0.0.x, every release's waits. A new rule
+warns for at least one release before it fails: the next release on 0.0.x, a later minor release
+from 0.1.0.

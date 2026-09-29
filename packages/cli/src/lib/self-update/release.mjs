@@ -45,6 +45,7 @@ export function latestRelease(tags) {
 /**
  * Whether moving from one release to another is a patch: fixes only, so its update merges itself.
  * A minor or major step can change behavior, so a maintainer merges it after reading the notes.
+ * Before 0.1.0 any release can change behavior, so no step between two 0.0.x releases is a patch.
  *
  * @param {string | null | undefined} from
  * @param {string} to
@@ -54,6 +55,7 @@ export function isPatchUpdate(from, to) {
   if (!from || !STABLE_TAG.test(from)) return false;
   const [fromMajor, fromMinor] = parseRelease(from);
   const [toMajor, toMinor] = parseRelease(to);
+  if (fromMajor === 0 && fromMinor === 0) return false;
   return fromMajor === toMajor && fromMinor === toMinor && compareReleases(to, from) > 0;
 }
 
@@ -120,7 +122,7 @@ export function pullRequestBody({ tag, kind, automerge }) {
       : `Every \`${standard.npmScope}/*\` dependency moves to ${tag.slice(1)}, and that release's \`${standard.cliName} update\` brings the files the standard owns up to date.`;
   const merge = automerge
     ? 'It is a patch release, so it merges itself once `Validate` passes.'
-    : 'It is a minor release, which can change how the repository works, so a maintainer merges it after reading the release notes.';
+    : 'It can change how the repository works, so a maintainer merges it after reading the release notes.';
   return [
     '## TL;DR',
     '',

@@ -308,7 +308,7 @@ test('cube check reports the file that breaks a shape rule', async () => {
   // CSS modules, config files, and a README beside tests are conventions.
   const conventional = ['src/card.module.css', 'src/content.config.ts', 'tests/README.md'];
   for (const file of conventional) assert.ok(!result.stdout.includes(file), `${file} is allowed`);
-  // A placeholder for files that do not exist yet warns until standard v0.8.0.
+  // A placeholder for files that do not exist yet warns until standard v0.0.2.
   assert.match(result.stdout, /warning: packages\/example\/src\/pages\/\.gitkeep holds a place/);
   assert.doesNotMatch(result.stdout, /\.gitkeep\n\s+expected/);
   assert.match(result.stdout, /FAIL {2}contract/);

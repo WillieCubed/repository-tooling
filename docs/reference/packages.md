@@ -4,7 +4,7 @@ Every personal repository depends on these packages, installed from GitHub Packa
 version of one release:
 
 ```json
-"@williecubed/typescript-config": "0.7.0"
+"@williecubed/typescript-config": "0.0.1"
 ```
 
 All packages share one version, the tooling version, and a repository pins every one of them to the

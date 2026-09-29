@@ -76,6 +76,8 @@ test('only a patch step merges itself', () => {
   assert.equal(isPatchUpdate('v0.4.5', 'v1.4.6'), false);
   assert.equal(isPatchUpdate(null, 'v0.4.6'), false);
   assert.equal(isPatchUpdate('v0.4.6', 'v0.4.6'), false);
+  // Before 0.1.0 every release may change how a repository works.
+  assert.equal(isPatchUpdate('v0.0.1', 'v0.0.2'), false);
   assert.match(
     pullRequestBody({ tag: 'v0.5.0', kind: 'consumer', automerge: false }),
     /a maintainer merges it/,
@@ -91,11 +93,11 @@ test('releases compare by version, not by text', () => {
 
 test('the newest release comes from what GitHub Packages publishes', () => {
   const view = (output) => fakeRunner([[/^npm view /, output]]);
-  const listed = view(JSON.stringify(['0.6.0', '0.7.0', '0.10.0-rc.1', '0.9.1']));
+  const listed = view(JSON.stringify(['0.0.1', '0.0.2', '0.10.0-rc.1', '0.9.1']));
   assert.equal(publishedRelease('/nonexistent', listed.runner), 'v0.9.1');
   assert.deepEqual(listed.calls, [`npm view ${standard.npmScope}/cli versions --json`]);
-  assert.equal(publishedRelease('/nonexistent', view('"0.7.0"').runner), 'v0.7.0');
-  assert.throws(() => publishedRelease('/nonexistent', view('"0.7.0-rc.1"').runner), /no stable/);
+  assert.equal(publishedRelease('/nonexistent', view('"0.0.2"').runner), 'v0.0.2');
+  assert.throws(() => publishedRelease('/nonexistent', view('"0.0.2-rc.1"').runner), /no stable/);
 });
 
 test('an update supersedes older update pull requests and yields to newer ones', () => {
@@ -143,7 +145,7 @@ test('a consumer moves every standard package to the release once, with its own 
   t.after(() => rm(fixture, { recursive: true, force: true }));
   const consumer = path.join(fixture, 'consumer');
   await cp(path.join(root, 'examples/basic'), consumer, { recursive: true });
-  await pinExample(consumer, 'v0.1.0');
+  await pinExample(consumer, 'v0.0.0');
   // A repository's own token may not push workflow files, so a self-update leaves them alone.
   await rm(path.join(consumer, '.github/workflows/standard-update.yml'));
   git(consumer, 'init', '--quiet', '--initial-branch', 'main');
@@ -160,7 +162,7 @@ test('a consumer moves every standard package to the release once, with its own 
   const entry = { name: 'consumer', kind: 'consumer' };
   const first = await applyRelease({ target: consumer, entry, tag, runner });
   assert.equal(first.changed, true);
-  assert.equal(first.from, 'v0.1.0');
+  assert.equal(first.from, 'v0.0.0');
   assert.deepEqual(first.skippedWorkflows, ['.github/workflows/standard-update.yml']);
   const install = calls.indexOf('pnpm install --no-frozen-lockfile');
   const update = calls.indexOf(`pnpm exec ${standard.cliName} update`);
@@ -183,9 +185,9 @@ test('a consumer moves every standard package to the release once, with its own 
 
   const again = await applyRelease({ target: consumer, entry, tag, runner });
   assert.deepEqual(again, { changed: false, from: tag, skippedWorkflows: [] });
-  const older = await applyRelease({ target: consumer, entry, tag: 'v0.0.1', runner });
+  const older = await applyRelease({ target: consumer, entry, tag: 'v0.0.0', runner });
   assert.equal(older.changed, false);
-  assert.match(older.reason ?? '', /newer than v0\.0\.1/);
+  assert.match(older.reason ?? '', /newer than v0\.0\.0/);
 });
 
 test('a template is regenerated from its release and keeps its published lockfile', async (t) => {
@@ -201,7 +203,7 @@ test('a template is regenerated from its release and keeps its published lockfil
 
   const template = path.join(fixture, 'template');
   await cp(path.join(root, 'examples/basic'), template, { recursive: true });
-  await pinExample(template, 'v0.1.0');
+  await pinExample(template, 'v0.0.0');
   await writeFile(path.join(template, 'pnpm-lock.yaml'), 'lockfileVersion: published\n');
   await mkdir(path.join(template, '.github/workflows'), { recursive: true });
   await writeFile(path.join(template, '.github/workflows/ci.yml'), 'name: CI\n');
@@ -302,7 +304,10 @@ test('a new pull request is opened with the helper the repository installed', as
     ),
   );
   assert.ok(!calls.some((call) => call.startsWith('gh pr create')));
-  assert.ok(!calls.some((call) => call.startsWith('gh pr merge')), 'a minor release waits');
+  assert.ok(
+    !calls.some((call) => call.startsWith('gh pr merge')),
+    'a release that is not a patch waits',
+  );
 });
 
 test('every example updates itself with only its own workflow token', async () => {

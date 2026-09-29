@@ -49,4 +49,5 @@ them. A repository that needs to diverge does so in its own file, on top of the 
 says why in the commit. A release still needs a tag, release notes, and a publish to GitHub
 Packages, and installing needs a token with `read:packages`. Each repository's daily
 `Standard update` workflow then opens the update in that repository. A patch update merges once the
-repository's own checks pass; a minor update waits for a maintainer.
+repository's own checks pass; a minor update, and every update while the standard is on 0.0.x, waits
+for a maintainer.

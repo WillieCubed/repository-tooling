@@ -58,9 +58,10 @@ the shared one.
 
 ## 3. Remove the old mechanism
 
-If the repository was adopted before v0.2.0, delete `plugins/willie-contributions/`,
-`.williecubed/repository-tooling.json`, `scripts/check-repository-tooling.ts`, and the
-`check:repository-tooling` script. Keep `.williecubed/commit-scopes.txt`.
+If the repository adopted the LasVegasForTransit standard before its v0.2.0, delete
+`plugins/willie-contributions/`, `.williecubed/repository-tooling.json`,
+`scripts/check-repository-tooling.ts`, and the `check:repository-tooling` script. Keep
+`.williecubed/commit-scopes.txt`.
 
 ## 4. Verify and commit
 

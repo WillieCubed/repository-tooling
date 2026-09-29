@@ -86,7 +86,7 @@ test('the plugin ref follows the installed release, and cube check owned fails o
   assert.deepEqual(clean.lines, []);
 
   const settings = path.join(directory, '.claude/settings.json');
-  await writeFile(settings, standardCopy('.claude/settings.json').replace(release, 'v0.1.0'));
+  await writeFile(settings, standardCopy('.claude/settings.json').replace(release, 'v0.0.0'));
   await writeFile(path.join(directory, '.editorconfig'), 'root = false\n');
   await chmod(path.join(directory, '.githooks/pre-push'), 0o644);
   await rm(path.join(directory, '.codex/hooks.json'));
@@ -99,7 +99,7 @@ test('the plugin ref follows the installed release, and cube check owned fails o
     '.codex/hooks.json is missing.',
     ".editorconfig differs from the standard's copy.",
     ".prettierrc.json replaces the organization's prettier.config.js.",
-    `.claude/settings.json loads the contribution plugin from v0.1.0, not ${release}.`,
+    `.claude/settings.json loads the contribution plugin from v0.0.0, not ${release}.`,
   ]);
   assert.ok(drift.fix.includes(`pnpm exec ${standard.cliName} update`));
 

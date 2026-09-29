@@ -70,7 +70,7 @@ reviewer asks of every added file whether this repository is its source.
 
 - One version catalog. Every repository's `pnpm-workspace.yaml` carries the catalog from
   `packages/cli/catalog.json`, and packages depend on `"catalog:"`. `cube check contract` warns when
-  a repository pins a shared entry to another version, and fails from v0.8.0.
+  a repository pins a shared entry to another version, and fails from v0.0.2.
 - The standard's own `@williecubed/*` packages install from GitHub Packages at one release's exact
   version, the same in every package of the workspace.
 - Versions are exact and change only through the pnpm CLI or a standard update, never by editing a

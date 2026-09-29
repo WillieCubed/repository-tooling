@@ -59,8 +59,8 @@ test('a repository may add catalog entries and is warned when it re-pins a share
     assert.deepEqual(checkContract({ cwd: root }).lines, []);
     await writeFile(path.join(root, 'pnpm-workspace.yaml'), workspace('^9.0.0'));
     const result = checkContract({ cwd: root });
-    assert.equal(result.ok, true, 'a re-pinned shared entry only warns until v0.8.0');
+    assert.equal(result.ok, true, 'a re-pinned shared entry only warns until v0.0.2');
     assert.deepEqual(result.lines, [
-      `warning: pnpm-workspace.yaml pins "eslint" to "^9.0.0"; the standard's catalog has "${catalog.eslint}" (from v0.8.0 this fails)`,
+      `warning: pnpm-workspace.yaml pins "eslint" to "^9.0.0"; the standard's catalog has "${catalog.eslint}" (from v0.0.2 this fails)`,
     ]);
   }));

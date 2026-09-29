@@ -11,9 +11,9 @@ repository-tooling's code. The files every repository keeps identical ship insid
 | File                    | What it holds                                                                                                               |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `.npmrc`                | `@williecubed:registry=https://npm.pkg.github.com`, and no credential                                                       |
-| `package.json` (each)   | Every `@williecubed/*` dependency at the release's exact version, such as `"@williecubed/cli": "0.7.0"`                     |
+| `package.json` (each)   | Every `@williecubed/*` dependency at the release's exact version, such as `"@williecubed/cli": "0.0.1"`                     |
 | `pnpm-workspace.yaml`   | `minimumReleaseAgeExclude: ['@williecubed/*']`, so a release installs the day it is published despite `minimumReleaseAge`   |
-| `.claude/settings.json` | The `cube` marketplace at the release tag, such as `"ref": "v0.7.0"`, so Claude Code loads the plugin from the same release |
+| `.claude/settings.json` | The `cube` marketplace at the release tag, such as `"ref": "v0.0.1"`, so Claude Code loads the plugin from the same release |
 
 Every package in the workspace pins the same release. `cube check contract` fails on a
 `@williecubed/*` dependency written as a range, a `file:` path, or a dist-tag; `workspace:` and
@@ -120,12 +120,14 @@ own token:
    proposed in one pull request through the contribution plugin's helper. The workflow dispatches
    `ci.yml` on the branch so the pull request gets its `Validate` check.
 
-A patch release's pull request merges itself once `Validate` passes. A minor release's waits for a
-maintainer. A newer release closes the older pull requests it replaces, and an update branch that
-fell behind `main` is rebuilt unless someone pushed a fix to it. The workflow's token may not change
-workflow files, so a release that changes one opens its pull request without that file, and the run
-fails and names the file to copy by hand. `cube self-update --dry-run` commits the update on its
-branch and stops before anything reaches GitHub.
+From 0.1.0, a patch release's pull request merges itself once `Validate` passes, and a minor
+release's waits for a maintainer. While the standard is on 0.0.x, any release can change how a
+repository works, so every update pull request waits for a maintainer. A newer release closes the
+older pull requests it replaces, and an update branch that fell behind `main` is rebuilt unless
+someone pushed a fix to it. The workflow's token may not change workflow files, so a release that
+changes one opens its pull request without that file, and the run fails and names the file to copy
+by hand. `cube self-update --dry-run` commits the update on its branch and stops before anything
+reaches GitHub.
 
 ## Unreleased changes
 

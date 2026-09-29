@@ -28,7 +28,7 @@ const subjectPattern = /^(?<type>[a-z]+)(?:\((?<scope>[a-z0-9-]+)\))?: \S.*$/;
  * They still pass, with a warning, until the release that retires them.
  */
 export const deprecatedNames = Object.freeze({
-  ci: 'Use `chore` for workflow and CI configuration changes; from standard v0.8.0 the commit hook rejects `ci`.',
+  ci: 'Use `chore` for workflow and CI configuration changes; from standard v0.0.2 the commit hook rejects `ci`.',
 });
 
 /** A warning for a subject that uses a deprecated type or scope, or undefined. */

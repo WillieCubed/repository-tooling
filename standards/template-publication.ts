@@ -75,7 +75,7 @@ export async function materializeTemplate(options: {
     throw new Error(`Unknown template example: ${options.example}`);
   if (source === target) throw new Error('Source and target directories must differ.');
   if (!/^v\d+\.\d+\.\d+$/.test(options.release))
-    throw new Error('Use an explicit version tag, such as v0.7.0.');
+    throw new Error('Use an explicit version tag, such as v0.0.1.');
 
   const git = (args: string[]) =>
     execFileSync('git', ['-C', source, ...args], {

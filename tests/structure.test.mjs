@@ -75,17 +75,16 @@ test('the organization registry contains every active repository', async () => {
   }
 });
 
-// Releases before 0.6.0 belong to the upstream standard this repository was forked from, and their
-// notes stay there; docs/reference/standard-config.md records the fork.
-test('every stable release since 0.6.0 has release notes', async () => {
+// The WillieCubed standard's releases start at 0.0.1, and every one has notes. The releases of the
+// upstream standard this repository was forked from keep their notes there, and their tags are not
+// in this repository; docs/reference/standard-config.md records the fork.
+test('every stable release has release notes', async () => {
   const { version } = JSON.parse(await read('package.json'));
   const tags = execFileSync('git', ['-C', root, 'tag', '--list', 'v*'], { encoding: 'utf8' })
     .split('\n')
     .filter((tag) => /^v\d+\.\d+\.\d+$/.test(tag));
   const versions = new Set([version, ...tags.map((tag) => tag.slice(1))]);
   for (const release of versions) {
-    const [major, minor] = release.split('.').map(Number);
-    if (major === 0 && minor < 6) continue;
     await access(
       path.join(root, `docs/reference/release-${release.replaceAll('.', '-')}.md`),
     ).catch(() =>

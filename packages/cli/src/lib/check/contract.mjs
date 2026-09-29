@@ -84,7 +84,7 @@ export function catalogEntries(text) {
 
 /**
  * Shared catalog versions belong to the standard; a repository adds entries but never re-pins one.
- * These are warnings until standard v0.8.0, which moves the entries and fails on any that differ.
+ * These are warnings until standard v0.0.2, which moves the entries and fails on any that differ.
  */
 function catalogWarnings(root) {
   const catalog = JSON.parse(readFileSync(STANDARD_CATALOG, 'utf8')).catalog;
@@ -93,7 +93,7 @@ function catalogWarnings(root) {
     .filter(([name, version]) => Object.hasOwn(catalog, name) && catalog[name] !== version)
     .map(
       ([name, version]) =>
-        `warning: pnpm-workspace.yaml pins "${name}" to "${version}"; the standard's catalog has "${catalog[name]}" (from v0.8.0 this fails)`,
+        `warning: pnpm-workspace.yaml pins "${name}" to "${version}"; the standard's catalog has "${catalog[name]}" (from v0.0.2 this fails)`,
     );
 }
 

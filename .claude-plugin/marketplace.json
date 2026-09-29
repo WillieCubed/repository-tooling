@@ -7,7 +7,7 @@
     {
       "name": "willie-contributions",
       "description": "Create readable GitHub issues and pull requests in WillieCubed repositories.",
-      "version": "0.6.0",
+      "version": "0.0.1",
       "source": "./packages/cli/plugins/willie-contributions"
     }
   ]

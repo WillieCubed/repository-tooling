@@ -14,8 +14,10 @@ copy the examples at that tag.
 
 ## 1. Set one version everywhere
 
-Choose the new version from the published contract. A backward-compatible fix increments the patch
-number. A new backward-compatible consumer capability increments the minor number. A breaking change
+Choose the new version from the published contract. While the standard is on 0.0.x, which lasts
+until its first release a maintainer calls useful, every release increments the patch number and may
+change how a repository works. From 0.1.0, a backward-compatible fix increments the patch number, a
+new backward-compatible consumer capability increments the minor number, and a breaking change
 before 1.0 increments the minor number and includes an explicit migration path.
 
 In the release commit, set the root `package.json`, every `packages/*/package.json`, both plugin
@@ -24,22 +26,23 @@ to the same version. Pin the examples' `@williecubed/*` dependencies to the vers
 Claude marketplace ref in each example and in `packages/cli/repository/.claude/settings.json` at the
 tag `v<version>`. `pnpm check` fails when any of these disagree.
 
-Commit with `chore(tooling): release v0.3.0`.
+Commit with `chore(tooling): release v0.0.2`.
 
 ## 2. Tag and push
 
 ```bash
-git tag v0.3.0
-git push origin main v0.3.0
+git tag v0.0.2
+git push origin main v0.0.2
 ```
 
-Create the GitHub release from the tag with `gh release create v0.3.0 --generate-notes`, then edit
+Create the GitHub release from the tag with `gh release create v0.0.2 --generate-notes`, then edit
 the notes so the first line says what changes for a repository that updates. The release notes page
 `docs/reference/release-<version>.md` belongs in the release commit; `pnpm check` fails without it.
 
 Other contributors depend on the standard staying predictable. A new rule ships as a warning in one
-minor release and becomes a failure only in a later one; the first release's notes say which release
-enforces it, so every repository sees the warning in its own checks first.
+release and becomes a failure only in a later one: the next release while the standard is on 0.0.x,
+and a later minor release from 0.1.0. The first release's notes say which release enforces it, so
+every repository sees the warning in its own checks first.
 
 ## 3. Publish to GitHub Packages
 
@@ -60,11 +63,12 @@ workflow's own token:
   release's own `cube update`, so the release's migrations apply in one pass however old the
   repository's current release is.
 
-A patch release's pull request merges itself once `Validate` passes. A minor release's pull request
-waits for a maintainer to merge it, because a minor release can change how a repository works. A
-newer release closes the older pull requests it replaces, and an update branch that fell behind
-`main` is rebuilt, unless someone pushed a fix to it. To roll a release out sooner, run
-`Standard update` by hand in each repository's Actions tab.
+From 0.1.0, a patch release's pull request merges itself once `Validate` passes, and a minor
+release's pull request waits for a maintainer to merge it, because a minor release can change how a
+repository works. While the standard is on 0.0.x, every release can, so every update pull request
+waits for a maintainer. A newer release closes the older pull requests it replaces, and an update
+branch that fell behind `main` is rebuilt, unless someone pushed a fix to it. To roll a release out
+sooner, run `Standard update` by hand in each repository's Actions tab.
 
 A workflow's own token may not change workflow files. When a release changes one, such as an
 example's `ci.yml`, the update still opens its pull request without that file, and the run fails and
