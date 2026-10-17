@@ -19,6 +19,9 @@ type Manifest = Parameters<typeof pinnedRelease>[0];
 
 export interface RegistryEntry {
   name: string;
+  /** GitHub repository and branch, when different from the registry identity/default branch. */
+  repository?: string;
+  branch?: string;
   requiredStatus: string;
   kind: 'source' | 'template' | 'consumer';
   example?: string;
@@ -57,8 +60,10 @@ export interface RepositoryState {
   pluginRef: string | null;
   /** The repository runs `Standard update`, and `ci.yml` accepts the dispatch it sends. */
   selfUpdating: boolean;
-  rulesets: string[];
-  updates: { number: number; headRefName: string; failing: boolean }[];
+  rulesets: string[] | null;
+  updates: { number: number; headRefName: string; failing: boolean }[] | null;
+  branch?: string;
+  discoveryErrors?: string[];
 }
 
 export interface Finding {
@@ -78,6 +83,22 @@ export function daysBehind(release: string, releases: Release[], now: number): n
     .filter(({ tag }) => compareReleases(tag, release) > 0)
     .sort((left, right) => compareReleases(left.tag, right.tag))[0];
   return missed ? (now - Date.parse(missed.date)) / 86_400_000 : 0;
+}
+
+/** Keeps unavailable discovery distinct from an observed policy failure. */
+function discoveryFindings(state: RepositoryState): Finding[] {
+  const found = (state.discoveryErrors ?? []).map((message) => ({
+    repository: state.name,
+    rule: 'discovery',
+    message,
+  }));
+  if (state.branch)
+    found.push({
+      repository: state.name,
+      rule: 'ruleset-scope',
+      message: `Protection of branch ${state.branch} is unverified: repository ruleset names alone do not establish effective attachment and enforcement.`,
+    });
+  return found;
 }
 
 /**
@@ -114,9 +135,10 @@ export function findings(state: RepositoryState, releases: Release[], now: numbe
       'self-update',
       'it cannot update itself: copy .github/workflows/standard-update.yml from the example and give ci.yml a workflow_dispatch trigger.',
     );
-  if (!state.rulesets.includes('org-standard'))
+  found.push(...discoveryFindings(state));
+  if (state.rulesets !== null && !state.rulesets.includes('org-standard'))
     add('ruleset', 'the org-standard ruleset is missing.');
-  for (const update of state.updates) {
+  for (const update of state.updates ?? []) {
     if (update.failing) add('update', `update pull request #${update.number} is failing Validate.`);
   }
   return found;
@@ -146,7 +168,10 @@ export function report(states: RepositoryState[], latest: string, open: Finding[
   ];
   for (const state of states) {
     const mine = open.filter(({ repository }) => repository === state.name);
-    const updates = state.updates.map(({ number }) => `#${number}`).join(', ') || '—';
+    const updates =
+      state.updates === null
+        ? 'unknown'
+        : state.updates.map(({ number }) => `#${number}`).join(', ') || '—';
     const summary = mine.map(({ message }) => message).join('<br>') || 'none';
     lines.push(`| ${state.name} | ${state.release ?? 'unreleased'} | ${updates} | ${summary} |`);
   }
@@ -157,11 +182,11 @@ export function report(states: RepositoryState[], latest: string, open: Finding[
 const gh = (args: string[]) =>
   execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-function readRaw(repository: string, file: string): string | null {
+function readRaw(repository: string, file: string, branch?: string): string | null {
   try {
     return gh([
       'api',
-      `repos/${OWNER}/${repository}/contents/${file}`,
+      `repos/${OWNER}/${repository}/contents/${file}${branch ? `?ref=${encodeURIComponent(branch)}` : ''}`,
       '-H',
       'Accept: application/vnd.github.raw',
     ]);
@@ -182,49 +207,80 @@ export function pluginRef(settings: string | null): string | null {
 }
 
 function readState(entry: RegistryEntry): RepositoryState {
-  const manifest = readRaw(entry.name, 'package.json');
+  const repository = entry.repository ?? entry.name;
+  const discoveryErrors: string[] = [];
+  function discover<T>(resource: string, read: () => T): T | null {
+    try {
+      return read();
+    } catch (error) {
+      const status = /HTTP \d{3}/.exec(String(error))?.[0] ?? 'request failed';
+      discoveryErrors.push(
+        `${resource} discovery for ${OWNER}/${repository}: ${status}; discovery is unknown and protection remains unverified. Check repository identity, visibility, token access and API support.`,
+      );
+      return null;
+    }
+  }
+  const manifest = readRaw(repository, 'package.json', entry.branch);
   const release = manifest ? pinnedRelease(JSON.parse(manifest) as Manifest) : null;
-  const rulesets = (
-    JSON.parse(gh(['api', `repos/${OWNER}/${entry.name}/rulesets`])) as { name: string }[]
-  ).map(({ name }) => name);
-  const pulls = JSON.parse(
-    gh([
-      'pr',
-      'list',
-      '--repo',
-      `${OWNER}/${entry.name}`,
-      '--state',
-      'open',
-      '--json',
-      'number,headRefName,statusCheckRollup',
-      '--limit',
-      '100',
-    ]),
-  ) as {
-    number: number;
-    headRefName: string;
-    statusCheckRollup: { name?: string; context?: string; conclusion?: string; state?: string }[];
-  }[];
-  const updates = pulls
-    .filter(({ headRefName }) => headRefName.startsWith(BRANCH_PREFIX))
-    .map(({ number, headRefName, statusCheckRollup }) => ({
-      number,
-      headRefName,
-      failing: statusCheckRollup.some(
-        (check) =>
-          (check.name ?? check.context) === entry.requiredStatus &&
-          ['FAILURE', 'ERROR', 'CANCELLED', 'TIMED_OUT'].includes(
-            check.conclusion ?? check.state ?? '',
-          ),
-      ),
-    }));
+  const rulesets = discover('rulesets', () =>
+    (JSON.parse(gh(['api', `repos/${OWNER}/${repository}/rulesets`])) as { name: string }[]).map(
+      ({ name }) => name,
+    ),
+  );
+  const pulls = discover(
+    'pull requests',
+    () =>
+      JSON.parse(
+        gh([
+          'pr',
+          'list',
+          '--repo',
+          `${OWNER}/${repository}`,
+          '--base',
+          entry.branch ?? 'main',
+          '--state',
+          'open',
+          '--json',
+          'number,headRefName,statusCheckRollup',
+          '--limit',
+          '100',
+        ]),
+      ) as {
+        number: number;
+        headRefName: string;
+        statusCheckRollup: {
+          name?: string;
+          context?: string;
+          conclusion?: string;
+          state?: string;
+        }[];
+      }[],
+  );
+  const updates =
+    pulls
+      ?.filter(({ headRefName }) => headRefName.startsWith(BRANCH_PREFIX))
+      .map(({ number, headRefName, statusCheckRollup }) => ({
+        number,
+        headRefName,
+        failing: statusCheckRollup.some(
+          (check) =>
+            (check.name ?? check.context) === entry.requiredStatus &&
+            ['FAILURE', 'ERROR', 'CANCELLED', 'TIMED_OUT'].includes(
+              check.conclusion ?? check.state ?? '',
+            ),
+        ),
+      })) ?? null;
   return {
     name: entry.name,
+    ...(entry.branch ? { branch: entry.branch } : {}),
+    discoveryErrors,
     release,
-    pluginRef: pluginRef(readRaw(entry.name, '.claude/settings.json')),
+    pluginRef: pluginRef(readRaw(repository, '.claude/settings.json', entry.branch)),
     selfUpdating:
-      readRaw(entry.name, '.github/workflows/standard-update.yml') !== null &&
-      /^\s{2}workflow_dispatch:/m.test(readRaw(entry.name, '.github/workflows/ci.yml') ?? ''),
+      readRaw(repository, '.github/workflows/standard-update.yml', entry.branch) !== null &&
+      /^\s{2}workflow_dispatch:/m.test(
+        readRaw(repository, '.github/workflows/ci.yml', entry.branch) ?? '',
+      ),
     rulesets,
     updates,
   };

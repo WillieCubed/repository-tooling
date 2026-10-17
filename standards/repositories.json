@@ -9,7 +9,9 @@
     {
       "name": "putin",
       "requiredStatus": "Validate",
-      "kind": "consumer"
+      "kind": "consumer",
+      "repository": "wpp",
+      "branch": "putin-live"
     },
     {
       "name": "reports",

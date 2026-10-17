@@ -91,3 +91,11 @@ an expiry date.
 Do not cut a release to unblock one repository. Try an unreleased change there by linking a local
 checkout, as [Installation and updates](../reference/installation.md#unreleased-changes) describes,
 on a branch that is never merged.
+
+Registry entries may set `repository` and `branch` when a project has a stable registry name but
+lives on another repository or branch. Status reads all files from that branch and filters update
+pull requests by its base. Ruleset and pull-request discovery failures remain unknown, produce a
+finding, and do not prevent inspecting the other repositories. A ruleset name alone cannot verify
+protection of an explicitly selected branch; inspect its effective attachment and enforcement before
+treating that branch as protected. Do not resolve an unknown result by weakening checks or changing
+credentials automatically.
