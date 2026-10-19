@@ -100,6 +100,12 @@ These are not machine-checked. Reviewers hold them.
 - **Right weight.** Build for the consumer that exists. Extract a shared package, abstraction, or
   config only when a second consumer needs it.
 
+## Personal web apps
+
+New personal web apps follow the [PWA baseline](personal-web-apps.md): responsive layouts,
+installation, safe offline behavior, and evidence from an installed app. This is a review rule; its
+scope and retrofit criteria preserve organization and client project boundaries.
+
 ## Commits and pull requests
 
 - Commit subjects follow Conventional Commits, at most 72 characters. Scopes come only from
