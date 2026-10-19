@@ -69,6 +69,10 @@ standard owns match the installed `@williecubed/cli`.
 The repository keeps itself on the standard: its `Standard update` workflow opens a pull request for
 each newer release, as [Installation and updates](../reference/installation.md) describes.
 
+For a personal web app, include the [PWA baseline](../reference/personal-web-apps.md) in the initial
+implementation and complete its [verification checklist](verify-a-personal-web-app.md). The
+framework template alone does not establish installation or offline support.
+
 ## 4. Commit and register
 
 ```bash

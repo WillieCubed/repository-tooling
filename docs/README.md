@@ -8,6 +8,7 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [Create a repository](how-to/create-a-repository.md)
 - [Adopt the standard in an existing repository](how-to/adopt-in-an-existing-repository.md)
 - [Set up a repository's production platform](how-to/set-up-production.md)
+- [Verify a personal web app](how-to/verify-a-personal-web-app.md)
 - [Publish a tooling release](how-to/publish-a-release.md)
 
 ## Reference
@@ -18,6 +19,7 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [Engineering rules](reference/engineering-rules.md)
 - [Identity](reference/identity.md)
 - [Infrastructure conventions](reference/infrastructure-conventions.md)
+- [Personal web apps](reference/personal-web-apps.md)
 - [Resource usage](reference/resource-usage.md)
 - [Standard configuration](reference/standard-config.md)
 - [Command reference](reference/cli.md)
