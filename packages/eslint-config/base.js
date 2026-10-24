@@ -9,11 +9,13 @@ import tseslint from 'typescript-eslint';
 /**
  * Paths no repository on the standard lints: build output, caches, dependencies, agent
  * worktrees (full checkouts of the same repository), and typings that
- * `wrangler types` generates from configuration.
+ * `wrangler types` generates from configuration. `.cloudflare/` holds the Build
+ * Output and types that cf writes.
  */
 const ignores = {
   ignores: [
     '**/.astro/**',
+    '**/.cloudflare/**',
     '**/.turbo/**',
     '**/.wrangler/**',
     '**/coverage/**',

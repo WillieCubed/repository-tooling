@@ -41,3 +41,30 @@ for (const name of await readdir(path.join(sourceRoot, 'examples'))) {
     }
   });
 }
+
+// cf writes Build Output and generated types into .cloudflare/ beside an app's
+// cloudflare.config.ts. A deploy refuses a working tree with changes, so the
+// output must be ignored while the config stays tracked.
+const cfOutputs = ['.cloudflare/output/v0/config.json', '.cloudflare/types/index.d.ts'];
+
+for (const name of await readdir(path.join(sourceRoot, 'examples'))) {
+  test(`${name}: ignores what cf writes into an app and tracks its config`, async () => {
+    const repository = await mkdtemp(path.join(tmpdir(), `standard-${name}-cf-ignores-`));
+    try {
+      await cp(
+        path.join(sourceRoot, 'examples', name, '.gitignore'),
+        path.join(repository, '.gitignore'),
+      );
+      assert.equal(spawnSync('git', ['init', '--quiet', repository]).status, 0);
+      const ignored = (file) =>
+        spawnSync('git', ['-C', repository, 'check-ignore', '--quiet', file]).status === 0;
+      for (const output of cfOutputs) {
+        assert.ok(ignored(`apps/site/${output}`), `apps/site/${output} must be ignored`);
+        assert.ok(ignored(output), `${output} at the root must be ignored`);
+      }
+      assert.ok(!ignored('apps/site/cloudflare.config.ts'), 'cloudflare.config.ts stays tracked');
+    } finally {
+      await rm(repository, { recursive: true, force: true });
+    }
+  });
+}

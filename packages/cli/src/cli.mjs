@@ -8,7 +8,8 @@
  *                   with --production, also report production's readiness
  *   cube check      the shared repository-shape rules (filenames, contract, debt,
  *                   owned, platform)
- *   cube deploy     build, then `wrangler deploy` for every app that has a config
+ *   cube deploy     build, then `cf deploy` for every app with cloudflare.config.ts
+ *                   (`wrangler deploy` for a legacy app with only a wrangler config)
  *   cube update     write the files the standard owns from this release and
  *                   migrate the repository's own files to it
  *   cube self-update  move the repository to the newest published release
@@ -42,9 +43,10 @@ Options:
   --filter      For deploy and --production: only the app directory named (apps/site)
   --rotate      For bootstrap --production: replace the named secrets' stored values
                 on every target. Without it, a value that is already set is kept
-  --dry-run     For deploy: build, then run wrangler deploy --dry-run. For update:
-                list what would change without writing. For self-update: commit the
-                update on its branch without pushing or opening a pull request
+  --dry-run     For deploy: build, then run cf deploy --dry-run (wrangler deploy
+                --dry-run for a legacy app). For update: list what would change
+                without writing. For self-update: commit the update on its branch
+                without pushing or opening a pull request
 `;
 
 const commands = { bootstrap, preflight, check, deploy, update, 'self-update': selfUpdate };

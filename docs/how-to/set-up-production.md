@@ -9,7 +9,9 @@ nothing and say so.
 ## Before you start
 
 - `pnpm bootstrap` passes on your machine. That means Node.js, pnpm, the GitHub CLI (signed in with
-  `gh auth login`), and Wrangler (signed in with `pnpm exec wrangler login`) all work.
+  `gh auth login`), and the app's deploy tool all work.
+- Wrangler is signed in with `pnpm exec wrangler login`. Production setup still reads and writes
+  through Wrangler, even for a cf project whose `pnpm bootstrap` checked only the cf sign-in.
 - Your Cloudflare user can administer the personal account (ID `18f90fa11cf0a87145be4a1517e41217`),
   including Cloudflare One, which Cloudflare used to call Zero Trust. Its Access team is
   `williecubed`.
@@ -243,9 +245,10 @@ applications:
 The deploy token lets the Deploy workflow publish the Worker. It becomes the GitHub environment
 secret `CLOUDFLARE_API_TOKEN` in the `production` environment. Make it an account API token, which
 belongs to the account rather than to your user, so deploys keep working if your user's access
-changes. Creating one needs the Super Administrator role on the account. Wrangler deploys with it
-because the workflow also sets `CLOUDFLARE_ACCOUNT_ID`; without that, Wrangler would ask Cloudflare
-for the token's memberships, which an account API token cannot read.
+changes. Creating one needs the Super Administrator role on the account. `cf deploy` deploys a cf
+project with it, and Wrangler a legacy app. The workflow also sets `CLOUDFLARE_ACCOUNT_ID`, which
+both use to pick the account; without it, Wrangler would ask Cloudflare for the token's memberships,
+which an account API token cannot read.
 
 1. Open the Cloudflare dashboard, choose the personal account, and go to Manage Account, then
    "Account API Tokens" (<https://dash.cloudflare.com/18f90fa11cf0a87145be4a1517e41217/api-tokens>).

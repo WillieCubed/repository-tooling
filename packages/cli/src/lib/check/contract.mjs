@@ -23,6 +23,7 @@ const IGNORED = new Set([
   'test-results',
   '.turbo',
   '.wrangler',
+  '.cloudflare',
   '.astro',
 ]);
 

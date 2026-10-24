@@ -5,21 +5,27 @@ check it; the rest are review rules and say so.
 
 ## Toolchain
 
-| Concern      | Tool                                                             |
-| ------------ | ---------------------------------------------------------------- |
-| Runtime      | Node.js 24, required through `engines`                           |
-| Packages     | pnpm through Corepack, pinned in `packageManager`                |
-| Workspace    | Turborepo, with `apps/*` and `packages/*` even for one app       |
-| Types        | TypeScript 6, strict base from `@williecubed/typescript-config`  |
-| Lint         | ESLint with typescript-eslint, from `@williecubed/eslint-config` |
-| Format       | Prettier, from `@williecubed/prettier-config`                    |
-| Unit tests   | Vitest, from `@williecubed/vitest-config`                        |
-| Browser      | Playwright, from `@williecubed/playwright-config`                |
-| Git hooks    | The standard's `.githooks`, wired by `prepare`                   |
-| Secrets scan | gitleaks, in pre-commit and CI                                   |
+| Concern      | Tool                                                                |
+| ------------ | ------------------------------------------------------------------- |
+| Runtime      | Node.js 24, required through `engines`                              |
+| Packages     | pnpm through Corepack, pinned in `packageManager`                   |
+| Workspace    | Turborepo, with `apps/*` and `packages/*` even for one app          |
+| Types        | TypeScript 6, strict base from `@williecubed/typescript-config`     |
+| Lint         | ESLint with typescript-eslint, from `@williecubed/eslint-config`    |
+| Format       | Prettier, from `@williecubed/prettier-config`                       |
+| Unit tests   | Vitest, from `@williecubed/vitest-config`                           |
+| Browser      | Playwright, from `@williecubed/playwright-config`                   |
+| Cloudflare   | The cf CLI, with `cloudflare.config.ts`; `wrangler.jsonc` is legacy |
+| Git hooks    | The standard's `.githooks`, wired by `prepare`                      |
+| Secrets scan | gitleaks, in pre-commit and CI                                      |
 
 TypeScript stays on version 6 because typescript-eslint's type-aware rules do not run on TypeScript
 7 yet. The [lint decision](../explanation/decisions/eslint-and-prettier.md) says when that changes.
+
+A new Cloudflare app is a cf project: `cloudflare.config.ts` beside its `package.json`, with `cf`
+and `@cloudflare/vite-plugin` as `catalog:` dev dependencies, and `cube deploy` runs `cf deploy` for
+it. An app with only a wrangler config still deploys with Wrangler, the legacy path, until it moves
+with `cf migrate`.
 
 ## Types
 

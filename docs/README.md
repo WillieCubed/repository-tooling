@@ -8,6 +8,7 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [Create a repository](how-to/create-a-repository.md)
 - [Adopt the standard in an existing repository](how-to/adopt-in-an-existing-repository.md)
 - [Set up a repository's production platform](how-to/set-up-production.md)
+- [Move an app to cf](how-to/move-an-app-to-cf.md)
 - [Verify a personal web app](how-to/verify-a-personal-web-app.md)
 - [Publish a tooling release](how-to/publish-a-release.md)
 

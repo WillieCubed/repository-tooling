@@ -13,15 +13,25 @@ It needs Node.js 24.20 or newer on the 24 line, and git.
 | `cube preflight`              | Check Node, pnpm, dependencies, git hooks, scopes, GitHub CLI, Cloudflare                                | 0 pass, 1 fail              |
 | `cube preflight --production` | The same, then report whether production has everything `platform.json` declares; changes nothing        | 0 ready, 1 not ready        |
 | `cube check [name ...]`       | The shared repository-shape rules: `filenames`, `contract`, `debt`, `owned`, `platform` (all by default) | 0 pass, 1 fail, 2 bad usage |
-| `cube deploy [--filter x]`    | `pnpm build`, then `wrangler deploy` in every app with a wrangler config                                 | 0 done, 2 nothing to deploy |
+| `cube deploy [--filter x]`    | `pnpm build`, then `cf deploy` in every cf project, and `wrangler deploy` in every legacy Wrangler app   | 0 done, 2 nothing to deploy |
 | `cube update`                 | Write the files the standard owns from the installed release and migrate the repository to it            | 0 done, 1 unreadable file   |
 | `cube self-update`            | Move the repository to the newest published release through one pull request                             | 0 done, 1 failed            |
 | `cube help`                   | Print usage                                                                                              | 0                           |
 
 `cube check filenames --staged` checks the staged tree, which the pre-commit hook uses.
-`cube deploy --dry-run` builds and runs `wrangler deploy --dry-run`; `--filter apps/worker` limits
-it to one app. With `--production`, `--filter apps/site` (or `site`) limits bootstrap and preflight
-to that app's `platform.json`; `--filter .` picks the one at the root.
+`cube deploy` deploys the repository root and each `apps/*` directory that has a config. A directory
+with `cloudflare.config.ts` is a cf project: it runs `pnpm exec cf deploy --message "Commit <sha>"`
+there, even when a wrangler config sits beside it, as one does after `cf migrate`. A directory with
+only `wrangler.jsonc`, `wrangler.json`, or `wrangler.toml` is a legacy Wrangler app, which runs
+`pnpm exec wrangler deploy --strict --message "Commit <sha>"`; the Wrangler path is legacy and stays
+until every repository has moved, as [Move an app to cf](../how-to/move-an-app-to-cf.md) describes.
+Either way the message is the full commit the build came from, and the deploy stops when the working
+tree has changes or differs from `GITHUB_SHA`.
+
+`cube deploy --dry-run` builds and adds `--dry-run` to each deploy, which builds and validates the
+Worker without uploading it; `--filter apps/worker` limits it to one app. With `--production`,
+`--filter apps/site` (or `site`) limits bootstrap and preflight to that app's `platform.json`;
+`--filter .` picks the one at the root.
 
 `cube update --dry-run` lists what the update would write without writing it. `cube self-update` is
 what the `Standard update` workflow runs; `--dry-run` commits the update on its branch without
@@ -47,7 +57,14 @@ Each failing check prints the command that fixes it.
 | git hooks       | `core.hooksPath` is `.githooks`                                                                                          | `pnpm install` (the prepare script sets it)                                                                          |
 | commit scopes   | `.williecubed/commit-scopes.txt` exists                                                                                  | copy it from the example and list your scopes                                                                        |
 | GitHub CLI      | `gh auth status` succeeds                                                                                                | `brew install gh && gh auth login`                                                                                   |
-| Cloudflare      | no wrangler config, or `wrangler whoami` succeeds                                                                        | `pnpm exec wrangler login`                                                                                           |
+| Cloudflare      | nothing deploys, or `cf auth whoami` reports a cf sign-in or a `CLOUDFLARE_API_TOKEN` that Cloudflare accepts            | `pnpm exec cf auth login`, or set `CLOUDFLARE_API_TOKEN`                                                             |
+| Cloudflare      | for legacy Wrangler apps, `wrangler whoami` succeeds                                                                     | `pnpm exec wrangler login`                                                                                           |
+
+The first Cloudflare check runs when any deployable is a cf project, and the second when any is a
+legacy Wrangler app, so a repository with both kinds gets both. `cf` keeps its own credentials, so a
+Wrangler sign-in never passes the cf check. `cf auth whoami` prints JSON and exits 0 even when
+nobody is signed in, so the check reads the JSON, and a `CLOUDFLARE_API_TOKEN` that Cloudflare
+rejects fails it.
 
 ## Production checks
 
@@ -65,12 +82,15 @@ Every line that is not `ok` is followed by `next:`, the action that fixes it. Th
 whether production is ready and counts what is needed now and what can wait. Preflight exits 1 when
 any `FAIL` remains, so CI or a person can use it to verify production.
 
-The command reads with the credentials already on the machine. Workers, D1, R2, and secret names
-come through the Cloudflare API with the token `wrangler login` created. Email records come from
-public DNS over HTTPS. GitHub environments and secret names come from `gh`. Turnstile and Access
-need a Cloudflare API token with more permissions than Wrangler's sign-in has; interactive runs ask
-for one, and non-interactive runs read it from `CUBE_CLOUDFLARE_SETUP_TOKEN`. Without it, those
-items are reported as `FAIL` with "could not check".
+The command reads with the credentials already on the machine. Production setup and checks still use
+Wrangler in every app, including a cf project, and read its wrangler config, so a cf project keeps
+the `wrangler.jsonc` that `cf migrate` leaves beside `cloudflare.config.ts` until a later release
+moves production setup to cf. Workers, D1, R2, and secret names come through the Cloudflare API with
+the token `wrangler login` created. Email records come from public DNS over HTTPS. GitHub
+environments and secret names come from `gh`. Turnstile and Access need a Cloudflare API token with
+more permissions than Wrangler's sign-in has; interactive runs ask for one, and non-interactive runs
+read it from `CUBE_CLOUDFLARE_SETUP_TOKEN`. Without it, those items are reported as `FAIL` with
+"could not check".
 
 `cube bootstrap --production` needs a terminal. It prints the same report, lists what it will do,
 and asks once before starting. Then it:

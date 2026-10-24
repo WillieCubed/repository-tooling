@@ -69,7 +69,7 @@ release.
 | `pnpm check`                  | Format check, then lint, typecheck, and tests through Turborepo     |
 | `pnpm check:fix`              | Apply formatting and lint fixes                                     |
 | `pnpm build`                  | Build every package                                                 |
-| `pnpm run deploy`             | Build, then `wrangler deploy` (deployable repositories)             |
+| `pnpm run deploy`             | Build, then `cf deploy` (`wrangler deploy` for a legacy app)        |
 | `pnpm test`                   | Run every package's tests                                           |
 
 Guides, the command reference, and the package reference are in [`docs/`](docs/README.md).

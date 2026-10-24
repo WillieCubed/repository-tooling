@@ -427,17 +427,17 @@ test('deploy refuses to run where there is nothing to deploy', async () => {
     encoding: 'utf8',
   });
   assert.equal(result.status, 2);
-  assert.match(result.stderr, /wrangler/);
+  assert.match(result.stderr, /no cloudflare\.config\.ts, wrangler\.jsonc, .* at the root/);
 });
 
-test('deploy finds every app with a wrangler config and honors --filter', async () => {
+test('deploy finds every app with a cf or wrangler config and honors --filter', async () => {
   const repository = await installedCopy('with-astro');
   const result = spawnSync(process.execPath, [cli, 'deploy', '--dry-run', '--filter', 'worker'], {
     cwd: repository,
     encoding: 'utf8',
   });
   assert.equal(result.status, 2);
-  assert.match(result.stderr, /worker has no wrangler/);
+  assert.match(result.stderr, /worker has no cloudflare\.config\.ts, wrangler\.jsonc/);
 });
 
 test('source manifests use one published version rather than a development prerelease', async () => {

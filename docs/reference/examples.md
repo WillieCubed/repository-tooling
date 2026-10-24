@@ -60,6 +60,10 @@ name that release. Running publication again for the same tag produces the same 
 | `.github/workflows/deploy.yml` | Validates, then runs `pnpm run deploy` on every push to `main` with the Cloudflare secrets           |
 | root `preview` and `deploy`    | `turbo run preview` and `cube deploy`                                                                |
 
+Both deployable examples still deploy through the legacy Wrangler path; they move to cf in a later
+release. A repository created from one can move its app now, as
+[Move an app to cf](../how-to/move-an-app-to-cf.md) describes.
+
 The Astro example also adds `prettier-plugin-astro` to its Prettier config and extends
 `@williecubed/typescript-config/astro.json`; the React example extends `react-library.json` and
 lints with `@williecubed/eslint-config/react-internal`.
