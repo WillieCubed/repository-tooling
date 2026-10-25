@@ -219,7 +219,7 @@ test('source and generated repositories pin audited transitive fixes', async () 
     const workspace = await readFile(path.join(root, directory, 'pnpm-workspace.yaml'), 'utf8');
     assert.match(
       workspace,
-      /^overrides:\n {2}sharp: 0\.35\.4\n {2}smol-toml: 1\.8\.0\n {2}svgo: 4\.1\.0$/m,
+      /^overrides:\n {2}sharp: 0\.35\.5\n {2}smol-toml: 1\.8\.0\n {2}svgo: 4\.1\.0\n {2}undici: 7\.30\.1$/m,
     );
   }
 });
