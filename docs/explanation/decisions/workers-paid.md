@@ -4,8 +4,7 @@ Decided 2026-09-28. Applying it is a purchase in the Cloudflare dashboard, which
 
 ## Decision
 
-The personal Cloudflare account moves to Workers Paid, at
-$5 a month minimum, with a budget alert
+The personal Cloudflare account moves to Workers Paid, at $5 a month minimum, with a budget alert
 around $15.
 
 ## Why
