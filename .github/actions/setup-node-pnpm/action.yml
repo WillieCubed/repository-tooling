@@ -6,6 +6,13 @@ description: Install the repository's pinned pnpm, cache its store, and install 
 runs:
   using: composite
   steps:
+    # setup-node writes an .npmrc that reads the registry token from NODE_AUTH_TOKEN, and pnpm
+    # warns in every later step that runs without it. The job's own token is the one the install
+    # uses, so every step in the job gets it; steps that set it themselves set the same value.
+    - name: Export the registry token
+      shell: bash
+      run: echo "NODE_AUTH_TOKEN=${{ github.token }}" >> "$GITHUB_ENV"
+
     # packageManager in package.json is the one version source; pnpm/action-setup
     # reads it when no version input is supplied.
     - name: Setup pnpm

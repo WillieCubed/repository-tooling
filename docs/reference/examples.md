@@ -13,27 +13,27 @@ its own `check` with the shared packages.
 
 ## What `examples/basic` contains
 
-| Path                                         | Purpose                                                                                          |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `package.json`                               | The standard scripts, lint-staged, and the `@williecubed/cli` and Prettier deps at the release   |
-| `.npmrc`                                     | The `@williecubed` scope's registry, GitHub Packages                                             |
-| `pnpm-workspace.yaml`                        | `apps/*`, `packages/*`, the release age rules, and the version catalog                           |
-| `turbo.json`                                 | `build`, `lint`, `check-types`, `test`, `test:e2e`, `dev` tasks                                  |
-| `prettier.config.js`                         | Extends `@williecubed/prettier-config`                                                           |
-| `.markdownlint-cli2.jsonc`                   | Documentation rules, including that every relative link resolves                                 |
-| `.gitleaks.toml`                             | Secret scanning exemptions for the lockfile and design records                                   |
-| `.githooks/`                                 | Stubs that run the shared hooks from `node_modules/@williecubed/cli`                             |
-| `.codex/hooks.json`, `.agents/plugins/`      | Codex loads the plugin from `node_modules` and runs its guard                                    |
-| `.claude/settings.json`                      | Claude Code loads the plugin from the release tag, formats on edit, and cannot read secret files |
-| `.github/workflows/ci.yml`                   | The `Validate` job: `pnpm check`, dependency audit, secret scan                                  |
-| `.github/workflows/standard-update.yml`      | Daily: `cube self-update` opens a pull request when GitHub Packages has a newer release          |
-| `.github/actions/setup-node-pnpm/action.yml` | Node from `package.json`, pinned pnpm, frozen install                                            |
-| `.github/renovate.json`                      | Weekly grouped updates; `@williecubed/*` bumps grouped as one                                    |
-| `.github/CODEOWNERS`                         | The owner reviews everything                                                                     |
-| `.williecubed/commit-scopes.txt`             | Placeholder scopes to replace                                                                    |
-| `docs/`                                      | The index, a start-here tutorial, and a glossary                                                 |
-| `AGENTS.md`, `README.md`                     | Agent guidance and the repository's own front page                                               |
-| `packages/example/`                          | A sample package with `lint`, `check-types`, `test`, `build`                                     |
+| Path                                         | Purpose                                                                                           |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `package.json`                               | The standard scripts, lint-staged, and the `@williecubed/cli` and Prettier deps at the release    |
+| `.npmrc`                                     | The `@williecubed` scope's registry, GitHub Packages                                              |
+| `pnpm-workspace.yaml`                        | `apps/*`, `packages/*`, the release age rules, and the version catalog                            |
+| `turbo.json`                                 | `build`, `lint`, `check-types`, `test`, `test:e2e`, `dev` tasks; `NODE_AUTH_TOKEN` passes through |
+| `prettier.config.js`                         | Extends `@williecubed/prettier-config`                                                            |
+| `.markdownlint-cli2.jsonc`                   | Documentation rules, including that every relative link resolves                                  |
+| `.gitleaks.toml`                             | Secret scanning exemptions for the lockfile and design records                                    |
+| `.githooks/`                                 | Stubs that run the shared hooks from `node_modules/@williecubed/cli`                              |
+| `.codex/hooks.json`, `.agents/plugins/`      | Codex loads the plugin from `node_modules` and runs its guard                                     |
+| `.claude/settings.json`                      | Claude Code loads the plugin from the release tag, formats on edit, and cannot read secret files  |
+| `.github/workflows/ci.yml`                   | The `Validate` job: `pnpm check`, dependency audit, secret scan                                   |
+| `.github/workflows/standard-update.yml`      | Daily: `cube self-update` opens a pull request when GitHub Packages has a newer release           |
+| `.github/actions/setup-node-pnpm/action.yml` | Node from `package.json`, pinned pnpm, frozen install, the registry token for every step          |
+| `.github/renovate.json`                      | Weekly grouped updates; `@williecubed/*` bumps grouped as one                                     |
+| `.github/CODEOWNERS`                         | The owner reviews everything                                                                      |
+| `.williecubed/commit-scopes.txt`             | Placeholder scopes to replace                                                                     |
+| `docs/`                                      | The index, a start-here tutorial, and a glossary                                                  |
+| `AGENTS.md`, `README.md`                     | Agent guidance and the repository's own front page                                                |
+| `packages/example/`                          | A sample package with `lint`, `check-types`, `test`, `build`                                      |
 
 `pnpm-workspace.yaml` lists `apps/*` even though `basic` has no app yet. pnpm and Turborepo accept a
 glob with nothing under it, and `turbo gen workspace` creates the directory with the first app, so
