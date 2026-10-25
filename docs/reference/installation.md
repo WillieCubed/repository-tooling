@@ -11,9 +11,9 @@ repository-tooling's code. The files every repository keeps identical ship insid
 | File                    | What it holds                                                                                                               |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `.npmrc`                | `@williecubed:registry=https://npm.pkg.github.com`, and no credential                                                       |
-| `package.json` (each)   | Every `@williecubed/*` dependency at the release's exact version, such as `"@williecubed/cli": "0.0.3"`                     |
+| `package.json` (each)   | Every `@williecubed/*` dependency at the release's exact version, such as `"@williecubed/cli": "0.0.4"`                     |
 | `pnpm-workspace.yaml`   | `minimumReleaseAgeExclude: ['@williecubed/*']`, so a release installs the day it is published despite `minimumReleaseAge`   |
-| `.claude/settings.json` | The `cube` marketplace at the release tag, such as `"ref": "v0.0.3"`, so Claude Code loads the plugin from the same release |
+| `.claude/settings.json` | The `cube` marketplace at the release tag, such as `"ref": "v0.0.4"`, so Claude Code loads the plugin from the same release |
 
 Every package in the workspace pins the same release. `cube check contract` fails on a
 `@williecubed/*` dependency written as a range, a `file:` path, or a dist-tag; `workspace:` and
@@ -28,10 +28,10 @@ committed file could send the token to another registry.
 Installing needs a GitHub token with `read:packages`. The packages are public, so any repository's
 workflow token can read them once the workflow grants `packages: read`.
 
-| Where     | Token                                                                         | Configuration                                                                                                                                                |
-| --------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CI        | The workflow's own token, with `packages: read` in the workflow's permissions | `.github/actions/setup-node-pnpm` passes `registry-url` and `scope` to `actions/setup-node`, which writes a user-level `.npmrc` that reads `NODE_AUTH_TOKEN` |
-| A machine | The GitHub CLI's token, refreshed with `read:packages`                        | `~/.npmrc` holds `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`, and the shell profile exports `NODE_AUTH_TOKEN`                                      |
+| Where     | Token                                                                         | Configuration                                                                                                                                                                                              |
+| --------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CI        | The workflow's own token, with `packages: read` in the workflow's permissions | `.github/actions/setup-node-pnpm` exports the token as `NODE_AUTH_TOKEN` for the whole job and passes `registry-url` and `scope` to `actions/setup-node`, which writes a user-level `.npmrc` that reads it |
+| A machine | The GitHub CLI's token, refreshed with `read:packages`                        | `~/.npmrc` holds `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`, and the shell profile exports `NODE_AUTH_TOKEN`                                                                                    |
 
 A machine is set up once with these commands, and with `export NODE_AUTH_TOKEN=$(gh auth token)` in
 the shell profile:
@@ -44,6 +44,12 @@ echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' >> ~/.npmrc
 `cube preflight` asks pnpm for the token it resolves for `npm.pkg.github.com`, never printing it,
 and fails `GitHub Packages` when there is none. In CI the check passes, because the setup action
 provides the token.
+
+pnpm reads its configuration, and with it `NODE_AUTH_TOKEN`, every time it runs, not only when it
+installs. Every step of a CI job has the token for that reason, and the root `turbo.json` lists it
+in `globalPassThroughEnv`, because Turbo runs tasks without variables it isn't told about. Without
+either, pnpm prints `Failed to replace env in config: ${NODE_AUTH_TOKEN}` in every step or task. A
+pass-through variable never changes a task's cache key.
 
 ## Files the standard owns
 
@@ -94,6 +100,8 @@ changes without writing them. It:
 - gives each Astro project, a package that depends on `astro` and has its own `astro.config.*`, a
   `sync` script (`astro sync`), and adds a `sync` task that `lint` depends on to `turbo.json`, so
   lint reads Astro's generated types on a clean checkout;
+- adds `NODE_AUTH_TOKEN` to `globalPassThroughEnv` in the root `turbo.json`, so pnpm inside every
+  task can read the registry token;
 - rewrites references to the `@lasvegasfortransit/*` platform packages of the standard this one was
   forked from as `@williecubed/*`, skipping `.claude/worktrees/` and any other nested checkout.
 

@@ -2,6 +2,7 @@ import { CliError } from '../arguments.mjs';
 import { syncAstroTypesBeforeLint } from './astro-sync.mjs';
 import { consumerIgnoreWarnings, syncConsumerIgnores } from './consumer-ignores.mjs';
 import { migrateLegacyPackageScope } from './legacy-scope.mjs';
+import { passRegistryTokenThroughTurbo } from './registry-token.mjs';
 import { release, seedFiles, syncPluginRef, writeOwnedFiles } from './standard-files.mjs';
 
 const unique = (names) => [...new Set(names)].sort();
@@ -13,6 +14,7 @@ async function plan(root, dryRun) {
       ...(await migrateLegacyPackageScope(root, dryRun)),
       ...(await syncConsumerIgnores(root, dryRun)),
       ...(await syncAstroTypesBeforeLint(root, dryRun)),
+      ...(await passRegistryTokenThroughTurbo(root, dryRun)),
       ...syncPluginRef(root, dryRun),
     ]),
   };
