@@ -16,9 +16,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@williecubed/eslint-config": "0.0.3",
-    "@williecubed/typescript-config": "0.0.3",
-    "@williecubed/vitest-config": "0.0.3",
+    "@williecubed/eslint-config": "0.0.4",
+    "@williecubed/typescript-config": "0.0.4",
+    "@williecubed/vitest-config": "0.0.4",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
