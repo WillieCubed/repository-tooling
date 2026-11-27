@@ -1,7 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { appendFile, readFile } from 'node:fs/promises';
-import path from 'node:path';
+import { appendFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -12,50 +11,26 @@ import {
   pinnedRelease,
 } from '../packages/cli/src/lib/self-update/release.mjs';
 import { sourceRepository, standard } from '../standard.config.ts';
-
+import { readHostPolicy } from './host-discovery.ts';
+import { hostFindings, rulesetProposals } from './host-findings.ts';
 const OWNER = standard.owner;
 
 type Manifest = Parameters<typeof pinnedRelease>[0];
 
-export interface RegistryEntry {
-  name: string;
-  /** GitHub repository and branch, when different from the registry identity/default branch. */
-  repository?: string;
-  branch?: string;
-  requiredStatus: string;
-  kind: 'source' | 'template' | 'consumer';
-  example?: string;
-}
-
-export interface RegistryException {
-  repository: string;
-  rule: string;
-  reason: string;
-  expires: string;
-}
-
-export interface Registry {
-  version: number;
-  repositories: RegistryEntry[];
-  exceptions: RegistryException[];
-}
-
-export async function readRegistry(
-  file = path.join(import.meta.dirname, 'repositories.json'),
-): Promise<Registry> {
-  return JSON.parse(await readFile(file, 'utf8')) as Registry;
-}
-
-/** Repositories that receive each release: every template and consumer, never the source. */
-export function propagationTargets(registry: Registry): RegistryEntry[] {
-  return registry.repositories.filter(({ kind }) => kind !== 'source');
-}
-
 /** Days a repository may trail the latest release while its update pull request runs. */
 export const GRACE_DAYS = 3;
 
+interface StatusTarget {
+  repository: string;
+  branch?: string;
+  packageChecks: boolean;
+  requiredStatus: string;
+}
+
 export interface RepositoryState {
   name: string;
+  repository?: string;
+  packageChecks?: boolean;
   release: string | null;
   pluginRef: string | null;
   /** The repository runs `Standard update`, and `ci.yml` accepts the dispatch it sends. */
@@ -64,6 +39,13 @@ export interface RepositoryState {
   updates: { number: number; headRefName: string; failing: boolean }[] | null;
   branch?: string;
   discoveryErrors?: string[];
+  hostPolicy?: ReturnType<typeof readHostPolicy>;
+  /** Account capability evidence; null means discovery could not establish it. */
+  github?: {
+    ownerType: string | null;
+    visibility: string | null;
+    plan: string | null;
+  } | null;
 }
 
 export interface Finding {
@@ -85,27 +67,8 @@ export function daysBehind(release: string, releases: Release[], now: number): n
   return missed ? (now - Date.parse(missed.date)) / 86_400_000 : 0;
 }
 
-/** Keeps unavailable discovery distinct from an observed policy failure. */
-function discoveryFindings(state: RepositoryState): Finding[] {
-  const found = (state.discoveryErrors ?? []).map((message) => ({
-    repository: state.name,
-    rule: 'discovery',
-    message,
-  }));
-  if (state.branch)
-    found.push({
-      repository: state.name,
-      rule: 'ruleset-scope',
-      message: `Protection of branch ${state.branch} is unverified: repository ruleset names alone do not establish effective attachment and enforcement.`,
-    });
-  return found;
-}
-
-/**
- * Compares one repository with the releases and the organization settings. Pure, so the rules are
- * tested without GitHub.
- */
-export function findings(state: RepositoryState, releases: Release[], now: number): Finding[] {
+function adoptionFindings(state: RepositoryState, releases: Release[], now: number): Finding[] {
+  if (state.packageChecks === false) return [];
   const found: Finding[] = [];
   const add = (rule: string, message: string) =>
     found.push({ repository: state.name, rule, message });
@@ -135,33 +98,30 @@ export function findings(state: RepositoryState, releases: Release[], now: numbe
       'self-update',
       'it cannot update itself: copy .github/workflows/standard-update.yml from the example and give ci.yml a workflow_dispatch trigger.',
     );
-  found.push(...discoveryFindings(state));
-  if (state.rulesets !== null && !state.rulesets.includes('org-standard'))
-    add('ruleset', 'the org-standard ruleset is missing.');
+  return found;
+}
+
+/**
+ * Compares one repository with the releases and the organization settings. Pure, so the rules are
+ * tested without GitHub.
+ */
+export function findings(state: RepositoryState, releases: Release[], now: number): Finding[] {
+  const found: Finding[] = [];
+  const add = (rule: string, message: string) =>
+    found.push({ repository: state.name, rule, message });
+  found.push(...adoptionFindings(state, releases, now));
+  found.push(...hostFindings(state));
   for (const update of state.updates ?? []) {
     if (update.failing) add('update', `update pull request #${update.number} is failing Validate.`);
   }
   return found;
 }
 
-/** Removes findings covered by an unexpired, documented exception in repositories.json. */
-export function applyExceptions(found: Finding[], registry: Registry, today: string): Finding[] {
-  return found.filter(
-    (finding) =>
-      !registry.exceptions.some(
-        (exception) =>
-          exception.repository === finding.repository &&
-          exception.rule === finding.rule &&
-          exception.expires >= today,
-      ),
-  );
-}
-
-export function report(states: RepositoryState[], latest: string, open: Finding[]): string {
+export function report(states: RepositoryState[], latest: string | null, open: Finding[]): string {
   const lines = [
     `# Repository standard status`,
     '',
-    `Latest release: **${latest}**.`,
+    latest ? `Latest release: **${latest}**.` : 'Package adoption: not requested.',
     '',
     '| Repository | Release | Open update | Findings |',
     '| --- | --- | --- | --- |',
@@ -173,7 +133,9 @@ export function report(states: RepositoryState[], latest: string, open: Finding[
         ? 'unknown'
         : state.updates.map(({ number }) => `#${number}`).join(', ') || '—';
     const summary = mine.map(({ message }) => message).join('<br>') || 'none';
-    lines.push(`| ${state.name} | ${state.release ?? 'unreleased'} | ${updates} | ${summary} |`);
+    lines.push(
+      `| ${state.name} | ${state.packageChecks === false ? 'not inspected' : (state.release ?? 'unreleased')} | ${updates} | ${summary} |`,
+    );
   }
   lines.push('');
   return lines.join('\n');
@@ -186,7 +148,7 @@ function readRaw(repository: string, file: string, branch?: string): string | nu
   try {
     return gh([
       'api',
-      `repos/${OWNER}/${repository}/contents/${file}${branch ? `?ref=${encodeURIComponent(branch)}` : ''}`,
+      `repos/${repository}/contents/${file}${branch ? `?ref=${encodeURIComponent(branch)}` : ''}`,
       '-H',
       'Accept: application/vnd.github.raw',
     ]);
@@ -206,27 +168,9 @@ export function pluginRef(settings: string | null): string | null {
   return marketplace?.source?.ref ?? null;
 }
 
-function readState(entry: RegistryEntry): RepositoryState {
-  const repository = entry.repository ?? entry.name;
-  const discoveryErrors: string[] = [];
-  function discover<T>(resource: string, read: () => T): T | null {
-    try {
-      return read();
-    } catch (error) {
-      const status = /HTTP \d{3}/.exec(String(error))?.[0] ?? 'request failed';
-      discoveryErrors.push(
-        `${resource} discovery for ${OWNER}/${repository}: ${status}; discovery is unknown and protection remains unverified. Check repository identity, visibility, token access and API support.`,
-      );
-      return null;
-    }
-  }
-  const manifest = readRaw(repository, 'package.json', entry.branch);
-  const release = manifest ? pinnedRelease(JSON.parse(manifest) as Manifest) : null;
-  const rulesets = discover('rulesets', () =>
-    (JSON.parse(gh(['api', `repos/${OWNER}/${repository}/rulesets`])) as { name: string }[]).map(
-      ({ name }) => name,
-    ),
-  );
+type Discover = <T>(resource: string, read: () => T) => T | null;
+
+function readUpdates(entry: StatusTarget, repository: string, discover: Discover) {
   const pulls = discover(
     'pull requests',
     () =>
@@ -235,7 +179,7 @@ function readState(entry: RegistryEntry): RepositoryState {
           'pr',
           'list',
           '--repo',
-          `${OWNER}/${repository}`,
+          repository,
           '--base',
           entry.branch ?? 'main',
           '--state',
@@ -256,7 +200,7 @@ function readState(entry: RegistryEntry): RepositoryState {
         }[];
       }[],
   );
-  const updates =
+  return (
     pulls
       ?.filter(({ headRefName }) => headRefName.startsWith(BRANCH_PREFIX))
       .map(({ number, headRefName, statusCheckRollup }) => ({
@@ -269,18 +213,97 @@ function readState(entry: RegistryEntry): RepositoryState {
               check.conclusion ?? check.state ?? '',
             ),
         ),
-      })) ?? null;
+      })) ?? null
+  );
+}
+
+function githubCapabilities(
+  metadata: { visibility?: string; owner?: { type?: string } } | null,
+  account: { login?: string; plan?: { name?: string } } | null,
+  owner: string,
+): Exclude<RepositoryState['github'], undefined> {
+  if (!metadata) return null;
   return {
-    name: entry.name,
-    ...(entry.branch ? { branch: entry.branch } : {}),
-    discoveryErrors,
-    release,
+    ownerType: metadata.owner?.type ?? null,
+    visibility: metadata.visibility ?? null,
+    plan: account?.login === owner ? (account.plan?.name ?? null) : null,
+  };
+}
+
+function readAdoption(entry: StatusTarget, repository: string) {
+  if (!entry.packageChecks) return { release: null, pluginRef: null, selfUpdating: false };
+  const manifest = readRaw(repository, 'package.json', entry.branch);
+  return {
+    release: manifest ? pinnedRelease(JSON.parse(manifest) as Manifest) : null,
     pluginRef: pluginRef(readRaw(repository, '.claude/settings.json', entry.branch)),
     selfUpdating:
       readRaw(repository, '.github/workflows/standard-update.yml', entry.branch) !== null &&
       /^\s{2}workflow_dispatch:/m.test(
         readRaw(repository, '.github/workflows/ci.yml', entry.branch) ?? '',
       ),
+  };
+}
+
+function readState(
+  entry: StatusTarget,
+  account: { login?: string; plan?: { name?: string } } | null,
+): RepositoryState {
+  const repository = entry.repository;
+  const owner = repository.split('/')[0] ?? OWNER;
+  const discoveryErrors: string[] = [];
+  function discover<T>(resource: string, read: () => T): T | null {
+    try {
+      return read();
+    } catch (error) {
+      const status = /HTTP \d{3}/.exec(String(error))?.[0] ?? 'request failed';
+      discoveryErrors.push(
+        `${resource} discovery for ${repository}: ${status}; discovery is unknown and protection remains unverified. Check repository identity, visibility, token access and API support.`,
+      );
+      return null;
+    }
+  }
+  const metadata = discover(
+    'repository metadata',
+    () =>
+      JSON.parse(gh(['api', `repos/${repository}`])) as {
+        visibility?: string;
+        owner?: { type?: string };
+        default_branch?: string;
+      },
+  );
+  const branch = entry.branch ?? metadata?.default_branch ?? 'main';
+  const hostPolicy = readHostPolicy(
+    {
+      repository,
+      branch,
+      merge: metadata,
+      acceptedCheck: null,
+    },
+    (resource, endpoint, paginated) =>
+      discover(resource, () => {
+        const result: unknown = JSON.parse(
+          gh(['api', endpoint, ...(paginated ? ['--paginate', '--slurp'] : [])]),
+        );
+        return paginated && Array.isArray(result) ? result.flat() : result;
+      }),
+  );
+  const rulesets = discover('rulesets', () =>
+    (JSON.parse(gh(['api', `repos/${repository}/rulesets`])) as { name: string }[]).map(
+      ({ name }) => name,
+    ),
+  );
+  const updates = entry.packageChecks
+    ? readUpdates({ ...entry, branch }, repository, discover)
+    : [];
+  return {
+    name: repository.split('/')[1] ?? repository,
+    packageChecks: entry.packageChecks,
+    repository,
+    branch,
+    hostPolicy,
+    discoveryErrors,
+    github: githubCapabilities(metadata, account, owner),
+    ...readAdoption(entry, repository),
     rulesets,
     updates,
   };
@@ -322,22 +345,58 @@ function readReleases(): Release[] {
     }));
 }
 
+function targetRepository(selected: string | undefined): string {
+  let repository = selected;
+  if (repository === undefined) {
+    try {
+      repository = gh(['repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner']);
+    } catch {
+      throw new Error(
+        'No GitHub destination could be identified. Local development and native commands remain independent; use --repo OWNER/REPOSITORY only when inspecting a selected remote.',
+      );
+    }
+  }
+  if (
+    !/^[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9_.-]+$/.test(repository) ||
+    ['.', '..'].includes(repository.split('/')[1] ?? '')
+  )
+    throw new Error('Use an explicit OWNER/REPOSITORY target.');
+  return repository;
+}
+
 export async function main(args: string[]): Promise<void> {
-  const { values } = parseArgs({ args, options: { json: { type: 'boolean' } } });
-  const registry = await readRegistry();
-  const releases = readReleases();
-  const latest = latestRelease(releases.map(({ tag }) => tag));
-  if (!latest) throw new Error('repository-tooling has no stable release tag.');
-  const states = propagationTargets(registry).map(readState);
-  const now = Date.now();
-  const open = applyExceptions(
-    states.flatMap((state) => findings(state, releases, now)),
-    registry,
-    new Date(now).toISOString().slice(0, 10),
-  );
-  const output = values.json
-    ? `${JSON.stringify({ latest, states, findings: open }, null, 2)}\n`
-    : report(states, latest, open);
+  const { values } = parseArgs({
+    args,
+    options: {
+      repo: { type: 'string' },
+      branch: { type: 'string' },
+      packages: { type: 'boolean' },
+      json: { type: 'boolean' },
+      proposals: { type: 'boolean' },
+    },
+  });
+  const target: StatusTarget = {
+    repository: targetRepository(values.repo),
+    ...(values.branch !== undefined ? { branch: values.branch } : {}),
+    packageChecks: values.packages ?? false,
+    requiredStatus: 'Validate',
+  };
+  const releases = target.packageChecks ? readReleases() : [];
+  const latest = latestRelease(releases.map(({ tag }) => tag)) ?? null;
+  if (target.packageChecks && !latest)
+    throw new Error('repository-tooling has no stable release tag.');
+  let account: { login?: string; plan?: { name?: string } } | null = null;
+  try {
+    account = JSON.parse(gh(['api', 'user'])) as typeof account;
+  } catch {
+    // A repository-scoped workflow token may not read the owner's private plan.
+  }
+  const states = [readState(target, account)];
+  const open = states.flatMap((state) => findings(state, releases, Date.now()));
+  const output =
+    values.json || values.proposals
+      ? `${JSON.stringify({ latest, states, findings: open, ...(values.proposals ? { proposals: rulesetProposals(states) } : {}) }, null, 2)}\n`
+      : report(states, latest, open);
   process.stdout.write(output);
   if (process.env.GITHUB_STEP_SUMMARY)
     await appendFile(process.env.GITHUB_STEP_SUMMARY, report(states, latest, open));

@@ -41,40 +41,6 @@ test('the issue forms require actionable information through native fields', asy
   assert.doesNotMatch(`${bug}\n${feature}`, /transitmapper:|<!--/);
 });
 
-test('the organization registry contains every active repository', async () => {
-  const registry = JSON.parse(await read('standards/repositories.json'));
-  assert.deepEqual(registry.repositories.map(({ name }) => name).sort(), [
-    '.github',
-    'putin',
-    'reports',
-    'repository-tooling',
-    'template-basic',
-    'template-with-astro',
-    'template-with-vite-react',
-    'website',
-    'wpp',
-  ]);
-  for (const entry of registry.repositories) {
-    assert.ok(
-      ['source', 'template', 'consumer'].includes(entry.kind),
-      `${entry.name} needs a kind`,
-    );
-    assert.equal(entry.requiredStatus, 'Validate');
-  }
-  assert.deepEqual(
-    registry.repositories.filter(({ kind }) => kind === 'source').map(({ name }) => name),
-    ['repository-tooling'],
-  );
-  for (const exception of registry.exceptions) {
-    assert.ok(
-      registry.repositories.some(({ name }) => name === exception.repository),
-      `exception names an unknown repository: ${exception.repository}`,
-    );
-    assert.ok(exception.rule && exception.reason, 'an exception needs a rule and a reason');
-    assert.match(exception.expires, /^\d{4}-\d{2}-\d{2}$/, 'an exception needs an expiry date');
-  }
-});
-
 // The WillieCubed standard's releases start at 0.0.1, and every one has notes. The releases of the
 // upstream standard this repository was forked from keep their notes there, and their tags are not
 // in this repository; docs/reference/standard-config.md records the fork.

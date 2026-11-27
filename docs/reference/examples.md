@@ -78,7 +78,7 @@ task to any repository that gains an Astro package.
 
 ## Adding an example
 
-Copy `examples/basic`, change what the profile needs, and add it to the table above, to the
-`examples` map in `tests/example.test.mjs` so it is proven on every check, and to
-`standards/repositories.json` as a `template` with its `example`, so each release publishes it. Keep
-the standard scripts and the catalog identical across examples.
+Copy `examples/basic`, change what the profile needs, and add it to the table above and to the
+`examples` map in `tests/example.test.mjs` so it is proven on every check. Keep the standard scripts
+and supported dependency versions consistent across examples. A separate reviewed publication can
+create a GitHub template destination; maintaining or using an example requires no project registry.

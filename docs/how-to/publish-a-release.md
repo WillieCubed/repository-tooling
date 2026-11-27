@@ -76,26 +76,26 @@ names the file to copy by hand.
 
 ## 4. Watch the repositories update
 
-The `Standard status` workflow runs daily. Its job summary lists each repository's release and open
-update pull request, and it fails when a repository has drifted: behind the latest release for more
-than three days, a `main` that pins `@williecubed/cli` to no release, a failing update pull request,
-a contribution plugin ref that differs from the pinned release, a missing `org-standard` ruleset, or
-no way to update itself (no `standard-update.yml`, or a `ci.yml` without `workflow_dispatch`). Run
-the same check locally with `pnpm standards:status`.
+The `Standard status` workflow inspects its own repository. Run the same optional host check locally
+with `pnpm standards:status`, or select another destination with
+`pnpm standards:status --repo OWNER/REPOSITORY --branch BRANCH`. There is no central project list,
+registration step or membership requirement. Each repository owns its dependencies and update flow.
 
-A failing update pull request means the repository needs a change the update could not make. Fix it
-on the update branch; the pull request then merges itself. A repository that must diverge from one
-rule for a while records an exception in `standards/repositories.json` with the rule, a reason, and
-an expiry date.
+Add `--packages` to explicitly inspect a legacy consumer's pinned CLI, plugin reference and update
+pull requests. Native projects and source examples do not acquire Node packages to participate in an
+inventory. A repository that needs a shared-rule exception documents the reason, scope and review
+condition in its own contributor guidance.
+
+An update pull request that fails validation needs an actual fix and fresh verification before
+integration. Current manual review requirements still apply. An update does not authorize
+publication or a production deployment.
 
 Do not cut a release to unblock one repository. Try an unreleased change there by linking a local
 checkout, as [Installation and updates](../reference/installation.md#unreleased-changes) describes,
 on a branch that is never merged.
 
-Registry entries may set `repository` and `branch` when a project has a stable registry name but
-lives on another repository or branch. Status reads all files from that branch and filters update
-pull requests by its base. Ruleset and pull-request discovery failures remain unknown, produce a
-finding, and do not prevent inspecting the other repositories. A ruleset name alone cannot verify
-protection of an explicitly selected branch; inspect its effective attachment and enforcement before
-treating that branch as protected. Do not resolve an unknown result by weakening checks or changing
-credentials automatically.
+Status reads the selected branch and inspects effective host protection. Ruleset and pull-request
+discovery failures remain unknown and produce a finding; a matching ruleset name is not proof of
+attachment or enforcement. Keep the project's local engineering checks independent of this optional
+remote inspection. Do not resolve an unknown result by weakening checks or changing credentials
+automatically.

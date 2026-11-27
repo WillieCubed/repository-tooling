@@ -73,20 +73,25 @@ For a personal web app, include the [PWA baseline](../reference/personal-web-app
 implementation and complete its [verification checklist](verify-a-personal-web-app.md). The
 framework template alone does not establish installation or offline support.
 
-## 4. Commit and register
+## 4. Commit
 
 ```bash
-git restore --staged . && git add -A && git commit -m "chore(dx): start from the repository standard"
+git restore --staged . && git add <reviewed-paths> && git commit -F <message-file>
 git push
 ```
 
-Then add the repository to `standards/repositories.json` here with `"kind": "consumer"`, so the
-standard ruleset applies and `Standard status` tracks it. Its workflows install the `@williecubed/*`
-packages with their own token. The packages are public, so the token needs only `packages: read`,
-which every template workflow that installs declares. A deployable repository deploys once its
-`production` environment has the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets; until
-then, `.github/workflows/deploy.yml` skips the deploy with a notice, so a new repository's first
-pushes stay green.
+Prepare the message file and review the explicit paths before running the atomic staging/commit
+chain. Push only through the repository's approved integration route.
+
+Each repository owns its configuration, commands and selected dependencies. Creation, development,
+builds and adoption of the shared stack require no central project registration. Optional
+host-policy inspection uses the current GitHub repository or an explicit target. Host protection and
+runner enrollment have their own reviewed configuration and acceptance. Existing `@williecubed/*`
+consumers still need the documented GitHub Packages access. Verify package visibility and workflow
+access rather than assuming a public source repository makes package installation anonymous. A
+deployable repository deploys once its `production` environment has the `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` secrets; until then, `.github/workflows/deploy.yml` skips the deploy with a
+notice, so a new repository's first pushes stay green.
 
 ## Common problems
 
