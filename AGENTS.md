@@ -4,16 +4,20 @@ Run `pnpm check` after every change. Keep the human-facing templates free of hid
 agent instructions. `CLAUDE.md` is a symlink to this file; edit this one.
 
 This repository is a pnpm workspace that follows Turborepo conventions. `packages/` holds the shared
-packages every personal repository installs: `eslint-config`, `typescript-config`,
-`prettier-config`, `vitest-config`, `playwright-config`, `web-platform`, the security packages
-(`access`, `edge-security`, `audit`, `data`), and `cli` (the `cube` command, the git hooks under
-`hooks/`, the contribution plugin under `plugins/`, the version catalog in `catalog.json`, and the
-files every repository keeps identical under `repository/`). Repositories install these packages
+packages JavaScript consumers install: `eslint-config`, `typescript-config`, `prettier-config`,
+`vitest-config`, `playwright-config`, `web-platform`, and `cli` (the `cube` command, the git hooks
+under `hooks/`, the contribution plugin under `plugins/`, the version catalog in `catalog.json`, and
+the files every repository keeps identical under `repository/`). Repositories install these packages
 from GitHub Packages at exact versions; none of them carries a copy of this repository. `examples/`
 holds the repositories the templates are published from; each is a complete, runnable Turborepo
 workspace, and a test proves it passes its own checks. The catalog in every `pnpm-workspace.yaml`
 here must match `packages/cli/catalog.json`, and every example's copy of a file under
 `packages/cli/repository/` must match it; tests fail when they differ.
+
+The security contracts in `docs/` are application requirements. The proposed `access`,
+`edge-security`, `audit` and `data` packages are not implemented here; do not claim they provide
+runtime protection. Durable recovery preserves required keys, retained data and deletion/revocation
+state under the project's tested operations procedure. Empty infrastructure setup is not recovery.
 
 Every value that names an owner, such as the GitHub owner, npm scope, command name, state directory,
 Cloudflare account, or Access team, comes from `standard.config.ts`. Never write one out in code,

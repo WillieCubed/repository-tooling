@@ -1,70 +1,93 @@
-# Rebuilding from source
+# Rebuilding and recovering a project
 
-Each project's source is enough to set up its production again from nothing. If every Cloudflare,
-GitHub, and Vercel resource a project uses disappeared, one command in that project's checkout would
-provision and deploy it again within minutes. Projects are independent: each rebuilds on its own,
-from its own repository, and none depends on another project or on this repository being configured
-first.
+Source and reviewed configuration describe how to recreate a project's infrastructure. Recovering an
+existing product also requires its retained data, required key material, and deletion and revocation
+records. Recreating an empty database does not recover the product.
 
-## What a rebuild starts from
+Each project owns its recovery procedure. Another personal project, a private agent plugin, or a
+Studio account must not be an undocumented prerequisite. Accounts, domains, credentials, provider
+access and backups that the procedure needs are explicit dependencies.
 
-1. **The project's source**, including its `platform.json`, wrangler config, and migrations.
-2. **Sign-ins.** A browser session for GitHub, Cloudflare, and Vercel, the same ones a person uses
-   every day, and a short-lived Cloudflare token from the prefilled link setup prints.
-3. **Any value no API can create**, issued again by a person from the steps in the manifest. Most
-   projects have none.
+## Choose the recovery outcome
+
+| Outcome                                   | What must survive                                                                                                             |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Disposable development or preview rebuild | Reviewed source and configuration; synthetic state can be discarded intentionally                                             |
+| Durable product recovery                  | User content, ownership and permissions, required keys, deletion/revocation state, and compatible application/schema versions |
+
+A project identifies which environments are disposable. Production data is not disposable merely
+because the project is personal, has one operator, or can provision its infrastructure again.
+Deleting an environment, rotating keys or abandoning retained data requires an explicit incident or
+retirement decision.
+
+## Infrastructure setup
+
+The existing web setup commands prepare dependencies, inspect configuration and provision the
+resources supported by the project's manifest:
 
 ```bash
 pnpm bootstrap
+pnpm preflight --production
 pnpm bootstrap --production
-pnpm run deploy
 ```
 
-## Where each secret comes from
+Inspect the proposed account, environment and operations before applying production setup. Native
+projects keep their native setup commands. These commands do not by themselves restore a backup,
+recover encryption keys, establish a usable product or prove a recovery-time objective. A project
+documents any required manual provider steps honestly.
 
-| Kind    | Where the value comes from                                      | Example                                                                                       |
-| ------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Minted  | Setup generates random bytes                                    | An HMAC key for signed links                                                                  |
-| Derived | A resource setup creates returns it                             | An Access audience tag, a Turnstile secret, a D1 id, a Neon connection string, a deploy token |
-| Issued  | A person creates it from the manifest's steps, once per rebuild | A Google OAuth client secret, a model provider's API key                                      |
+## Credentials and keys
 
-No secret is stored anywhere except the service that uses it. Minted values need no copy because a
-rebuild does not bring data back: the links and sessions an old key signed belong to data that no
-longer exists. Derived values need no copy because setup creates the resource that holds them.
-Issued values are cheaper to issue again than to keep safe in a second place.
+Where a secret comes from and whether it must survive recovery are separate questions. A value may
+be generated locally, returned by provisioning, or issued by a person. Each still needs a purpose,
+environment, custody rule and recovery behavior.
 
-## Nothing is set only in a dashboard
+- Replace deploy tokens and other replaceable credentials through their supported issuance path.
+  Revoke old credentials and verify the replacement with the least required access.
+- Preserve encryption keys and signing keys needed by retained records in the project's approved
+  secret store or encrypted recovery material, with access separate from ordinary application
+  writes. Keep the required key versions and a tested way to recover them from a replacement device.
+- Replace session or link-signing keys only when the recovery procedure deliberately invalidates the
+  affected sessions or links, preserves account recovery, and verifies that revoked credentials
+  cannot become valid again. Retained signed records may require the original key or a compatible
+  migration.
+- Never put plaintext secrets, private keys or recovery material in source, issue descriptions,
+  logs, screenshots or public examples. Source may name a non-secret recovery reference.
 
-A setting that can only be changed in a dashboard is a gap in the standard, because the source no
-longer describes production. The Zero Trust organization, sign-in methods, Access applications and
-policies, Turnstile widgets, Web Analytics sites, zone settings, rate-limit rules, account API
-tokens, Vercel projects, and Neon databases all have APIs, so setup creates them from the manifest.
-Verifying an email domain with Resend is the one remaining step that waits for a person.
+Missing required keys block durable restoration. Generating new random bytes with the same secret
+name is not a recovery strategy. See the
+[credential recovery decision](decisions/issue-credentials-again.md).
 
-## What stays outside source
+## Recovery order
 
-- **The accounts themselves**: GitHub, Cloudflare, Vercel, Neon, Resend, and the Google Cloud
-  project that owns any OAuth client.
-- **Domain registration and nameservers.** A zone can be created by API, but pointing a registrar at
-  it cannot, unless the domain is registered with Cloudflare Registrar.
-- **Data.** A rebuild creates empty databases and applies every migration. Restoring rows or files
-  is a separate decision, made per incident. D1 Time Travel and Neon's point-in-time restore cover
-  ordinary mistakes inside a working account.
+The project's existing operations guide records the actual commands and their prerequisites:
 
-## Minutes, measured
+1. Identify the incident, recovery point, exact destination and authorized operator. Preserve the
+   remaining source and recovery material; do not overwrite the only usable copy.
+2. Establish an isolated environment with outbound messages, billing, webhooks, scheduled work and
+   other real-world effects disabled. Production credentials must not cross into a less trusted
+   environment merely to run the drill.
+3. Recover the compatible application/schema versions, required key versions and representative
+   retained data. Verify integrity and ownership before applying new migrations.
+4. Reapply deletion and revocation records before exposing restored data or re-enabling sync. Verify
+   that deleted content stays deleted and restricted accounts or credentials stay restricted.
+5. Exercise the important user journeys and confirm readable content, authorization, writes and
+   recovery behavior. A backup-success message or an answering homepage is insufficient.
+6. For an authorized production recovery, follow the project's cutover and rollback procedure,
+   reconcile writes after the chosen recovery point, and verify the actual service afterward.
 
-Setup asks every question first, then runs without stopping. The target is under ten minutes from
-the last answer to the app answering on its hostname.
+This ordering is a recovery contract, not a claim that a shared restore command exists. Each durable
+project must implement and rehearse its own provider-appropriate procedure.
 
-The target is tested, not assumed. A project's continuity drill runs setup against a spare
-Cloudflare account and zone, deploys, checks the app, and deletes what it created:
+## Objectives and evidence
 
-```bash
-pnpm bootstrap --production --account <spare-account-id> --zone <spare-zone>
-pnpm run deploy -- --account <spare-account-id> --zone <spare-zone>
-pnpm teardown --account <spare-account-id>
-```
+For each critical journey or data class, record numerical recovery point and recovery time
+objectives, backup frequency and retention, restore prerequisites, and the measurement window.
+Consider loss of the provider account as well as ordinary mistakes within a working account.
+Provider-native restore features need their actual coverage and limits documented; they are not
+automatically an independent recovery copy.
 
-`teardown` refuses the account in the project's manifest. A drill that takes longer than ten
-minutes, or stops for a dashboard step, is a defect to fix in the standard. A project adopts the
-standard only after its drill passes.
+Before general availability and at least quarterly afterward, restore representative data into an
+isolated environment and measure the result. Retain concise recovery evidence outside public source:
+the selected recovery point, usable-content and permission checks, deletion/revocation checks,
+elapsed time and any unmet objective. Keep the operations guide evergreen.

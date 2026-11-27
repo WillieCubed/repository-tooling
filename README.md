@@ -1,28 +1,35 @@
 # Repository tooling
 
-The source of truth for the WillieCubed repository standard: the shape every personal repository
-has, the commands it answers to, where it is hosted, how it handles data, and how its admin is
-protected. It follows [Turborepo](https://turborepo.dev) conventions throughout.
+Personal ownership configuration and compatibility tooling for adopting the Hypertext Studio
+engineering and product baseline. Products retain their purpose, authorship, provider destinations
+and native toolchains. Multi-package JavaScript workspaces use pnpm and Turborepo; native projects
+keep their own language's setup, build and verification commands.
 
-This repository is a fork of
+This repository originated as a fork of
 [LasVegasForTransit/repository-tooling](https://github.com/LasVegasForTransit/repository-tooling) at
 `v0.5.1`. The values that tie it to one owner live in `standard.config.ts`;
-[Standard configuration](docs/reference/standard-config.md) lists them.
+[Standard configuration](docs/reference/standard-config.md) lists them. Shared generic behavior is
+moving to Studio tooling, with legacy personal packages retained until equivalent behavior and
+clean-checkout access are verified. This source does not certify that every Personal product has
+completed adoption.
 
-It owns five things:
+It owns the following tooling:
 
-- the shared packages every repository installs from GitHub Packages at one exact release:
+- the legacy packages JavaScript consumers install from GitHub Packages at one exact release:
   `@williecubed/eslint-config`, `@williecubed/typescript-config`, `@williecubed/prettier-config`,
   `@williecubed/vitest-config`, `@williecubed/playwright-config`, and `@williecubed/cli` (the `cube`
   command for `bootstrap`, `preflight`, `check`, `deploy`, and `update`, the production platform
   setup, the git hooks, the files every repository keeps identical, and the `willie-contributions`
   agent plugin);
-- the security packages every app with admin or personal data uses: `@williecubed/access`,
-  `@williecubed/edge-security`, `@williecubed/audit`, and `@williecubed/data`;
 - the example repositories under `examples/` that the templates are published from;
 - the issue forms and pull request template published by
   [`WillieCubed/.github`](https://github.com/WillieCubed/.github);
-- the default-branch ruleset applied to every registered repository.
+- the default-branch ruleset definition and repository status checks. Actual host enforcement
+  requires supported account capabilities and verified activation.
+
+The security requirements describe behavior each application must implement and verify. The
+previously proposed `access`, `edge-security`, `audit` and `data` packages do not exist here; their
+names are not evidence of an installed security implementation.
 
 ## The standard in brief
 
@@ -34,7 +41,7 @@ It owns five things:
 | Documentation  | Diátaxis inside domain directories, with required documents and sections                                                                       | [Documentation standard](docs/reference/documentation-standard.md)         |
 | Code           | Strict TypeScript, ESLint and Prettier with Astro and MDX, one version catalog, zero warnings                                                  | [Engineering rules](docs/reference/engineering-rules.md)                   |
 | Production     | Declared in `platform.json`, checked and set up by one idempotent command                                                                      | [Platform manifest](docs/reference/platform-manifest.md)                   |
-| Continuity     | Each project's source is enough to set up its production again in minutes; no secret is stored outside the services that use it                | [Rebuilding from source](docs/explanation/continuity.md)                   |
+| Continuity     | Recover durable data, required keys and deletion/revocation state through a rehearsed project-owned procedure                                  | [Rebuilding and recovery](docs/explanation/continuity.md)                  |
 | Identity       | Every web project links to willie.page with one author link and its head tag, from `@williecubed/brand`                                        | [Identity](docs/reference/identity.md)                                     |
 | Infrastructure | Account-unique names start with the Worker name, no `workers.dev` copies, zone-wide settings belong to the zone, unlisted sites send `noindex` | [Infrastructure conventions](docs/reference/infrastructure-conventions.md) |
 | Resources      | Each app documents its limits, paid endpoints are guarded, each provider caps each project, and local disk is kept clean                       | [Resource usage](docs/reference/resource-usage.md)                         |
@@ -58,7 +65,11 @@ Each template is published from the matching directory under `examples/` on ever
 repository's daily `Standard update` workflow opens a pull request that moves it to each newer
 release.
 
-## Every repository answers to the same commands
+## Web workspace commands
+
+These are the legacy pnpm workspace entrypoints. Native-only projects use their real commands for
+the same setup, development, build, test, lint and typecheck meanings. They do not acquire Node,
+Turborepo or an empty workspace merely to match a command spelling.
 
 | Command                       | What it does                                                        |
 | ----------------------------- | ------------------------------------------------------------------- |
@@ -82,6 +93,6 @@ pnpm check
 
 It formats, lints, and runs every test under `tests/`, including one that copies each example into a
 temporary directory and proves it passes its own checks with the shared packages. This repository
-consumes its own packages and hooks. A repository that needs to weaken a shared rule records an
-exception with a reason and an expiry date in
-[`standards/repositories.json`](standards/repositories.json).
+consumes its own packages and hooks. Each project owns its configuration and native commands; there
+is no central project registration requirement. Document any necessary exception where that
+repository's contributors can understand its reason, scope and review condition.

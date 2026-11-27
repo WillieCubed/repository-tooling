@@ -6,9 +6,11 @@ Rules for data every personal project stores. Each app records what it actually 
 
 ## Validation
 
-Every value that crosses a trust boundary is parsed with a Zod schema before use: environment at
-startup, request bodies and query strings on arrival, and structured values stored as JSON on every
-read and every write. A value that fails parsing is rejected. It is never coerced into shape.
+Every value that crosses a trust boundary is validated before use: environment at startup, request
+bodies and query strings on arrival, and structured stored values on read and write. TypeScript
+applications use their approved schema validator; native applications keep equivalent validation in
+their own language. A value that fails validation is rejected rather than silently coerced into
+shape.
 
 ## Storage choice
 
@@ -67,17 +69,31 @@ finding, not a default of forever. Deleting a record deletes its copies in cache
 
 ## Backups and restore
 
-- D1 relies on Time Travel for point-in-time restore. The restore command and its window are in the
-  app's `operations.md` under Restore, and the restore is run once against a copy before the app
-  launches.
-- Neon relies on its point-in-time restore, with the same documentation and one rehearsal.
-- R2 objects that cannot be recreated are listed in the data inventory with how they are backed up.
+- Classify original durable records, objects and local stores separately from regenerable indexes
+  and caches. Document backup coverage, retention and access controls for every durable class.
+- Record numerical recovery time and recovery point objectives, backup frequency, actual restore
+  windows and account/provider-loss dependencies in the existing operations guide.
+- Retain required encryption/signing key versions under the documented custody model. An empty
+  infrastructure rebuild or newly generated replacement key does not restore retained content.
+- Restore representative data into an isolated environment before general availability and at least
+  quarterly afterward. Verify usable content, permissions, required keys and recovery time. Keep
+  external messages, billing, scheduled work and production integrations disabled in a drill.
+- Reapply deletion and revocation records before exposing restored content, credentials or sync.
+  Verify that recovery does not resurrect deleted data or revoked access.
+- Document provider-native restore features and their actual coverage. Address recovery outside the
+  failed account where the product's objectives require it; do not assume a provider restore window
+  covers account loss or every object type.
+
+See [rebuilding and recovery](../explanation/continuity.md) for the recovery order. These are
+product requirements; shared setup does not implement a universal backup or restore operation.
 
 ## Exports
 
 CSV exports follow RFC 4180 quoting and neutralize formula injection: a cell that starts with `=`,
-`+`, `-`, `@`, a tab, or a carriage return is prefixed with `'`. `toCsv` in `@williecubed/data` does
-both. Exports are admin-only.
+`+`, `-`, `@`, a tab, or a carriage return is prefixed with `'`. Verify quoting and formula handling
+in the actual export implementation. The previously proposed `@williecubed/data` package is not an
+available implementation in this repository. Exports require authorization appropriate to their
+contents; people may export their own data where the product offers that capability.
 
 ## Analytics
 
