@@ -1,11 +1,6 @@
-# Checks every repository in standards/repositories.json against the latest
-# release and the organization settings, and fails when one has drifted:
-# behind the latest release for more than three days, a main that pins
-# @williecubed/cli to no release, a failing update pull request, a stale plugin
-# ref, a missing org-standard ruleset, or a repository that cannot update
-# itself. The job summary lists every repository. A documented, unexpired
-# exception in repositories.json silences one rule for one repository. Every
-# repository is public, so the workflow's own token reads everything it needs.
+# Inspects effective host policy for this repository, without a project catalog.
+# Package adoption is an explicit optional check. Repository-scoped tokens may not
+# read owner account capabilities; unavailable discovery remains unverified.
 name: Standard status
 
 on:

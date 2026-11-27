@@ -3,15 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 
-import {
-  applyExceptions,
-  daysBehind,
-  findings,
-  pluginRef,
-  propagationTargets,
-  readRegistry,
-  report,
-} from '../standards/status.ts';
+import { daysBehind, findings, pluginRef, report } from '../standards/status.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
 const day = 86_400_000;
@@ -32,19 +24,56 @@ const current = (overrides = {}) => ({
 });
 const rules = (state) => findings(state, releases, now).map(({ rule }) => rule);
 
-test('every template and consumer receives each release, and the source does not', async () => {
-  const registry = await readRegistry();
-  const targets = propagationTargets(registry);
-  assert.ok(!targets.some(({ name }) => name === 'repository-tooling'));
-  assert.equal(targets.length, registry.repositories.length - 1);
-  for (const entry of targets) {
-    if (entry.kind === 'template') assert.equal(entry.name, `template-${entry.example}`);
-    else assert.equal(entry.kind, 'consumer');
-  }
+test('host-only inspection retains protection checks without requiring Node package adoption', () => {
+  assert.deepEqual(
+    rules(
+      current({
+        packageChecks: false,
+        release: null,
+        pluginRef: null,
+        selfUpdating: false,
+        github: { ownerType: 'User', visibility: 'private', plan: 'free' },
+      }),
+    ),
+    ['ruleset-unavailable'],
+  );
 });
 
 test('a current repository has no findings', () => {
   assert.deepEqual(rules(current()), []);
+});
+
+test('a Free personal private repository reports unavailable host enforcement', () => {
+  for (const rulesets of [null, [], ['org-standard']]) {
+    const state = current({
+      github: { ownerType: 'User', visibility: 'private', plan: 'free' },
+      rulesets,
+    });
+    assert.deepEqual(rules(state), ['ruleset-unavailable']);
+    const messages = findings(state, releases, now)
+      .map(({ message }) => message)
+      .join(' ');
+    assert.match(messages, /private.*Free/i);
+    assert.doesNotMatch(messages, /create.*org-standard/i);
+  }
+});
+
+test('supported public and Pro personal repositories still require their ruleset', () => {
+  for (const github of [
+    { ownerType: 'User', visibility: 'public', plan: 'free' },
+    { ownerType: 'User', visibility: 'private', plan: 'pro' },
+  ]) {
+    assert.deepEqual(rules(current({ github, rulesets: [] })), ['ruleset']);
+  }
+});
+
+test('unknown private-account capabilities do not masquerade as missing protection', () => {
+  for (const plan of [null, 'unrecognized']) {
+    assert.deepEqual(
+      rules(current({ github: { ownerType: 'User', visibility: 'private', plan }, rulesets: [] })),
+      ['ruleset-unverified'],
+    );
+  }
 });
 
 test('lag counts from the first release a repository missed, not the latest', () => {
@@ -69,20 +98,6 @@ test('an unpinned CLI, plugin refs, self-update, rulesets, and red updates are d
       }),
     ),
     ['update'],
-  );
-});
-
-test('an unexpired exception silences one rule for one repository', () => {
-  const found = findings(current({ pluginRef: 'v0.4.0', rulesets: [] }), releases, now);
-  const registry = {
-    exceptions: [
-      { repository: 'example', rule: 'ruleset', reason: 'test', expires: '2026-12-31' },
-      { repository: 'example', rule: 'plugin-ref', reason: 'test', expires: '2026-09-01' },
-    ],
-  };
-  assert.deepEqual(
-    applyExceptions(found, registry, '2026-09-27').map(({ rule }) => rule),
-    ['plugin-ref'],
   );
 });
 
