@@ -3,8 +3,12 @@ import { z } from 'zod';
 
 export function githubReader(root: string) {
   return (endpoint: string): Promise<unknown> => {
-    if (!/^repos\/[A-Za-z0-9-]+\/[A-Za-z0-9._-]+(?:\/|$)/.test(endpoint) || endpoint.includes('..'))
-      return Promise.reject(new Error('GitHub reads require a repository API path.'));
+    const repositoryPath =
+      /^repos\/[A-Za-z0-9-]+\/[A-Za-z0-9._-]+(?:\/|$)/.test(endpoint) && !endpoint.includes('..');
+    if (endpoint !== 'user' && !repositoryPath)
+      return Promise.reject(
+        new Error('GitHub reads require a repository API path or the authenticated user endpoint.'),
+      );
     try {
       const output = execFileSync(
         'gh',
