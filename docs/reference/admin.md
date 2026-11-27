@@ -3,6 +3,11 @@
 The contract every admin surface meets. The reasoning is in
 [Why admin sits behind two checks](../explanation/security-model.md).
 
+These are application requirements, not a claim that runtime middleware is installed. The proposed
+`@williecubed/access`, `@williecubed/edge-security` and `@williecubed/audit` packages are not
+implemented in this repository. Reuse a verified implementation from the product or shared Studio
+tooling where it fits, and exercise its actual authorization boundary before exposing admin.
+
 ## Location
 
 | App host           | Admin lives at                                   |
@@ -31,8 +36,9 @@ policy that admits everyone.
 
 ## Gate
 
-`@williecubed/access` provides the gate. Middleware calls it for every request under the admin
-prefix, before routing.
+Application middleware verifies the Access identity for every request under the admin prefix, before
+routing. Reuse the product's approved JWT implementation instead of writing a second verifier merely
+to satisfy a proposed package name.
 
 | Result                                     | Response                         |
 | ------------------------------------------ | -------------------------------- |
@@ -41,11 +47,15 @@ prefix, before routing.
 | Token valid                                | The identity, passed to routes   |
 | `ADMIN_DEV_OPEN=1` in `.dev.vars`          | A fixed local identity           |
 
-Verification uses WebCrypto and no dependencies. It accepts RS256 only, verifies the signature
-before reading claims, and then checks that `aud` includes `ACCESS_AUD`, that `iss` is the team URL,
-and `exp` and `nbf` with 60 seconds of clock skew. Keys come from
-`https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`, are cached, and are refetched when a
-token names an unknown key id, at most once a minute.
+The gate accepts RS256 only, verifies the signature before trusting claims, and then checks that
+`aud` includes `ACCESS_AUD`, that `iss` is the team URL, and `exp` and `nbf` with 60 seconds of
+clock skew. Keys come from `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`, are cached,
+and are refetched when a token names an unknown key id, at most once a minute.
+
+The local development bypass must be unavailable outside an explicitly local environment. Staging
+and production use separate credential stores, audiences and permitted hosts, and reject each
+other's credentials. Missing or malformed configuration keeps admin closed. Owner administration
+does not require adding customer accounts or a public signup flow.
 
 ## Routes
 
@@ -53,8 +63,8 @@ token names an unknown key id, at most once a minute.
   `run_worker_first`, because the asset layer serves prerendered files before the Worker runs.
 - Every change is a `POST` answered with `303 See Other`. A `GET` changes nothing. The one allowed
   exception is an OAuth callback, which does nothing without a `state` value the app signed.
-- Posts pass Astro's origin check and `readWriteRequest` from `@williecubed/edge-security`, the same
-  size, content-type, and rate-limit guard public write paths use.
+- Posts pass the framework's supported origin/CSRF checks and the application's size, content-type,
+  authorization and rate-limit guards. Public write paths retain their own appropriate protections.
 
 ## Headers
 
@@ -65,7 +75,7 @@ form post and the origin check rejects it.
 
 ## Audit
 
-`@williecubed/audit` owns one table, created by the migration the package ships:
+The application owns durable audit storage and its migration. A minimal record includes:
 
 | Column        | Contents                                           |
 | ------------- | -------------------------------------------------- |
@@ -76,9 +86,10 @@ form post and the origin check rejects it.
 | `target`      | The record the action changed                      |
 | `request_id`  | Cloudflare's `cf-ray` value for the request        |
 
-Every admin route that changes data calls `recordAudit` in the same batch as the change. Audit rows
-are never updated or deleted by the app. The app's `docs/security/reference/admin.md` lists its
-actions.
+Every admin route that changes data records the verified actor and change atomically. The ordinary
+application cannot silently rewrite audit history. Define retention and deletion obligations,
+authorized maintenance, and recovery behavior alongside the data inventory. The application's admin
+guide lists the actual actions and storage implementation.
 
 ## Webhooks
 
@@ -96,5 +107,5 @@ closed. A preview-only key that opens admin is allowed only when `platform.json`
 
 1. Put it under the admin prefix, rendered on demand.
 2. Make every change a `POST` that ends in a `303`.
-3. Call `recordAudit` for every change, and add the action to the app's admin document.
+3. Record an atomic audit event for every change, and list the action in the app's admin document.
 4. Add a test that the page answers 403 without a token.

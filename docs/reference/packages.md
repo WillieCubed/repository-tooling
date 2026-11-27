@@ -1,7 +1,7 @@
 # The shared packages
 
-Every personal repository depends on these packages, installed from GitHub Packages at the exact
-version of one release:
+JavaScript consumers of the legacy personal tooling install the applicable packages from GitHub
+Packages at the exact version of one release:
 
 ```json
 "@williecubed/typescript-config": "0.0.4"
@@ -10,6 +10,13 @@ version of one release:
 All packages share one version, the tooling version, and a repository pins every one of them to the
 same release. [Installation and updates](installation.md) describes the registry, the token, and how
 a repository moves to a new release.
+
+The migration target is the shared Studio implementation with personal ownership configuration.
+These legacy presets remain until supported upstream exports, access and equivalent consumer
+behavior are verified. Native-only projects do not install this package set merely to share command
+names. The proposed security packages mentioned in older documentation are not available
+implementations; applications must verify the [admin](admin.md) and [data](data-handling.md)
+contracts through their actual code.
 
 | Package                          | What a repository gets                                                                                                                                                                                                                                                                                                                                       |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

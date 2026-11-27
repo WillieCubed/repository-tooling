@@ -19,6 +19,7 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [Documentation standard](reference/documentation-standard.md)
 - [Engineering rules](reference/engineering-rules.md)
 - [Identity](reference/identity.md)
+- [GitHub personal accounts](reference/github-personal-accounts.md)
 - [Infrastructure conventions](reference/infrastructure-conventions.md)
 - [Personal web apps](reference/personal-web-apps.md)
 - [Resource usage](reference/resource-usage.md)
@@ -32,7 +33,7 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 ## Explanation
 
 - [Where a project runs](explanation/hosting.md)
-- [Rebuilding from source](explanation/continuity.md)
+- [Rebuilding and recovery](explanation/continuity.md)
 - [Why admin sits behind two checks](explanation/security-model.md)
 - [Why packages and examples](explanation/packages-and-examples.md)
 - [Why production is declared in a platform manifest](explanation/production-platform.md)
@@ -44,7 +45,7 @@ reference pages record facts and contracts, and explanation gives the reasoning.
 - [Install the standard from GitHub Packages](explanation/decisions/install-from-github-packages.md)
 - [ESLint and Prettier](explanation/decisions/eslint-and-prettier.md)
 - [Vercel apps keep admin on Workers](explanation/decisions/vercel-admin-on-workers.md)
-- [Issue credentials again instead of storing them](explanation/decisions/issue-credentials-again.md)
+- [Recover credentials according to their purpose](explanation/decisions/issue-credentials-again.md)
 - [Publish the brand package from willie.page](explanation/decisions/brand-from-website.md)
 - [Zone-wide settings belong to the zone](explanation/decisions/zone-settings-belong-to-the-zone.md)
 - [Workers Paid for the personal account](explanation/decisions/workers-paid.md)
